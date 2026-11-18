@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>21. 合并两个有序链表 · INTJ 算法解剖刀工作台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-panel: #111827;
+            --bg-card: #1e293b;
+            --border-color: #334155;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        /* 严格保证代码缩进与等宽字体渲染（核心铁律） */
+        .code-container, .code-pre, .code-line, .code-content {
+            font-family: 'JetBrains Mono', monospace !important;
+            white-space: pre !important;
+            tab-size: 4 !important;
+            font-variant-ligatures: none;
+        }
+
+        .code-line {
+            display: flex;
+            align-items: center;
+            min-height: 1.75rem;
+            padding: 0 0.75rem;
+            border-left: 3px solid transparent;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+            position: relative;
+        }
+
+        .code-line:hover {
+            background-color: rgba(51, 65, 85, 0.35);
+        }
+
+        .code-line.active-line {
+            background-color: rgba(245, 158, 11, 0.16) !important;
+            border-left-color: #f59e0b !important;
+        }
+
+        .code-line.active-line .line-num {
+            color: #fbbf24 !important;
+            font-weight: 700;
+        }
+
+        .line-num {
+            width: 2.2rem;
+            display: inline-block;
+            text-align: right;
+            margin-right: 1rem;
+            color: #64748b;
+            user-select: none;
+            font-size: 0.78rem;
+            flex-shrink: 0;
+        }
+
+        .code-content {
+            position: relative;
+            font-size: 0.84rem;
+            line-height: 1.75rem;
+            flex-grow: 1;
+        }
+
+        /* 4空格缩进视觉对齐线 */
+        .indent-guide {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: rgba(148, 163, 184, 0.16);
+            pointer-events: none;
+        }
+
+        /* 语法高亮色彩 */
+        .tok-kw { color: #c084fc; font-weight: 600; }
+        .tok-fn { color: #38bdf8; font-weight: 600; }
+        .tok-cls { color: #fbbf24; }
+        .tok-var-l1 { color: #38bdf8; font-weight: 600; }
+        .tok-var-l2 { color: #34d399; font-weight: 600; }
+        .tok-var-cur { color: #fbbf24; font-weight: 600; }
+        .tok-prop { color: #93c5fd; }
+        .tok-num { color: #fb923c; }
+        .tok-cmt { color: #64748b; font-style: italic; }
+        .tok-op { color: #f472b6; }
+
+        /* SVG 动画过渡 */
+        .svg-node, .svg-arrow, .svg-badge {
+            transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5)); }
+            50% { filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.95)); }
+        }
+
+        .glow-amber {
+            animation: pulseGlow 2s infinite;
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-amber-500/30 selection:text-amber-200">
+
+    <!-- 顶部总控导航栏 -->
+    <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <!-- 标题与宇宙坐标 -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 via-cyan-500/20 to-emerald-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-lg shadow-inner">
+                    21
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">合并两个有序链表</h1>
+                        <span class="px-2 py-0.5 text-xs font-semibold rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">简单 · Easy</span>
+                        <span class="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">🏛️ 宇宙 A：拓扑重构施工机</span>
+                        <span class="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">⚡ 含 new_node 专属诊断与双引擎同构</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                        INTJ 算法解剖刀 · 具象双轨母图 <span class="text-amber-400">➔</span> 搭桥 vs 跨步分野 <span class="text-emerald-400">➔</span> 你的 <code class="text-amber-300">new_node</code> 提纯与 $O(1)$ 升维
+                    </p>
+                </div>
+            </div>
+
+            <!-- 双主模式切换器 -->
+            <div class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800 w-full md:w-auto">
+                <button id="btn-mode-slicing" onclick="switchMainMode('slicing')" class="flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow">
+                    <span>🔪</span>
+                    <span>模式一：七刀原子切分 · 图像解构</span>
+                </button>
+                <button id="btn-mode-sandbox" onclick="switchMainMode('sandbox')" class="flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
+                    <span>🎮</span>
+                    <span>模式二：双引擎三阶段沙盒 (含 new_node)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容容器 -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 lg:px-8 py-5">
+
+        <!-- ================================================================= -->
+        <!-- 模式一：🔪 七刀原子切分 · 图像解构 (Cuts 0 ~ 6) -->
+        <!-- ================================================================= -->
+        <section id="view-slicing" class="space-y-5">
+
+            <!-- 顶部由内向外 5 步引擎速览条 -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-xs font-bold shrink-0">
+                        🧠 INTJ 双轨架构路径
+                    </span>
+                    <p class="text-xs sm:text-sm text-slate-300">
+                        <strong class="text-white">物理隔离过渡：</strong>先用你的 <code class="text-amber-400">new_node</code> 造砖法彻底理顺 <strong class="text-emerald-300">「① 造砖抄数 ➔ ② 搭桥 (.next=) ➔ ③ 跨步 (merge=)」</strong>，再一键升维至 $O(1)$ 原地挂钩！
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-slate-400 shrink-0">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400"></span><span>上轨 l1</span>
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 ml-2"></span><span>下轨 l2</span>
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 ml-2"></span><span>施工员 merge / new_node</span>
+                </div>
+            </div>
+
+            <!-- 七刀导航条 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 flex items-center justify-between gap-2 overflow-x-auto">
+                <div id="cut-tabs-container" class="flex items-center gap-1.5">
+                    <!-- 由 JS 动态渲染第 0 刀 ~ 第 6 刀按钮 -->
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0 pl-2 border-l border-slate-800">
+                    <button onclick="stepCut(-1)" id="btn-prev-cut" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition disabled:opacity-40 disabled:pointer-events-none">
+                        ◀ 上一刀
+                    </button>
+                    <button onclick="stepCut(1)" id="btn-next-cut" class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition disabled:opacity-40 disabled:pointer-events-none">
+                        下一刀 ▶
+                    </button>
+                </div>
+            </div>
+
+            <!-- 当前刀的主体渲染容器 -->
+            <div id="cut-content-host" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+                <!-- 由 JS 动态渲染当前选中的 Cut -->
+            </div>
+
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- 模式二：🎮 双引擎三阶段解耦沙盒 · 实时图码追踪 -->
+        <!-- ================================================================= -->
+        <section id="view-sandbox" class="hidden space-y-5">
+
+            <!-- 沙盒顶部控制栏：双引擎切换 + 预设选择 + 自定义输入 + 三阶段进度条 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
+                <!-- 引擎切换横幅 -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold">
+                            ⚙️ 切换沙盒执行引擎
+                        </span>
+                        <span class="text-xs text-slate-400">对比你的 <code class="text-amber-300">new_node</code> 物理隔离造砖法与 <code class="text-cyan-300">O(1)</code> 原地指针拼接法：</span>
+                    </div>
+                    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button id="btn-engine-newnode" onclick="switchSandboxEngine('newnode')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow">
+                            <span>🌟 引擎 A：你的 new_node 造砖优化版</span>
+                        </button>
+                        <button id="btn-engine-inplace" onclick="switchSandboxEngine('inplace')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+                            <span>⚡ 引擎 B：O(1) 原地指针拼接版</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <!-- 4 大典型预设探针 -->
+                    <div class="space-y-1.5">
+                        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>🧪 选择预设测试用例（含专测 merge 跨步防覆写的极简照妖镜）</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2" id="sandbox-preset-buttons">
+                            <button onclick="loadSandboxPreset(0)" id="preset-btn-0" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                                ① 示例1标准双轨 l1=[1,2,4], l2=[1,3,4]
+                            </button>
+                            <button onclick="loadSandboxPreset(1)" id="preset-btn-1" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                                ② 极简反例照妖镜 l1=[1,4], l2=[2]
+                            </button>
+                            <button onclick="loadSandboxPreset(2)" id="preset-btn-2" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                                ③ 单边空链表 l1=[], l2=[0]
+                            </button>
+                            <button onclick="loadSandboxPreset(3)" id="preset-btn-3" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                                ④ 双空链表 l1=[], l2=[]
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 自定义链表输入 -->
+                    <div class="flex flex-wrap items-end gap-2 bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
+                        <div>
+                            <label class="block text-[11px] text-cyan-400 font-mono mb-1">l1 (升序逗号分隔):</label>
+                            <input id="input-custom-l1" type="text" value="1,2,4" placeholder="如 1,2,4 或留空" class="w-32 px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-xs font-mono text-white focus:outline-none focus:border-cyan-400">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-emerald-400 font-mono mb-1">l2 (升序逗号分隔):</label>
+                            <input id="input-custom-l2" type="text" value="1,3,4" placeholder="如 1,3,4 或留空" class="w-32 px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-xs font-mono text-white focus:outline-none focus:border-emerald-400">
+                        </div>
+                        <button onclick="applyCustomSandboxInput()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-semibold transition">
+                            ⚡ 载入自定义
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 三阶段解耦状态横幅 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
+                    <div id="stage-badge-1" class="px-3.5 py-2 rounded-xl border flex items-center justify-between transition">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-slate-800 text-slate-300" id="stage-dot-1">1</span>
+                            <div>
+                                <div class="text-xs font-bold">阶段一：立定海神针与双轨</div>
+                                <div class="text-[11px] opacity-75 font-mono">dummy = ListNode(-1); merge = dummy</div>
+                            </div>
+                        </div>
+                        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800/80">起跑锚定</span>
+                    </div>
+
+                    <div id="stage-badge-2" class="px-3.5 py-2 rounded-xl border flex items-center justify-between transition">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-slate-800 text-slate-300" id="stage-dot-2">2</span>
+                            <div>
+                                <div class="text-xs font-bold">阶段二：洋葱心「造砖·搭桥·跨步」</div>
+                                <div class="text-[11px] opacity-75 font-mono" id="stage-2-subtitle">new_node 抄数 ➔ merge.next ➔ merge前移</div>
+                            </div>
+                        </div>
+                        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800/80">循环推进</span>
+                    </div>
+
+                    <div id="stage-badge-3" class="px-3.5 py-2 rounded-xl border flex items-center justify-between transition">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-slate-800 text-slate-300" id="stage-dot-3">3</span>
+                            <div>
+                                <div class="text-xs font-bold">阶段三：剩余轨道一键移交</div>
+                                <div class="text-[11px] opacity-75 font-mono">merge.next = l1 / l2 ➔ return</div>
+                            </div>
+                        </div>
+                        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800/80">整列收官</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 沙盒主体：左图 + 右码同屏联动 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <!-- 左侧（7列）：双轨拉链物理画布 + 成品链条 + 播放控制 -->
+                <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-4">
+                    <!-- 顶部步骤解说条 -->
+                    <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3 flex items-start justify-between gap-3">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span id="sandbox-step-badge" class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    帧 0 / 0
+                                </span>
+                                <h3 id="sandbox-step-title" class="text-sm font-bold text-white">初始化准备</h3>
+                            </div>
+                            <p id="sandbox-step-desc" class="text-xs text-slate-300 leading-relaxed">
+                                点击「下一步」或「自动播放」观察施工员 merge 如何完成搭桥与跨步。
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 核心交互 SVG 舞台 -->
+                    <div class="bg-slate-950 rounded-xl border border-slate-800/90 p-2 overflow-x-auto">
+                        <div id="sandbox-svg-container" class="min-w-[600px]">
+                            <!-- 由 JS 渲染动态双轨 + 已缝合链表 SVG -->
+                        </div>
+                    </div>
+
+                    <!-- 底部控制条 + 变量监视表 -->
+                    <div class="space-y-3">
+                        <!-- 实时寄存器状态栏 -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+                            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2">
+                                <span class="text-slate-400 block text-[10px]">施工员 merge</span>
+                                <span id="watch-cur" class="text-amber-400 font-bold text-sm">-</span>
+                            </div>
+                            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2">
+                                <span class="text-slate-400 block text-[10px]">上轨探针 l1</span>
+                                <span id="watch-l1" class="text-cyan-400 font-bold text-sm">-</span>
+                            </div>
+                            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2">
+                                <span class="text-slate-400 block text-[10px]">下轨探针 l2</span>
+                                <span id="watch-l2" class="text-emerald-400 font-bold text-sm">-</span>
+                            </div>
+                            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2">
+                                <span class="text-slate-400 block text-[10px]">成品链 (dummy.next)</span>
+                                <span id="watch-merged" class="text-amber-200 font-bold text-xs truncate block">-</span>
+                            </div>
+                        </div>
+
+                        <!-- 播放按钮组 -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="sandboxReset()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">
+                                    ⏮ 重置
+                                </button>
+                                <button onclick="sandboxStep(-1)" id="btn-sb-prev" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition disabled:opacity-40">
+                                    ◀ 上一步
+                                </button>
+                                <button onclick="sandboxStep(1)" id="btn-sb-next" class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition disabled:opacity-40">
+                                    下一步 ▶
+                                </button>
+                                <button onclick="sandboxToggleAuto()" id="btn-sb-auto" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition">
+                                    ⏯ 自动播放
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-slate-400">
+                                <span>进度:</span>
+                                <input id="sandbox-slider" type="range" min="0" max="10" value="0" oninput="sandboxJumpTo(this.value)" class="w-28 accent-amber-500 cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧（5列）：实时行级高亮 Python 代码面板 -->
+                <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                            <h3 id="sandbox-code-title" class="text-xs sm:text-sm font-bold text-white font-mono">你的 new_node 优化版 (实时行级追踪)</h3>
+                        </div>
+                        <button onclick="copyStandardCode()" id="btn-copy-sandbox-code" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+                            📋 复制源码
+                        </button>
+                    </div>
+
+                    <div id="sandbox-code-viewer" class="bg-slate-950 rounded-xl border border-slate-800 py-2.5 overflow-x-auto code-container flex-grow">
+                        <!-- 由 JS 使用 renderPythonLines 严格渲染 -->
+                    </div>
+
+                    <div id="sandbox-tip-box" class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200/90 space-y-1">
+                        <div class="font-bold text-amber-300 flex items-center gap-1.5">
+                            <span>💡 观察「搭桥」与「跨步」黄金两连击：</span>
+                        </div>
+                        <p class="leading-relaxed text-slate-300">
+                            注意第 15 行 <code class="text-amber-300">merge.next = new_node</code>（站在原地把钩子挂到新砖上）与第 16 行 <code class="text-amber-300">merge = merge.next</code>（施工员本人迈步踩上新砖）的先后配合，彻底杜绝原地覆写！
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- 核心脚本：七刀原子切分渲染器 + 左码右图同构 + 双引擎三阶段沙盒 -->
+    <!-- ================================================================= -->
+    <script>
+        // ==================== 1. 双版本 Python 代码定义与严格缩进渲染工具 ====================
+
+        // 版本 A：用户的 new_node 提纯优化版（首选理解）
+        const USER_NEWNODE_PYTHON_LINES = [
+            { num: 1, indent: 0, html: `<span class="tok-kw">class</span> <span class="tok-cls">Solution</span>:` },
+            { num: 2, indent: 4, html: `<span class="tok-kw">def</span> <span class="tok-fn">mergeTwoLists</span>(self, list1: ListNode | <span class="tok-kw">None</span>, list2: ListNode | <span class="tok-kw">None</span>) -> ListNode | <span class="tok-kw">None</span>:` },
+            { num: 3, indent: 8, html: `<span class="tok-cmt"># 态①(头部壳)：立定海神针 dummy，施工员 merge 与双轨就位</span>` },
+            { num: 4, indent: 8, html: `<span class="tok-var-cur">dummy</span> = <span class="tok-cls">ListNode</span>(-<span class="tok-num">1</span>)` },
+            { num: 5, indent: 8, html: `<span class="tok-var-l1">l1</span>, <span class="tok-var-l2">l2</span> = list1, list2` },
+            { num: 6, indent: 8, html: `<span class="tok-var-cur">merge</span> = <span class="tok-var-cur">dummy</span>` },
+            { num: 7, indent: 8, html: `<span class="tok-cmt"># 态②(门卫壳)：点号守恒 ➔ l1.val 与 l2.val 锁住双轨非空</span>` },
+            { num: 8, indent: 8, html: `<span class="tok-kw">while</span> <span class="tok-var-l1">l1</span> <span class="tok-kw">and</span> <span class="tok-var-l2">l2</span>:` },
+            { num: 9, indent: 12, html: `<span class="tok-var-cur">new_node</span> = <span class="tok-cls">ListNode</span>(-<span class="tok-num">1</span>)  <span class="tok-cmt"># ① 造一块空白新砖</span>` },
+            { num: 10, indent: 12, html: `<span class="tok-kw">if</span> <span class="tok-var-l1">l1</span>.<span class="tok-prop">val</span> <= <span class="tok-var-l2">l2</span>.<span class="tok-prop">val</span>:` },
+            { num: 11, indent: 16, html: `<span class="tok-var-cur">new_node</span>.<span class="tok-prop">val</span> = <span class="tok-var-l1">l1</span>.<span class="tok-prop">val</span>  <span class="tok-cmt"># 抄上轨 l1 的较小值</span>` },
+            { num: 12, indent: 16, html: `<span class="tok-var-l1">l1</span> = <span class="tok-var-l1">l1</span>.<span class="tok-prop">next</span>            <span class="tok-cmt"># 上轨 l1 前移一步</span>` },
+            { num: 13, indent: 12, html: `<span class="tok-kw">else</span>:` },
+            { num: 14, indent: 16, html: `<span class="tok-var-cur">new_node</span>.<span class="tok-prop">val</span> = <span class="tok-var-l2">l2</span>.<span class="tok-prop">val</span>  <span class="tok-cmt"># 抄下轨 l2 的较小值</span>` },
+            { num: 15, indent: 16, html: `<span class="tok-var-l2">l2</span> = <span class="tok-var-l2">l2</span>.<span class="tok-prop">next</span>            <span class="tok-cmt"># 下轨 l2 前移一步</span>` },
+            { num: 16, indent: 12, html: `<span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-cur">new_node</span>      <span class="tok-cmt"># ② 搭桥：挂钩栓到新砖上</span>` },
+            { num: 17, indent: 12, html: `<span class="tok-var-cur">merge</span> = <span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span>          <span class="tok-cmt"># ③ 跨步：merge 踩上新砖！</span>` },
+            { num: 18, indent: 8, html: `<span class="tok-cmt"># 态④(尾部壳)：把未走完的那条轨道整列挂上并交卷</span>` },
+            { num: 19, indent: 8, html: `<span class="tok-kw">if</span> <span class="tok-var-l1">l1</span>: <span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-l1">l1</span>` },
+            { num: 20, indent: 8, html: `<span class="tok-kw">else</span>: <span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-l2">l2</span>` },
+            { num: 21, indent: 8, html: `<span class="tok-kw">return</span> <span class="tok-var-cur">dummy</span>.<span class="tok-prop">next</span>` }
+        ];
+
+        const RAW_USER_NEWNODE_CODE = `class Solution:
+    def mergeTwoLists(self, list1: ListNode | None, list2: ListNode | None) -> ListNode | None:
+        # 态①(头部壳)：立定海神针 dummy，施工员 merge 与双轨就位
+        dummy = ListNode(-1)
+        l1, l2 = list1, list2
+        merge = dummy
+        # 态②(门卫壳)：点号守恒 ➔ l1.val 与 l2.val 锁住双轨非空
+        while l1 and l2:
+            new_node = ListNode(-1)  # ① 造一块空白新砖
+            if l1.val <= l2.val:
+                new_node.val = l1.val  # 抄上轨 l1 的较小值
+                l1 = l1.next            # 上轨 l1 前移一步
+            else:
+                new_node.val = l2.val  # 抄下轨 l2 的较小值
+                l2 = l2.next            # 下轨 l2 前移一步
+            merge.next = new_node      # ② 搭桥：挂钩栓到新砖上
+            merge = merge.next          # ③ 跨步：merge 踩上新砖！
+        # 态④(尾部壳)：把未走完的那条轨道整列挂上并交卷
+        if l1: merge.next = l1
+        else: merge.next = l2
+        return dummy.next`;
+
+        // 版本 B：O(1) 原地指针挂钩版（进阶）
+        const STANDARD_PYTHON_LINES = [
+            { num: 1, indent: 0, html: `<span class="tok-kw">class</span> <span class="tok-cls">Solution</span>:` },
+            { num: 2, indent: 4, html: `<span class="tok-kw">def</span> <span class="tok-fn">mergeTwoLists</span>(self, list1: ListNode | <span class="tok-kw">None</span>, list2: ListNode | <span class="tok-kw">None</span>) -> ListNode | <span class="tok-kw">None</span>:` },
+            { num: 3, indent: 8, html: `<span class="tok-cmt"># 态①(头部壳)：立定海神针 dummy，施工员 merge 就位</span>` },
+            { num: 4, indent: 8, html: `<span class="tok-var-cur">dummy</span> = <span class="tok-var-cur">merge</span> = <span class="tok-cls">ListNode</span>(-<span class="tok-num">1</span>)` },
+            { num: 5, indent: 8, html: `<span class="tok-var-l1">l1</span>, <span class="tok-var-l2">l2</span> = list1, list2` },
+            { num: 6, indent: 8, html: `<span class="tok-cmt"># 态②(门卫壳)：点号守恒 ➔ 双轨均有车厢才可比武</span>` },
+            { num: 7, indent: 8, html: `<span class="tok-kw">while</span> <span class="tok-var-l1">l1</span> <span class="tok-kw">and</span> <span class="tok-var-l2">l2</span>:` },
+            { num: 8, indent: 12, html: `<span class="tok-kw">if</span> <span class="tok-var-l1">l1</span>.<span class="tok-prop">val</span> <= <span class="tok-var-l2">l2</span>.<span class="tok-prop">val</span>:` },
+            { num: 9, indent: 16, html: `<span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-l1">l1</span>      <span class="tok-cmt"># ① 直接搭桥挂钩 l1 原节点</span>` },
+            { num: 10, indent: 16, html: `<span class="tok-var-l1">l1</span> = <span class="tok-var-l1">l1</span>.<span class="tok-prop">next</span>          <span class="tok-cmt"># ② 胜出轨 l1 前移</span>` },
+            { num: 11, indent: 12, html: `<span class="tok-kw">else</span>:` },
+            { num: 12, indent: 16, html: `<span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-l2">l2</span>      <span class="tok-cmt"># ① 直接搭桥挂钩 l2 原节点</span>` },
+            { num: 13, indent: 16, html: `<span class="tok-var-l2">l2</span> = <span class="tok-var-l2">l2</span>.<span class="tok-prop">next</span>          <span class="tok-cmt"># ② 胜出轨 l2 前移</span>` },
+            { num: 14, indent: 12, html: `<span class="tok-var-cur">merge</span> = <span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span>      <span class="tok-cmt"># ③ 跨步：merge 踩上新接的车厢</span>` },
+            { num: 15, indent: 8, html: `<span class="tok-cmt"># 态④(尾部壳)：O(1) 整列甩尾挂接剩余非空轨道</span>` },
+            { num: 16, indent: 8, html: `<span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-l1">l1</span> <span class="tok-kw">if</span> <span class="tok-var-l1">l1</span> <span class="tok-kw">else</span> <span class="tok-var-l2">l2</span>` },
+            { num: 17, indent: 8, html: `<span class="tok-kw">return</span> <span class="tok-var-cur">dummy</span>.<span class="tok-prop">next</span>` }
+        ];
+
+        const RAW_STANDARD_CODE = `class Solution:
+    def mergeTwoLists(self, list1: ListNode | None, list2: ListNode | None) -> ListNode | None:
+        # 态①(头部壳)：立定海神针 dummy，施工员 merge 就位
+        dummy = merge = ListNode(-1)
+        l1, l2 = list1, list2
+        # 态②(门卫壳)：点号守恒 ➔ 双轨均有车厢才可比武
+        while l1 and l2:
+            if l1.val <= l2.val:
+                merge.next = l1      # ① 直接搭桥挂钩 l1 原节点
+                l1 = l1.next          # ② 胜出轨 l1 前移
+            else:
+                merge.next = l2      # ① 直接搭桥挂钩 l2 原节点
+                l2 = l2.next          # ② 胜出轨 l2 前移
+            merge = merge.next      # ③ 跨步：merge 踩上新接的车厢
+        # 态④(尾部壳)：O(1) 整列甩尾挂接剩余非空轨道
+        merge.next = l1 if l1 else l2
+        return dummy.next`;
+
+        /**
+         * 严格渲染带缩进参考线与行号的 Python 代码行
+         */
+        function renderPythonLines(lines, activeLineNums = [], clickableMap = null) {
+            return lines.map(line => {
+                const isActive = activeLineNums.includes(line.num);
+                const spaces = ' '.repeat(line.indent);
+                let guidesHtml = '';
+                for (let g = 4; g <= line.indent; g += 4) {
+                    guidesHtml += `<span class="indent-guide" style="left: ${(g - 4) * 0.6}em;"></span>`;
+                }
+                const clickAttr = clickableMap && clickableMap[line.num]
+                    ? `onclick="${clickableMap[line.num]}" class="code-line cursor-pointer ${isActive ? 'active-line' : ''}"`
+                    : `class="code-line ${isActive ? 'active-line' : ''}"`;
+
+                return `<div ${clickAttr} data-line="${line.num}"><span class="line-num">${line.num}</span><div class="code-content">${guidesHtml}${spaces}${line.html}</div></div>`;
+            }).join('');
+        }
+
+        function copyTextToClipboard(text, btnId) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = '✅ 已复制';
+                    setTimeout(() => { btn.innerHTML = orig; }, 1600);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function copyStandardCode() {
+            const code = sandboxEngine === 'newnode' ? RAW_USER_NEWNODE_CODE : RAW_STANDARD_CODE;
+            copyTextToClipboard(code, 'btn-copy-sandbox-code');
+        }
+
+        // ==================== 2. 全局状态与七刀元数据 ====================
+        let currentMainMode = 'slicing';
+        let currentCutIndex = 0;
+
+        // 各刀内部微交互状态
+        let cut0Mode = 'zipper';       // 'naive' | 'zipper'
+        let cut1Step = 0;              // 0: 初始锚定 | 1: 首轮挂钩同构
+        let cut2Action = 'bridge';     // 'bridge' (merge.next = new_node) | 'step' (merge = merge.next)
+        let cut3SubTab = 'optimized';  // 'pitfall' | 'optimized' | 'bridge_o1'
+        let cut3BugStep = 0;           // 0 ~ 3: 演示 l1=[1,4], l2=[2] 漏写 merge=merge.next 连续覆写 dummy.next
+        let cut3OptStep = 0;           // 0: ①造砖抄数 | 1: ②搭桥 merge.next=new_node | 2: ③跨步 merge=merge.next
+        let cut4RadarMode = 'both';    // 'both' (安全) | 'oneEmpty' (单轨空拦截)
+        let cut5Hooked = false;        // false: 待甩尾 | true: O(1) 一钩挂接整串
+        let cut6ViewMode = 'newnode';  // 'newnode' | 'inplace' | 'evolution'
+        let cut6ActiveState = 3;       // 1, 2, 3, 4 (四态同构)
+        let cut6ZipperStep = 1;        // 态 ③ 内部微缩步进器 (0 ~ 5)
+
+        const CUTS_METADATA = [
+            {
+                index: 0,
+                shortTitle: '第 0 刀 · 具象母图',
+                tag: 'Root Topology',
+                knifeName: '立具象母图：双轨拉链缝合机 (Zipper Track)',
+                question: '为什么不能把一条链表「硬塞」进另一条链表，而要用一个独立的「施工员 merge」同时扫描两条轨道？'
+            },
+            {
+                index: 1,
+                shortTitle: '第 1 刀 · 空间定界',
+                tag: 'Spatial Cut',
+                knifeName: '🔪 空间定界刀：立定海神针 dummy 消除头部特判',
+                question: '如何一刀砍掉「新链表头节点究竟来自 l1 还是 l2」的分支判断，让第 1 节车厢和第 N 节车厢接法 100% 同构？'
+            },
+            {
+                index: 2,
+                shortTitle: '第 2 刀 · 搭桥 vs 跨步',
+                tag: 'Action Cut',
+                knifeName: '🔪 物理动作分野刀：等号左边带不带 .next 的本质区别',
+                question: '为什么写了 merge.next = new_node 之后，施工员 merge 依然停在原地？「甩钩搭桥」与「抬脚跨步」在物理跑道上有何区别？'
+            },
+            {
+                index: 3,
+                shortTitle: '⚡ 第 3 刀 · 你的 new_node 法',
+                tag: 'Your Solution & Upgrade',
+                knifeName: '⚡ 专属诊断与提纯刀：你的 new_node 造砖优化版（黄金三步）',
+                question: '为什么漏写 merge = merge.next 会把前面接好的节点全部覆写清零？如何将你的 new_node 解法提纯为最清晰的三步闭环？'
+            },
+            {
+                index: 4,
+                shortTitle: '第 4 刀 · 点号守恒',
+                tag: 'Boundary Radar Cut',
+                knifeName: '🔪 点号守恒刀（第 2 层 while 门卫）：双轨探照灯推导',
+                question: '外层 while 循环条件凭什么机械推导为 while l1 and l2:，而不是直觉上的「只要还有节点就继续 (while l1 or l2:)」？'
+            },
+            {
+                index: 5,
+                shortTitle: '第 5 刀 · 几何守恒',
+                tag: 'Invariant Cut',
+                knifeName: '🔪 几何守恒刀：残局「O(1) 整列一键甩尾」的链表特权',
+                question: '当一条轨道空了跳出循环时，另一条轨道还剩 [2 -> 3 -> 4 -> 5]，为什么不需要像合并数组那样再写循环逐个搬运？'
+            },
+            {
+                index: 6,
+                shortTitle: '🎯 第 6 刀 · 图码同构',
+                tag: 'Visual-Code Isomorphism',
+                knifeName: '🎯 收官刀：左码右图 · 双版本四态同构工作台 & 宇宙 A 基因对比',
+                question: '如何将你的 new_node 优化版与 O(1) 原地挂钩版 1:1 映射为物理画面，并与「203. 移除链表元素」打通成同一个母本？'
+            }
+        ];
+
+        // ==================== 3. 主模式与七刀导航控制 ====================
+        function switchMainMode(mode) {
+            currentMainMode = mode;
+            const slicingSec = document.getElementById('view-slicing');
+            const sandboxSec = document.getElementById('view-sandbox');
+            const btnSlicing = document.getElementById('btn-mode-slicing');
+            const btnSandbox = document.getElementById('btn-mode-sandbox');
+
+            if (mode === 'slicing') {
+                slicingSec.classList.remove('hidden');
+                sandboxSec.classList.add('hidden');
+                btnSlicing.className = 'flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow';
+                btnSandbox.className = 'flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white';
+                sandboxStopAuto();
+                renderCurrentCut();
+            } else {
+                slicingSec.classList.add('hidden');
+                sandboxSec.classList.remove('hidden');
+                btnSandbox.className = 'flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow';
+                btnSlicing.className = 'flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white';
+                renderSandbox();
+            }
+        }
+
+        function renderCutTabs() {
+            const container = document.getElementById('cut-tabs-container');
+            container.innerHTML = CUTS_METADATA.map(cut => {
+                const active = cut.index === currentCutIndex;
+                const isSpecial = cut.index === 3;
+                return `<button onclick="goToCut(${cut.index})" class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    active
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm'
+                        : isSpecial
+                            ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
+                }">
+                    <span>${cut.shortTitle}</span>
+                </button>`;
+            }).join('');
+
+            document.getElementById('btn-prev-cut').disabled = (currentCutIndex === 0);
+            document.getElementById('btn-next-cut').disabled = (currentCutIndex === CUTS_METADATA.length - 1);
+        }
+
+        function goToCut(index) {
+            currentCutIndex = Math.max(0, Math.min(CUTS_METADATA.length - 1, index));
+            renderCutTabs();
+            renderCurrentCut();
+        }
+
+        function stepCut(delta) {
+            goToCut(currentCutIndex + delta);
+        }
+
+        function renderCurrentCut() {
+            renderCutTabs();
+            const host = document.getElementById('cut-content-host');
+            switch (currentCutIndex) {
+                case 0: host.innerHTML = renderCut0HTML(); break;
+                case 1: host.innerHTML = renderCut1HTML(); break;
+                case 2: host.innerHTML = renderCut2ActionHTML(); break;
+                case 3: host.innerHTML = renderCut3NewNodeHTML(); break;
+                case 4: host.innerHTML = renderCut4RadarHTML(); break;
+                case 5: host.innerHTML = renderCut5TailHTML(); break;
+                case 6: host.innerHTML = renderCut6IsoHTML(); break;
+            }
+        }
+
+        // ==================== 4. 第 0 刀 ~ 第 6 刀具体视图渲染函数 ====================
+
+        // -------------------- 第 0 刀：立具象母图（双轨拉链缝合机 vs 原地硬塞乱麻） --------------------
+        function setCut0Mode(mode) {
+            cut0Mode = mode;
+            renderCurrentCut();
+        }
+
+        function renderCut0HTML() {
+            const meta = CUTS_METADATA[0];
+            const isZipper = cut0Mode === 'zipper';
+
+            return `
+            <div class="p-5 lg:p-6 space-y-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">${meta.tag}</span>
+                            <h2 class="text-base sm:text-lg font-bold text-white">${meta.knifeName}</h2>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-200/90 font-medium">❓ 引导提问：${meta.question}</p>
+                    </div>
+                    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+                        <button onclick="setCut0Mode('naive')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${!isZipper ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'text-slate-400 hover:text-white'}">
+                            ❌ 朴素视角：原地穿插 + 纠结排头兵
+                        </button>
+                        <button onclick="setCut0Mode('zipper')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${isZipper ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'text-slate-400 hover:text-white'}">
+                            ✅ INTJ 母图：双轨拉链施工机 (merge)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 overflow-x-auto">
+                    ${isZipper ? `
+                    <svg viewBox="0 0 820 260" class="w-full min-w-[640px] h-auto">
+                        <defs>
+                            <marker id="arr-cyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/>
+                            </marker>
+                            <marker id="arr-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399"/>
+                            </marker>
+                            <marker id="arr-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b"/>
+                            </marker>
+                        </defs>
+
+                        <rect x="260" y="22" width="520" height="82" rx="12" fill="#0f172a" stroke="#1e293b" stroke-dasharray="4 4"/>
+                        <text x="275" y="42" fill="#38bdf8" font-size="12" font-weight="bold" font-family="JetBrains Mono">上轨 l1 (待比武升序队列)</text>
+
+                        <rect x="260" y="152" width="520" height="82" rx="12" fill="#0f172a" stroke="#1e293b" stroke-dasharray="4 4"/>
+                        <text x="275" y="172" fill="#34d399" font-size="12" font-weight="bold" font-family="JetBrains Mono">下轨 l2 (待比武升序队列)</text>
+
+                        <rect x="25" y="92" width="100" height="72" rx="14" fill="#451a03" stroke="#f59e0b" stroke-width="2.5"/>
+                        <text x="75" y="122" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="bold" font-family="JetBrains Mono">⚓ dummy(-1)</text>
+                        <text x="75" y="144" text-anchor="middle" fill="#fde68a" font-size="11" font-family="JetBrains Mono">施工员 merge</text>
+
+                        <path d="M 125 128 L 295 75" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arr-amber)"/>
+                        <path d="M 125 128 L 295 195" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arr-amber)"/>
+
+                        <rect x="148" y="108" width="118" height="40" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+                        <text x="207" y="125" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold">⚡ 择小比武天平</text>
+                        <text x="207" y="140" text-anchor="middle" fill="#cbd5e1" font-size="10" font-family="JetBrains Mono">l1.val <= l2.val</text>
+
+                        <g transform="translate(330, 68)">
+                            <circle cx="0" cy="0" r="22" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2.5"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold" font-family="JetBrains Mono">1</text>
+                            <text x="0" y="-28" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold" font-family="JetBrains Mono">👇 l1</text>
+                            <line x1="24" y1="0" x2="108" y2="0" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr-cyan)"/>
+                        </g>
+                        <g transform="translate(465, 68)">
+                            <circle cx="0" cy="0" r="22" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="bold" font-family="JetBrains Mono">2</text>
+                            <line x1="24" y1="0" x2="108" y2="0" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr-cyan)"/>
+                        </g>
+                        <g transform="translate(600, 68)">
+                            <circle cx="0" cy="0" r="22" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="bold" font-family="JetBrains Mono">4</text>
+                            <line x1="24" y1="0" x2="90" y2="0" stroke="#475569" stroke-width="2"/>
+                            <text x="118" y="4" fill="#64748b" font-size="12" font-family="JetBrains Mono">None</text>
+                        </g>
+
+                        <g transform="translate(330, 198)">
+                            <circle cx="0" cy="0" r="22" fill="#064e3b" stroke="#34d399" stroke-width="2.5"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold" font-family="JetBrains Mono">1</text>
+                            <text x="0" y="38" text-anchor="middle" fill="#34d399" font-size="11" font-weight="bold" font-family="JetBrains Mono">👆 l2</text>
+                            <line x1="24" y1="0" x2="108" y2="0" stroke="#34d399" stroke-width="2" marker-end="url(#arr-emerald)"/>
+                        </g>
+                        <g transform="translate(465, 198)">
+                            <circle cx="0" cy="0" r="22" fill="#0f172a" stroke="#34d399" stroke-width="2"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="bold" font-family="JetBrains Mono">3</text>
+                            <line x1="24" y1="0" x2="108" y2="0" stroke="#34d399" stroke-width="2" marker-end="url(#arr-emerald)"/>
+                        </g>
+                        <g transform="translate(600, 198)">
+                            <circle cx="0" cy="0" r="22" fill="#0f172a" stroke="#34d399" stroke-width="2"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="bold" font-family="JetBrains Mono">4</text>
+                            <line x1="24" y1="0" x2="90" y2="0" stroke="#475569" stroke-width="2"/>
+                            <text x="118" y="4" fill="#64748b" font-size="12" font-family="JetBrains Mono">None</text>
+                        </g>
+                    </svg>
+                    ` : `
+                    <svg viewBox="0 0 820 260" class="w-full min-w-[640px] h-auto">
+                        <rect x="20" y="25" width="350" height="210" rx="12" fill="#1f121d" stroke="#fb7185" stroke-width="1.5"/>
+                        <text x="40" y="55" fill="#fb7185" font-size="14" font-weight="bold">❌ 痛点 1：开头被迫写一堆 if-else 抢排头兵</text>
+                        <text x="40" y="85" fill="#cbd5e1" font-size="12" font-family="JetBrains Mono">if not l1: return l2</text>
+                        <text x="40" y="108" fill="#cbd5e1" font-size="12" font-family="JetBrains Mono">if not l2: return l1</text>
+                        <text x="40" y="131" fill="#cbd5e1" font-size="12" font-family="JetBrains Mono">if l1.val <= l2.val: head = l1 ...</text>
+                        <text x="40" y="154" fill="#cbd5e1" font-size="12" font-family="JetBrains Mono">else: head = l2 ...</text>
+                        <text x="40" y="195" fill="#fda4af" font-size="12">👉 头部确定逻辑与后续循环完全割裂，代码膨胀一倍！</text>
+
+                        <rect x="400" y="25" width="395" height="210" rx="12" fill="#1f121d" stroke="#fb7185" stroke-width="1.5"/>
+                        <text x="420" y="55" fill="#fb7185" font-size="14" font-weight="bold">❌ 痛点 2：把 l2 硬塞进 l1 内部需要 4 个临时指针</text>
+                        <circle cx="465" cy="120" r="20" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2"/>
+                        <text x="465" y="125" text-anchor="middle" fill="#fff" font-family="JetBrains Mono">1</text>
+                        <circle cx="595" cy="120" r="20" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2"/>
+                        <text x="595" y="125" text-anchor="middle" fill="#fff" font-family="JetBrains Mono">2</text>
+                        <circle cx="530" cy="180" r="20" fill="#064e3b" stroke="#34d399" stroke-width="2"/>
+                        <text x="530" y="185" text-anchor="middle" fill="#fff" font-family="JetBrains Mono">1</text>
+                        <path d="M 482 130 L 512 170" stroke="#fb7185" stroke-width="2"/>
+                        <path d="M 548 170 L 578 130" stroke="#fb7185" stroke-width="2"/>
+                        <text x="640" y="135" fill="#fda4af" font-size="12">既要记 prev1/nxt1</text>
+                        <text x="640" y="155" fill="#fda4af" font-size="12">又要记 nxt2，极易断链！</text>
+                    </svg>
+                    `}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950/70 border border-slate-800 rounded-xl p-4">
+                    <div class="md:col-span-9 space-y-1">
+                        <div class="text-xs font-bold text-amber-400 uppercase tracking-wider">📌 一句话直觉结论（Ni 母图锚定）</div>
+                        <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                            不要把一条链表往另一条里硬塞！把 <code class="text-cyan-400">l1</code> 和 <code class="text-emerald-400">l2</code> 看作两条平行的<strong>只读待检铁轨</strong>，派一个独立的<strong>施工员 <code class="text-amber-400">merge</code></strong> 在新轨道上铺砖：每次只对比两条铁轨最前面的车厢，谁小就把谁接过来。
+                        </p>
+                    </div>
+                    <div class="md:col-span-3 flex flex-col items-end justify-center border-t md:border-t-0 md:border-l border-slate-800 pt-3 md:pt-0 md:pl-4">
+                        <span class="text-[11px] font-mono text-slate-400">is_atomic 终止判据</span>
+                        <span class="text-xs font-bold text-rose-400 mt-0.5">❌ 尚未原子化 (继续切)</span>
+                        <span class="text-[11px] text-slate-400 mt-0.5">疑问：merge 第 0 步站在哪？</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // -------------------- 第 1 刀：空间定界刀（立定海神针 dummy） --------------------
+        function setCut1Step(step) {
+            cut1Step = step;
+            renderCurrentCut();
+        }
+
+        function renderCut1HTML() {
+            const meta = CUTS_METADATA[1];
+            const isStep1 = cut1Step === 1;
+
+            return `
+            <div class="p-5 lg:p-6 space-y-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">${meta.tag}</span>
+                            <h2 class="text-base sm:text-lg font-bold text-white">${meta.knifeName}</h2>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-200/90 font-medium">❓ 引导提问：${meta.question}</p>
+                    </div>
+                    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+                        <button onclick="setCut1Step(0)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${!isStep1 ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'}">
+                            帧 0：立桩定界 (merge 站在 dummy)
+                        </button>
+                        <button onclick="setCut1Step(1)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${isStep1 ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'}">
+                            帧 1：首轮铺砖 (与第 N 轮 100% 同构)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 overflow-x-auto">
+                    <svg viewBox="0 0 820 265" class="w-full min-w-[640px] h-auto">
+                        <defs>
+                            <marker id="c1-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b"/>
+                            </marker>
+                            <marker id="c1-cyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/>
+                            </marker>
+                            <marker id="c1-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399"/>
+                            </marker>
+                        </defs>
+
+                        <rect x="20" y="20" width="${isStep1 ? '390' : '240'}" height="225" rx="14" fill="rgba(245, 158, 11, 0.06)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 4"/>
+                        <text x="38" y="46" fill="#fbbf24" font-size="13" font-weight="bold">🏛️ 左侧空间：已缝合成品区 (dummy ➔ ... ➔ merge)</text>
+
+                        <line x1="${isStep1 ? '425' : '275'}" y1="12" x2="${isStep1 ? '425' : '275'}" y2="252" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="8 5"/>
+                        <rect x="${isStep1 ? '375' : '225'}" y="222" width="100" height="24" rx="6" fill="#881337" stroke="#fb7185"/>
+                        <text x="${isStep1 ? '425' : '275'}" y="238" text-anchor="middle" fill="#ffe4e6" font-size="11" font-weight="bold">🔪 空间定界线</text>
+
+                        <rect x="${isStep1 ? '440' : '290'}" y="20" width="${isStep1 ? '360' : '510'}" height="225" rx="14" fill="rgba(15, 23, 42, 0.8)" stroke="#334155" stroke-width="1.5"/>
+                        <text x="${isStep1 ? '460' : '310'}" y="46" fill="#94a3b8" font-size="13" font-weight="bold">⚡ 右侧空间：待比武双轨区 (l1 & l2)</text>
+
+                        <g transform="translate(110, 135)">
+                            <rect x="-38" y="-26" width="76" height="52" rx="12" fill="#451a03" stroke="#f59e0b" stroke-width="2.5"/>
+                            <text x="0" y="-3" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="bold" font-family="JetBrains Mono">dummy</text>
+                            <text x="0" y="15" text-anchor="middle" fill="#fde68a" font-size="12" font-family="JetBrains Mono">val: -1</text>
+                            ${!isStep1 ? `
+                            <rect x="-36" y="34" width="72" height="22" rx="6" fill="#f59e0b"/>
+                            <text x="0" y="49" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="bold" font-family="JetBrains Mono">👆 merge</text>
+                            ` : ''}
+                        </g>
+
+                        ${isStep1 ? `
+                        <path d="M 150 135 C 210 135, 250 88, 312 88" fill="none" stroke="#f59e0b" stroke-width="3" marker-end="url(#c1-amber)"/>
+                        <g transform="translate(340, 88)">
+                            <circle cx="0" cy="0" r="23" fill="#451a03" stroke="#f59e0b" stroke-width="3"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fde68a" font-size="15" font-weight="bold" font-family="JetBrains Mono">1</text>
+                            <rect x="-36" y="30" width="72" height="22" rx="6" fill="#f59e0b"/>
+                            <text x="0" y="45" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="bold" font-family="JetBrains Mono">👆 merge</text>
+                        </g>
+                        ` : `
+                        <g transform="translate(355, 88)">
+                            <circle cx="0" cy="0" r="22" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2.5"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold" font-family="JetBrains Mono">1</text>
+                            <text x="0" y="-28" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold" font-family="JetBrains Mono">👇 l1</text>
+                            <line x1="24" y1="0" x2="112" y2="0" stroke="#38bdf8" stroke-width="2" marker-end="url(#c1-cyan)"/>
+                        </g>
+                        `}
+
+                        <g transform="translate(495, 88)">
+                            <circle cx="0" cy="0" r="22" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="bold" font-family="JetBrains Mono">2</text>
+                            ${isStep1 ? `<text x="0" y="-28" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold" font-family="JetBrains Mono">👇 l1</text>` : ''}
+                            <line x1="24" y1="0" x2="112" y2="0" stroke="#38bdf8" stroke-width="2" marker-end="url(#c1-cyan)"/>
+                        </g>
+                        <g transform="translate(635, 88)">
+                            <circle cx="0" cy="0" r="22" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="bold" font-family="JetBrains Mono">4</text>
+                        </g>
+
+                        <g transform="translate(495, 185)">
+                            <circle cx="0" cy="0" r="22" fill="#064e3b" stroke="#34d399" stroke-width="2.5"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold" font-family="JetBrains Mono">1</text>
+                            <text x="0" y="38" text-anchor="middle" fill="#34d399" font-size="11" font-weight="bold" font-family="JetBrains Mono">👆 l2</text>
+                            <line x1="24" y1="0" x2="112" y2="0" stroke="#34d399" stroke-width="2" marker-end="url(#c1-emerald)"/>
+                        </g>
+                        <g transform="translate(635, 185)">
+                            <circle cx="0" cy="0" r="22" fill="#0f172a" stroke="#34d399" stroke-width="2"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="bold" font-family="JetBrains Mono">3</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950/70 border border-slate-800 rounded-xl p-4">
+                    <div class="md:col-span-9 space-y-1">
+                        <div class="text-xs font-bold text-cyan-400 uppercase tracking-wider">📌 一句话直觉结论（Dummy 定海神针法则）</div>
+                        <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                            凡是<strong>新链表的头节点在循环前无法确定</strong>，无脑在最左侧立一根虚拟桩 <code class="text-amber-400">dummy = ListNode(-1); merge = dummy</code>，完工后直接卸载桩子 <code class="text-amber-400">return dummy.next</code>！
+                        </p>
+                    </div>
+                    <div class="md:col-span-3 flex flex-col items-end justify-center border-t md:border-t-0 md:border-l border-slate-800 pt-3 md:pt-0 md:pl-4">
+                        <span class="text-[11px] font-mono text-slate-400">代码直投影 (3行)</span>
+                        <span class="text-xs font-bold text-emerald-400 mt-0.5">✅ 起跑与出口已原子化</span>
+                        <code class="text-[11px] text-amber-300 font-mono mt-0.5">dummy = ListNode(-1)</code>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // -------------------- 第 2 刀：物理动作分野刀（搭桥 merge.next = ... vs 跨步 merge = ...） --------------------
+        function setCut2Action(act) {
+            cut2Action = act;
+            renderCurrentCut();
+        }
+
+        function renderCut2ActionHTML() {
+            const meta = CUTS_METADATA[2];
+            const isBridge = cut2Action === 'bridge';
+
+            return `
+            <div class="p-5 lg:p-6 space-y-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">${meta.tag}</span>
+                            <h2 class="text-base sm:text-lg font-bold text-white">${meta.knifeName}</h2>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-200/90 font-medium">❓ 引导提问：${meta.question}</p>
+                    </div>
+                    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+                        <button onclick="setCut2Action('bridge')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${isBridge ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
+                            🔗 动作 A：甩钩搭桥 (merge.next = new_node)
+                        </button>
+                        <button onclick="setCut2Action('step')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${!isBridge ? 'bg-emerald-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
+                            👣 动作 B：抬脚跨步 (merge = merge.next)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 搭桥 vs 跨步 双栏视觉解剖 -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+                    <div class="lg:col-span-7 bg-slate-950 rounded-xl border border-slate-800 p-4 flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-xs font-mono border-b border-slate-800 pb-2">
+                            <span class="text-slate-400">🔬 宇宙 A 指针赋值物理显微镜</span>
+                            <span class="${isBridge ? 'text-amber-400' : 'text-emerald-400'} font-bold">
+                                ${isBridge ? '等号左边带 .next ➔ 人站在原地不动，只改脚下砖头的挂钩！' : '等号左边不带 .next ➔ 挂钩不动，施工员本人迈步踩上新砖！'}
+                            </span>
+                        </div>
+
+                        <svg viewBox="0 0 580 230" class="w-full h-auto my-2">
+                            <defs>
+                                <marker id="c2a-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b"/>
+                                </marker>
+                                <marker id="c2a-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399"/>
+                                </marker>
+                            </defs>
+
+                            <!-- 旧砖 (dummy 或上一块砖) -->
+                            <g transform="translate(150, 130)">
+                                <rect x="-48" y="-30" width="96" height="60" rx="12" fill="#1e293b" stroke="#f59e0b" stroke-width="2.5"/>
+                                <text x="0" y="-4" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="bold" font-family="JetBrains Mono">当前砖</text>
+                                <text x="0" y="16" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="JetBrains Mono">.next 挂钩</text>
+
+                                <!-- 施工员小人位于旧砖上 -->
+                                <g opacity="${isBridge ? '1' : '0.25'}">
+                                    <rect x="-42" y="-70" width="84" height="28" rx="8" fill="#f59e0b"/>
+                                    <text x="0" y="-52" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="bold" font-family="JetBrains Mono">👷 merge</text>
+                                </g>
+                            </g>
+
+                            <!-- 新砖 new_node -->
+                            <g transform="translate(420, 130)">
+                                <rect x="-52" y="-30" width="104" height="60" rx="12" fill="#451a03" stroke="${isBridge ? '#f59e0b' : '#34d399'}" stroke-width="3"/>
+                                <text x="0" y="-4" text-anchor="middle" fill="#fde68a" font-size="13" font-weight="bold" font-family="JetBrains Mono">new_node</text>
+                                <text x="0" y="16" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="JetBrains Mono">val: 1</text>
+
+                                <!-- 当跨步时，施工员小人落在新砖头顶 -->
+                                ${!isBridge ? `
+                                <g>
+                                    <rect x="-42" y="-70" width="84" height="28" rx="8" fill="#34d399"/>
+                                    <text x="0" y="-52" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="bold" font-family="JetBrains Mono">👷 merge</text>
+                                </g>
+                                ` : ''}
+                            </g>
+
+                            <!-- 砖与砖之间的 .next 桥 -->
+                            <line x1="200" y1="130" x2="362" y2="130" stroke="#f59e0b" stroke-width="4" marker-end="url(#c2a-amber)"/>
+                            <rect x="230" y="102" width="108" height="22" rx="5" fill="#451a03" stroke="#f59e0b"/>
+                            <text x="284" y="117" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold" font-family="JetBrains Mono">① 搭桥 (.next=)</text>
+
+                            <!-- 跨步弧线箭头 -->
+                            ${!isBridge ? `
+                            <path d="M 150 55 Q 285 5, 415 55" fill="none" stroke="#34d399" stroke-width="3.5" stroke-dasharray="6 4" marker-end="url(#c2a-emerald)"/>
+                            <rect x="215" y="12" width="140" height="24" rx="6" fill="#064e3b" stroke="#34d399"/>
+                            <text x="285" y="28" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="bold" font-family="JetBrains Mono">② 跨步 (merge = ...)</text>
+                            ` : `
+                            <text x="285" y="45" text-anchor="middle" fill="#94a3b8" font-size="12">⚠️ 注意：仅执行 merge.next = new_node 时，👷 merge 双脚仍在左侧旧砖上！</text>
+                            `}
+                        </svg>
+                    </div>
+
+                    <!-- 右侧：对比法则卡片 -->
+                    <div class="lg:col-span-5 bg-slate-950 rounded-xl border border-slate-800 p-4 flex flex-col justify-between space-y-3">
+                        <div class="text-xs font-bold text-white border-b border-slate-800 pb-2">
+                            🧭 宇宙 A 黄金两连击法则（缺一不可）
+                        </div>
+
+                        <div class="p-3 rounded-xl border ${isBridge ? 'bg-amber-500/15 border-amber-500' : 'bg-slate-900 border-slate-800'} space-y-1">
+                            <div class="text-xs font-bold text-amber-300 font-mono">第 1 拍：merge.next = new_node</div>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                <strong>左边带 <code class="text-amber-300">.next</code> = 改砖头的挂钩（搭桥）</strong>。施工员 <code class="text-amber-300">merge</code> 站在原砖不动，把手里的铁链栓到 <code class="text-amber-300">new_node</code> 上。
+                            </p>
+                        </div>
+
+                        <div class="p-3 rounded-xl border ${!isBridge ? 'bg-emerald-500/15 border-emerald-500' : 'bg-slate-900 border-slate-800'} space-y-1">
+                            <div class="text-xs font-bold text-emerald-300 font-mono">第 2 拍：merge = merge.next</div>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                <strong>左边不带 <code class="text-emerald-300">.next</code> = 改施工员站位（跨步）</strong>。施工员 <code class="text-emerald-300">merge</code> 顺着刚搭好的桥，迈步站到 <code class="text-emerald-300">new_node</code> 头顶上，成为新的链表尾巴！
+                            </p>
+                        </div>
+
+                        <div class="bg-rose-500/10 border border-rose-500/30 rounded-lg p-2.5 text-xs text-rose-200">
+                            <strong>💥 为什么你在第 2 版会写出 <code class="text-rose-300">new_node.next = new_node</code>？</strong><br>
+                            因为误把「搭桥」当成了「跨步」！让新砖的挂钩钩住自己会立刻形成死循环自环。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950/70 border border-slate-800 rounded-xl p-4">
+                    <div class="md:col-span-9 space-y-1">
+                        <div class="text-xs font-bold text-amber-400 uppercase tracking-wider">📌 一句话直觉结论（左边有无 .next 铁律）</div>
+                        <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                            在链表题里看到赋值号 <code class="text-amber-400">=</code>：左边有 <code class="text-amber-400">.next</code> 是<strong>「人不动，甩钩搭桥」</strong>；左边只有变量名 <code class="text-emerald-400">merge = ...</code> 才是<strong>「人抬脚走过去」</strong>！
+                        </p>
+                    </div>
+                    <div class="md:col-span-3 flex flex-col items-end justify-center border-t md:border-t-0 md:border-l border-slate-800 pt-3 md:pt-0 md:pl-4">
+                        <span class="text-[11px] font-mono text-slate-400">代码直投影 (2行)</span>
+                        <span class="text-xs font-bold text-emerald-400 mt-0.5">✅ 搭桥与跨步已原子化</span>
+                        <code class="text-[11px] text-amber-300 font-mono mt-0.5">merge.next = new_node; merge = merge.next</code>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // -------------------- ⚡ 第 3 刀（新增核心刀）：你的 new_node 解法诊断、提纯优化与升维桥梁 --------------------
+        function setCut3SubTab(tab) {
+            cut3SubTab = tab;
+            renderCurrentCut();
+        }
+
+        function setCut3BugStep(step) {
+            cut3BugStep = Math.max(0, Math.min(3, step));
+            renderCurrentCut();
+        }
+
+        function setCut3OptStep(step) {
+            cut3OptStep = step;
+            renderCurrentCut();
+        }
+
+        function renderCut3NewNodeHTML() {
+            const meta = CUTS_METADATA[3];
+
+            // 你的 new_node 优化版洋葱心代码行
+            const optOnionLines = [
+                { num: 8, indent: 8, html: `<span class="tok-kw">while</span> <span class="tok-var-l1">l1</span> <span class="tok-kw">and</span> <span class="tok-var-l2">l2</span>:` },
+                { num: 9, indent: 12, html: `<span class="tok-cmt"># 动作 ①：造一块空白新砖，谁小就抄谁的数字，原轨前移</span>` },
+                { num: 10, indent: 12, html: `<span class="tok-var-cur">new_node</span> = <span class="tok-cls">ListNode</span>(-<span class="tok-num">1</span>)` },
+                { num: 11, indent: 12, html: `<span class="tok-kw">if</span> <span class="tok-var-l1">l1</span>.<span class="tok-prop">val</span> <= <span class="tok-var-l2">l2</span>.<span class="tok-prop">val</span>:` },
+                { num: 12, indent: 16, html: `<span class="tok-var-cur">new_node</span>.<span class="tok-prop">val</span> = <span class="tok-var-l1">l1</span>.<span class="tok-prop">val</span>` },
+                { num: 13, indent: 16, html: `<span class="tok-var-l1">l1</span> = <span class="tok-var-l1">l1</span>.<span class="tok-prop">next</span>` },
+                { num: 14, indent: 12, html: `<span class="tok-kw">else</span>:` },
+                { num: 15, indent: 16, html: `<span class="tok-var-cur">new_node</span>.<span class="tok-prop">val</span> = <span class="tok-var-l2">l2</span>.<span class="tok-prop">val</span>` },
+                { num: 16, indent: 16, html: `<span class="tok-var-l2">l2</span> = <span class="tok-var-l2">l2</span>.<span class="tok-prop">next</span>` },
+                { num: 17, indent: 12, html: `<span class="tok-cmt"># 动作 ②（搭桥）：站在当前 merge 砖上，把挂钩栓到新砖上</span>` },
+                { num: 18, indent: 12, html: `<span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-cur">new_node</span>` },
+                { num: 19, indent: 12, html: `<span class="tok-cmt"># 动作 ③（跨步）：施工员 merge 本人迈步站到这块新砖上！</span>` },
+                { num: 20, indent: 12, html: `<span class="tok-var-cur">merge</span> = <span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span>` }
+            ];
+
+            const activeOptLines = cut3OptStep === 0
+                ? [9, 10, 11, 12, 13, 14, 15, 16]
+                : cut3OptStep === 1
+                    ? [17, 18]
+                    : [19, 20];
+
+            return `
+            <div class="p-5 lg:p-6 space-y-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">${meta.tag}</span>
+                            <h2 class="text-base sm:text-lg font-bold text-white">${meta.knifeName}</h2>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-200/90 font-medium">❓ 引导提问：${meta.question}</p>
+                    </div>
+
+                    <!-- 3 个子标签切换器 -->
+                    <div class="flex flex-wrap items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0 gap-1">
+                        <button onclick="setCut3SubTab('pitfall')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${cut3SubTab === 'pitfall' ? 'bg-rose-500/25 text-rose-300 border border-rose-500/50' : 'text-slate-400 hover:text-white'}">
+                            ❌ 1. 踩坑复盘 (原地覆写 & 自环)
+                        </button>
+                        <button onclick="setCut3SubTab('optimized')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${cut3SubTab === 'optimized' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
+                            ✅ 2. 你的 new_node 优化版 (黄金三步)
+                        </button>
+                        <button onclick="setCut3SubTab('bridge_o1')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${cut3SubTab === 'bridge_o1' ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/50' : 'text-slate-400 hover:text-white'}">
+                            🧬 3. 升维桥梁 (new_node ➔ O(1)挂钩)
+                        </button>
+                    </div>
+                </div>
+
+                ${cut3SubTab === 'pitfall' ? `
+                <!-- 子视图 1：踩坑复盘（漏写 merge = merge.next 连续覆写 + new_node.next = new_node 自环） -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    <div class="lg:col-span-7 bg-slate-950 rounded-xl border border-slate-800 p-4 space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
+                            <span class="text-xs font-bold text-rose-300">💥 极简反例 l1=[1, 4], l2=[2]：漏写 merge = merge.next 发生了什么？</span>
+                            <div class="flex items-center gap-1">
+                                ${[0, 1, 2, 3].map(s => `
+                                    <button onclick="setCut3BugStep(${s})" class="px-2.5 py-1 rounded text-xs font-mono font-bold transition ${cut3BugStep === s ? 'bg-rose-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}">
+                                        ${s === 0 ? '初始' : s === 1 ? '第1轮(接1)' : s === 2 ? '第2轮(覆写2)' : '收尾(覆写4)'}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <svg viewBox="0 0 540 215" class="w-full h-auto">
+                            <defs>
+                                <marker id="bug-rose" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#fb7185"/>
+                                </marker>
+                            </defs>
+
+                            <!-- Dummy 节点 (merge 焊死在上面) -->
+                            <g transform="translate(85, 110)">
+                                <rect x="-42" y="-26" width="84" height="52" rx="10" fill="#451a03" stroke="#f59e0b" stroke-width="2.5"/>
+                                <text x="0" y="-4" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="bold" font-family="JetBrains Mono">dummy(-1)</text>
+                                <text x="0" y="14" text-anchor="middle" fill="#fda4af" font-size="10" font-family="JetBrains Mono">merge 焊死!</text>
+                                <rect x="-40" y="-58" width="80" height="22" rx="5" fill="#e11d48"/>
+                                <text x="0" y="-43" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold" font-family="JetBrains Mono">👷 merge</text>
+                            </g>
+
+                            <!-- 第 1 轮造出的 new_node(1) -->
+                            ${cut3BugStep >= 1 ? `
+                            <g transform="translate(290, 48)" opacity="${cut3BugStep === 1 ? '1' : '0.3'}">
+                                <circle cx="0" cy="0" r="21" fill="#1e293b" stroke="${cut3BugStep === 1 ? '#fb7185' : '#475569'}" stroke-width="2.5"/>
+                                <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold" font-family="JetBrains Mono">1</text>
+                                <text x="85" y="5" fill="${cut3BugStep === 1 ? '#fda4af' : '#64748b'}" font-size="11" font-family="JetBrains Mono">
+                                    ${cut3BugStep === 1 ? '第1轮: dummy.next = 1' : '❌ 被第2轮覆写丢弃!'}
+                                </text>
+                            </g>
+                            ` : ''}
+
+                            <!-- 第 2 轮造出的 new_node(2) -->
+                            ${cut3BugStep >= 2 ? `
+                            <g transform="translate(290, 110)" opacity="${cut3BugStep === 2 ? '1' : '0.3'}">
+                                <circle cx="0" cy="0" r="21" fill="#1e293b" stroke="${cut3BugStep === 2 ? '#fb7185' : '#475569'}" stroke-width="2.5"/>
+                                <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold" font-family="JetBrains Mono">2</text>
+                                <text x="85" y="5" fill="${cut3BugStep === 2 ? '#fda4af' : '#64748b'}" font-size="11" font-family="JetBrains Mono">
+                                    ${cut3BugStep === 2 ? '第2轮: 覆写 dummy.next = 2' : '❌ 被收尾覆写丢弃!'}
+                                </text>
+                            </g>
+                            ` : ''}
+
+                            <!-- 收尾挂上的 l1 剩余节点 [4] -->
+                            ${cut3BugStep === 3 ? `
+                            <g transform="translate(290, 172)">
+                                <circle cx="0" cy="0" r="21" fill="#0c4a6e" stroke="#fb7185" stroke-width="3"/>
+                                <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold" font-family="JetBrains Mono">4</text>
+                                <text x="85" y="5" fill="#fb7185" font-size="11" font-weight="bold" font-family="JetBrains Mono">
+                                    第3次覆写! 最终只剩 [4]!
+                                </text>
+                            </g>
+                            ` : ''}
+
+                            <!-- 当前 dummy.next 指向线 -->
+                            ${cut3BugStep === 1 ? `<line x1="129" y1="100" x2="265" y2="52" stroke="#fb7185" stroke-width="3" marker-end="url(#bug-rose)"/>` : ''}
+                            ${cut3BugStep === 2 ? `<line x1="129" y1="110" x2="265" y2="110" stroke="#fb7185" stroke-width="3" marker-end="url(#bug-rose)"/>` : ''}
+                            ${cut3BugStep === 3 ? `<line x1="129" y1="120" x2="265" y2="168" stroke="#fb7185" stroke-width="3" marker-end="url(#bug-rose)"/>` : ''}
+                        </svg>
+
+                        <div class="bg-rose-950/40 border border-rose-500/30 rounded-lg p-2.5 text-xs text-rose-200">
+                            ${cut3BugStep === 0 ? '初始态：merge 站在 dummy(-1) 上，准备进入 while 循环。' :
+                              cut3BugStep === 1 ? '第 1 轮 (1 <= 2)：造出 new_node(1)，执行 merge.next = new_node(1)。因为没写 merge = merge.next，merge 仍停在 dummy 上！' :
+                              cut3BugStep === 2 ? '第 2 轮 (4 > 2)：造出 new_node(2)，执行 merge.next = new_node(2)。因为 merge 还是 dummy，dummy.next 被直接改写为 2，节点 1 丢失！' :
+                              '收尾阶段：执行 merge.next = l1(4)，dummy.next 第 3 次被改写为 [4]，while 循环里接的所有节点 100% 白干！'}
+                        </div>
+                    </div>
+
+                    <!-- 右侧：自环死锁图解 -->
+                    <div class="lg:col-span-5 bg-slate-950 rounded-xl border border-slate-800 p-4 flex flex-col justify-between space-y-3">
+                        <div class="text-xs font-bold text-rose-300 border-b border-slate-800 pb-2">
+                            🔄 踩坑 2：为什么 <code class="font-mono">new_node.next = new_node</code> 会死锁？
+                        </div>
+                        <svg viewBox="0 0 360 155" class="w-full h-auto">
+                            <defs>
+                                <marker id="self-loop-arr" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#f43f5e"/>
+                                </marker>
+                            </defs>
+                            <circle cx="130" cy="85" r="28" fill="#4c0519" stroke="#f43f5e" stroke-width="3"/>
+                            <text x="130" y="82" text-anchor="middle" fill="#fda4af" font-size="11" font-weight="bold" font-family="JetBrains Mono">new_node</text>
+                            <text x="130" y="98" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold" font-family="JetBrains Mono">val: 1</text>
+
+                            <!-- 红色自环弧线 -->
+                            <path d="M 152 68 C 215 25, 215 145, 154 102" fill="none" stroke="#f43f5e" stroke-width="3" marker-end="url(#self-loop-arr)"/>
+                            <text x="245" y="78" fill="#fb7185" font-size="12" font-weight="bold" font-family="JetBrains Mono">↺ 无限自环死锁!</text>
+                            <text x="245" y="98" fill="#cbd5e1" font-size="11">自己指向自己 (1 ➔ 1 ➔ 1...)</text>
+                        </svg>
+                        <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-emerald-300">✅ 正确修复：</strong>新创建的 <code class="text-amber-300">ListNode(-1)</code> 默认 <code class="text-amber-300">next = None</code>，根本不需要改 <code class="text-rose-300">new_node.next</code>！只需在末尾写 <code class="text-emerald-300">merge.next = new_node</code>（搭桥）和 <code class="text-emerald-300">merge = merge.next</code>（跨步）。
+                        </div>
+                    </div>
+                </div>
+                ` : cut3SubTab === 'optimized' ? `
+                <!-- 子视图 2：你的 new_node 提纯优化版（黄金三步） -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+                    <div class="lg:col-span-6 bg-slate-950 rounded-xl border border-slate-800 p-4 flex flex-col justify-between space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
+                            <span class="text-xs font-bold text-amber-300">🌟 单帧「黄金三步」微交互（物理隔离优势）</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="setCut3OptStep(0)" class="px-2.5 py-1 rounded text-xs font-bold transition ${cut3OptStep === 0 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">
+                                    ① 造砖抄数
+                                </button>
+                                <button onclick="setCut3OptStep(1)" class="px-2.5 py-1 rounded text-xs font-bold transition ${cut3OptStep === 1 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">
+                                    ② 搭桥 (.next=)
+                                </button>
+                                <button onclick="setCut3OptStep(2)" class="px-2.5 py-1 rounded text-xs font-bold transition ${cut3OptStep === 2 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">
+                                    ③ 跨步 (merge=)
+                                </button>
+                            </div>
+                        </div>
+
+                        <svg viewBox="0 0 520 230" class="w-full h-auto">
+                            <defs>
+                                <marker id="opt-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b"/>
+                                </marker>
+                                <marker id="opt-cyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/>
+                                </marker>
+                            </defs>
+
+                            <!-- 上方只读原链表区 -->
+                            <rect x="15" y="12" width="490" height="82" rx="10" fill="#0f172a" stroke="#1e293b"/>
+                            <text x="28" y="32" fill="#94a3b8" font-size="11" font-weight="bold">🛡️ 上层：只读原轨区（只读 .val 与推进指针，绝不改乱原链表指针）</text>
+
+                            <g transform="translate(155, 62)">
+                                <circle cx="0" cy="0" r="18" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2.5"/>
+                                <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold" font-family="JetBrains Mono">1</text>
+                                <text x="-42" y="4" fill="#38bdf8" font-size="11" font-weight="bold" font-family="JetBrains Mono">l1 ➔</text>
+                            </g>
+                            <g transform="translate(335, 62)">
+                                <circle cx="0" cy="0" r="18" fill="#064e3b" stroke="#34d399" stroke-width="2"/>
+                                <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold" font-family="JetBrains Mono">2</text>
+                                <text x="-42" y="4" fill="#34d399" font-size="11" font-weight="bold" font-family="JetBrains Mono">l2 ➔</text>
+                            </g>
+
+                            <!-- 抄数虚线 -->
+                            ${cut3OptStep === 0 ? `
+                            <path d="M 155 82 L 265 148" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="5 3" marker-end="url(#opt-cyan)"/>
+                            <text x="225" y="115" fill="#38bdf8" font-size="11" font-weight="bold" font-family="JetBrains Mono">① 抄小值 val=1</text>
+                            ` : ''}
+
+                            <!-- 下方独立新建轨道区 -->
+                            <rect x="15" y="110" width="490" height="108" rx="10" fill="rgba(245, 158, 11, 0.05)" stroke="#f59e0b" stroke-dasharray="5 4"/>
+                            <text x="28" y="130" fill="#fbbf24" font-size="11" font-weight="bold">🏗️ 下层：独立新链表施工区（dummy ➔ new_node）</text>
+
+                            <!-- dummy(-1) -->
+                            <g transform="translate(105, 172)">
+                                <rect x="-36" y="-20" width="72" height="40" rx="8" fill="#451a03" stroke="#f59e0b" stroke-width="2"/>
+                                <text x="0" y="4" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold" font-family="JetBrains Mono">dummy(-1)</text>
+                                ${cut3OptStep < 2 ? `
+                                <rect x="-32" y="-44" width="64" height="20" rx="5" fill="#f59e0b"/>
+                                <text x="0" y="-30" text-anchor="middle" fill="#0f172a" font-size="10" font-weight="bold" font-family="JetBrains Mono">👷 merge</text>
+                                ` : ''}
+                            </g>
+
+                            <!-- 搭桥线 -->
+                            ${cut3OptStep >= 1 ? `
+                            <line x1="143" y1="172" x2="245" y2="172" stroke="#f59e0b" stroke-width="3.5" marker-end="url(#opt-amber)"/>
+                            <text x="194" y="162" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="bold" font-family="JetBrains Mono">② 搭桥</text>
+                            ` : ''}
+
+                            <!-- new_node(1) -->
+                            <g transform="translate(275, 172)">
+                                <circle cx="0" cy="0" r="22" fill="#451a03" stroke="#f59e0b" stroke-width="3"/>
+                                <text x="0" y="5" text-anchor="middle" fill="#fde68a" font-size="14" font-weight="bold" font-family="JetBrains Mono">1</text>
+                                <text x="0" y="34" text-anchor="middle" fill="#fbbf24" font-size="10" font-family="JetBrains Mono">new_node</text>
+                                ${cut3OptStep === 2 ? `
+                                <rect x="-32" y="-46" width="64" height="20" rx="5" fill="#34d399"/>
+                                <text x="0" y="-32" text-anchor="middle" fill="#0f172a" font-size="10" font-weight="bold" font-family="JetBrains Mono">👷 merge</text>
+                                ` : ''}
+                            </g>
+                        </svg>
+
+                        <div class="bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-300">
+                            <strong class="text-amber-300">为什么把 <code class="font-mono">merge.next = new_node</code> 抽到 if-else 外面更好？</strong><br>
+                            让 <code class="text-cyan-300">if-else</code> 只专注做一件事（谁小就抄谁的数字并把原轨往前推一步），然后在末尾固定连打「② 搭桥 + ③ 跨步」两拳，结构零重复！
+                        </div>
+                    </div>
+
+                    <!-- 右侧：优化后的 new_node 洋葱心代码 -->
+                    <div class="lg:col-span-6 bg-slate-950 rounded-xl border border-slate-800 p-4 flex flex-col justify-between">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <span class="text-xs font-bold text-amber-300">🧅 你的 new_node 提纯版洋葱心（严格 4 空格缩进）</span>
+                            <button onclick="copyTextToClipboard(RAW_USER_NEWNODE_CODE, 'btn-copy-cut3-opt')" id="btn-copy-cut3-opt" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-mono transition">
+                                📋 复制完整优化版
+                            </button>
+                        </div>
+                        <div class="py-2 overflow-x-auto code-container">
+                            ${renderPythonLines(optOnionLines, activeOptLines)}
+                        </div>
+                    </div>
+                </div>
+                ` : `
+                <!-- 子视图 3：升维桥梁（从 new_node 造新砖 ➔ O(1) 原地挂旧砖） -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-950 border border-amber-500/40 rounded-xl p-4 space-y-2">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <span class="text-xs font-bold text-amber-300">🌟 方式 A：你的 new_node 造新砖版 (O(N+M) 空间)</span>
+                            <span class="text-[11px] font-mono text-amber-200/80">读原轨与建新轨物理隔离</span>
+                        </div>
+                        <div class="overflow-x-auto code-container">
+                            ${renderPythonLines([
+                                { num: 1, indent: 8, html: `<span class="tok-kw">while</span> <span class="tok-var-l1">l1</span> <span class="tok-kw">and</span> <span class="tok-var-l2">l2</span>:` },
+                                { num: 2, indent: 12, html: `<span class="tok-var-cur">new_node</span> = <span class="tok-cls">ListNode</span>(-<span class="tok-num">1</span>)` },
+                                { num: 3, indent: 12, html: `<span class="tok-kw">if</span> <span class="tok-var-l1">l1</span>.<span class="tok-prop">val</span> <= <span class="tok-var-l2">l2</span>.<span class="tok-prop">val</span>:` },
+                                { num: 4, indent: 16, html: `<span class="tok-var-cur">new_node</span>.<span class="tok-prop">val</span> = <span class="tok-var-l1">l1</span>.<span class="tok-prop">val</span>` },
+                                { num: 5, indent: 16, html: `<span class="tok-var-l1">l1</span> = <span class="tok-var-l1">l1</span>.<span class="tok-prop">next</span>` },
+                                { num: 6, indent: 12, html: `<span class="tok-kw">else</span>:` },
+                                { num: 7, indent: 16, html: `<span class="tok-var-cur">new_node</span>.<span class="tok-prop">val</span> = <span class="tok-var-l2">l2</span>.<span class="tok-prop">val</span>` },
+                                { num: 8, indent: 16, html: `<span class="tok-var-l2">l2</span> = <span class="tok-var-l2">l2</span>.<span class="tok-prop">next</span>` },
+                                { num: 9, indent: 12, html: `<span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-cur">new_node</span>  <span class="tok-cmt"># 挂上新造的砖</span>` },
+                                { num: 10, indent: 12, html: `<span class="tok-var-cur">merge</span> = <span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span>` }
+                            ], [2, 4, 7, 9])}
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950 border border-emerald-500/40 rounded-xl p-4 space-y-2">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <span class="text-xs font-bold text-emerald-300">⚡ 方式 B：直接拿原节点当 new_node (O(1) 空间)</span>
+                            <span class="text-[11px] font-mono text-emerald-200/80">省去造砖，直接挂原车厢</span>
+                        </div>
+                        <div class="overflow-x-auto code-container">
+                            ${renderPythonLines([
+                                { num: 1, indent: 8, html: `<span class="tok-kw">while</span> <span class="tok-var-l1">l1</span> <span class="tok-kw">and</span> <span class="tok-var-l2">l2</span>:` },
+                                { num: 2, indent: 12, html: `<span class="tok-cmt"># 无需 new_node，l1 / l2 本身就是现成的砖！</span>` },
+                                { num: 3, indent: 12, html: `<span class="tok-kw">if</span> <span class="tok-var-l1">l1</span>.<span class="tok-prop">val</span> <= <span class="tok-var-l2">l2</span>.<span class="tok-prop">val</span>:` },
+                                { num: 4, indent: 16, html: `<span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-l1">l1</span>      <span class="tok-cmt"># 直接挂上 l1</span>` },
+                                { num: 5, indent: 16, html: `<span class="tok-var-l1">l1</span> = <span class="tok-var-l1">l1</span>.<span class="tok-prop">next</span>` },
+                                { num: 6, indent: 12, html: `<span class="tok-kw">else</span>:` },
+                                { num: 7, indent: 16, html: `<span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-l2">l2</span>      <span class="tok-cmt"># 直接挂上 l2</span>` },
+                                { num: 8, indent: 16, html: `<span class="tok-var-l2">l2</span> = <span class="tok-var-l2">l2</span>.<span class="tok-prop">next</span>` },
+                                { num: 9, indent: 12, html: `<span class="tok-cmt"># 跨步动作完全一模一样：</span>` },
+                                { num: 10, indent: 12, html: `<span class="tok-var-cur">merge</span> = <span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span>` }
+                            ], [4, 7, 10])}
+                        </div>
+                    </div>
+                </div>
+                `}
+
+                <!-- 结论与原子判据 -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950/70 border border-slate-800 rounded-xl p-4">
+                    <div class="md:col-span-9 space-y-1">
+                        <div class="text-xs font-bold text-indigo-400 uppercase tracking-wider">📌 一句话直觉结论（你的 new_node 黄金三步曲）</div>
+                        <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                            单帧洋葱心只需严格执行三步：<strong>① 造砖抄小值并推原轨</strong> ➔ <strong>② <code class="text-amber-400">merge.next = new_node</code> 搭桥</strong> ➔ <strong>③ <code class="text-emerald-400">merge = merge.next</code> 跨步</strong>。把这两行焊死在循环末尾，永远不会覆写丢节点！
+                        </p>
+                    </div>
+                    <div class="md:col-span-3 flex flex-col items-end justify-center border-t md:border-t-0 md:border-l border-slate-800 pt-3 md:pt-0 md:pl-4">
+                        <span class="text-[11px] font-mono text-slate-400">is_atomic 终止判据</span>
+                        <span class="text-xs font-bold text-emerald-400 mt-0.5">✅ 洋葱心已切至最小原子</span>
+                        <span class="text-[11px] text-slate-400 mt-0.5">下一步：推导 while 门卫</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // -------------------- 第 4 刀：点号守恒刀（双轨探照灯推导） --------------------
+        function setCut4RadarMode(mode) {
+            cut4RadarMode = mode;
+            renderCurrentCut();
+        }
+
+        function renderCut4RadarHTML() {
+            const meta = CUTS_METADATA[4];
+            const isBoth = cut4RadarMode === 'both';
+
+            return `
+            <div class="p-5 lg:p-6 space-y-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">${meta.tag}</span>
+                            <h2 class="text-base sm:text-lg font-bold text-white">${meta.knifeName}</h2>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-200/90 font-medium">❓ 引导提问：${meta.question}</p>
+                    </div>
+                    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+                        <button onclick="setCut4RadarMode('both')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${isBoth ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'text-slate-400 hover:text-white'}">
+                            🟢 双轨均有车厢 (l1=4, l2=3)
+                        </button>
+                        <button onclick="setCut4RadarMode('oneEmpty')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${!isBoth ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'text-slate-400 hover:text-white'}">
+                            🔴 单轨踩空探针 (l1=None, l2=4)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 overflow-x-auto">
+                    <svg viewBox="0 0 820 245" class="w-full min-w-[640px] h-auto">
+                        <rect x="20" y="20" width="320" height="205" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+                        <text x="38" y="48" fill="#fbbf24" font-size="13" font-weight="bold">📐 点号守恒定律（由内向外机械推导）</text>
+                        <text x="38" y="78" fill="#cbd5e1" font-size="12">1. 低头看你在洋葱心写的比武判据：</text>
+                        <rect x="38" y="90" width="280" height="32" rx="6" fill="#1e293b" stroke="#475569"/>
+                        <text x="52" y="111" fill="#f8fafc" font-size="13" font-family="JetBrains Mono">if <tspan fill="#38bdf8" font-weight="bold">l1.val</tspan> &lt;= <tspan fill="#34d399" font-weight="bold">l2.val</tspan>:</text>
+                        <text x="38" y="146" fill="#cbd5e1" font-size="12">2. <tspan fill="#38bdf8" font-family="JetBrains Mono">l1.val</tspan> 含 1 个点 ➔ 锁 <tspan fill="#38bdf8" font-family="JetBrains Mono">l1 != None</tspan></text>
+                        <text x="38" y="168" fill="#cbd5e1" font-size="12">3. <tspan fill="#34d399" font-family="JetBrains Mono">l2.val</tspan> 含 1 个点 ➔ 锁 <tspan fill="#34d399" font-family="JetBrains Mono">l2 != None</tspan></text>
+                        <text x="38" y="198" fill="#fbbf24" font-size="13" font-weight="bold" font-family="JetBrains Mono">➔ 门卫必为：while l1 and l2:</text>
+
+                        <rect x="365" y="20" width="435" height="205" rx="12" fill="#0f172a" stroke="${isBoth ? '#10b981' : '#f43f5e'}" stroke-width="1.5"/>
+                        <text x="385" y="48" fill="${isBoth ? '#34d399' : '#fb7185'}" font-size="13" font-weight="bold">
+                            ${isBoth ? '🔦 双探照灯全绿：l1 与 l2 均非空，放行进循环！' : '🚨 上轨探照灯触发空指针拦截：l1 为 None，立即短路跳出！'}
+                        </text>
+
+                        <rect x="390" y="102" width="76" height="46" rx="10" fill="#451a03" stroke="#f59e0b" stroke-width="2"/>
+                        <text x="428" y="129" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="bold" font-family="JetBrains Mono">雷达门卫</text>
+
+                        <polygon points="466,115 585,62 585,102" fill="${isBoth ? 'rgba(56, 189, 248, 0.2)' : 'rgba(244, 63, 94, 0.25)'}"/>
+                        <polygon points="466,135 585,148 585,188" fill="rgba(52, 211, 153, 0.2)"/>
+
+                        ${isBoth ? `
+                        <g transform="translate(615, 82)">
+                            <circle cx="0" cy="0" r="22" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2.5"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold" font-family="JetBrains Mono">4</text>
+                            <text x="75" y="5" fill="#38bdf8" font-size="12" font-family="JetBrains Mono">l1.val = 4 ✅</text>
+                        </g>
+                        ` : `
+                        <g transform="translate(615, 82)">
+                            <rect x="-34" y="-18" width="68" height="36" rx="8" fill="#4c0519" stroke="#fb7185" stroke-width="2" stroke-dasharray="4 3"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fda4af" font-size="13" font-weight="bold" font-family="JetBrains Mono">None</text>
+                            <text x="52" y="-2" fill="#fb7185" font-size="11" font-weight="bold" font-family="JetBrains Mono">❌ 若写 or 会执行 None.val</text>
+                            <text x="52" y="14" fill="#fda4af" font-size="11" font-family="JetBrains Mono">直接 AttributeError 崩溃！</text>
+                        </g>
+                        `}
+
+                        <g transform="translate(615, 168)">
+                            <circle cx="0" cy="0" r="22" fill="#064e3b" stroke="#34d399" stroke-width="2.5"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold" font-family="JetBrains Mono">4</text>
+                            <text x="75" y="5" fill="#34d399" font-size="12" font-family="JetBrains Mono">l2.val = 4 ✅</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950/70 border border-slate-800 rounded-xl p-4">
+                    <div class="md:col-span-9 space-y-1">
+                        <div class="text-xs font-bold text-rose-400 uppercase tracking-wider">📌 一句话直觉结论（双轨探照灯铁律）</div>
+                        <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                            比武需要<strong>双方同时在场</strong>（<code class="text-amber-400">while l1 and l2:</code>）。一旦任意一条轨道变成 <code class="text-rose-400">None</code>，比武立刻终止，绝不进入循环读取 <code class="text-rose-400">None.val</code>！
+                        </p>
+                    </div>
+                    <div class="md:col-span-3 flex flex-col items-end justify-center border-t md:border-t-0 md:border-l border-slate-800 pt-3 md:pt-0 md:pl-4">
+                        <span class="text-[11px] font-mono text-slate-400">代码直投影 (1行)</span>
+                        <span class="text-xs font-bold text-emerald-400 mt-0.5">✅ 第 2 层门卫已原子化</span>
+                        <code class="text-[11px] text-amber-300 font-mono mt-0.5">while l1 and l2:</code>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // -------------------- 第 5 刀：几何守恒刀（O(1) 整列甩尾挂接） --------------------
+        function toggleCut5Hook(state) {
+            cut5Hooked = state;
+            renderCurrentCut();
+        }
+
+        function renderCut5TailHTML() {
+            const meta = CUTS_METADATA[5];
+            const hooked = cut5Hooked;
+
+            return `
+            <div class="p-5 lg:p-6 space-y-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">${meta.tag}</span>
+                            <h2 class="text-base sm:text-lg font-bold text-white">${meta.knifeName}</h2>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-200/90 font-medium">❓ 引导提问：${meta.question}</p>
+                    </div>
+                    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+                        <button onclick="toggleCut5Hook(false)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${!hooked ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'}">
+                            1. 跳出 while 瞬间 (l1 耗尽，l2 剩 4 节)
+                        </button>
+                        <button onclick="toggleCut5Hook(true)" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${hooked ? 'bg-amber-500 text-slate-950 shadow' : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'}">
+                            ⚡ 2. 触发 O(1) 一钩甩尾 (merge.next = l2)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 overflow-x-auto">
+                    <svg viewBox="0 0 820 255" class="w-full min-w-[640px] h-auto">
+                        <defs>
+                            <marker id="c5-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b"/>
+                            </marker>
+                            <marker id="c5-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399"/>
+                            </marker>
+                        </defs>
+
+                        <rect x="20" y="15" width="780" height="72" rx="10" fill="#0f172a" stroke="#334155"/>
+                        <text x="38" y="42" fill="#94a3b8" font-size="12" font-weight="bold">🐢 数组合并残局 (O(K) 逐个复制搬砖)：</text>
+                        <text x="38" y="66" fill="#64748b" font-size="12" font-family="JetBrains Mono">因为数组内存连续，必须写 while j &lt; len(arr2): res.append(arr2[j]); j += 1 一个个搬过去</text>
+
+                        <rect x="20" y="100" width="780" height="140" rx="12" fill="#0f172a" stroke="${hooked ? '#f59e0b' : '#10b981'}" stroke-width="2"/>
+                        <text x="38" y="128" fill="${hooked ? '#fbbf24' : '#34d399'}" font-size="13" font-weight="bold">
+                            🚀 链表合并残局 (O(1) 整列火车甩尾挂接)：剩余节点的内部 .next 箭头天然已经连好！
+                        </text>
+
+                        <rect x="38" y="160" width="66" height="40" rx="8" fill="#451a03" stroke="#f59e0b" stroke-width="2"/>
+                        <text x="71" y="184" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold" font-family="JetBrains Mono">dummy</text>
+                        <line x1="106" y1="180" x2="148" y2="180" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#c5-amber)"/>
+
+                        <g transform="translate(175, 180)">
+                            <circle cx="0" cy="0" r="22" fill="#451a03" stroke="#f59e0b" stroke-width="3"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fde68a" font-size="14" font-weight="bold" font-family="JetBrains Mono">1</text>
+                            <text x="0" y="38" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold" font-family="JetBrains Mono">👆 merge</text>
+                        </g>
+
+                        <text x="240" y="148" fill="#fb7185" font-size="11" font-family="JetBrains Mono">上轨 l1 = None (已耗尽)</text>
+
+                        ${hooked ? `
+                        <line x1="199" y1="180" x2="310" y2="180" stroke="#f59e0b" stroke-width="4" marker-end="url(#c5-amber)"/>
+                        <rect x="216" y="152" width="84" height="20" rx="5" fill="#f59e0b"/>
+                        <text x="258" y="166" text-anchor="middle" fill="#0f172a" font-size="10" font-weight="bold" font-family="JetBrains Mono">O(1) 一钩移交!</text>
+                        ` : `
+                        <line x1="199" y1="180" x2="310" y2="180" stroke="#475569" stroke-width="2" stroke-dasharray="5 5"/>
+                        `}
+
+                        <rect x="308" y="145" width="465" height="70" rx="12" fill="${hooked ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.08)'}" stroke="${hooked ? '#f59e0b' : '#34d399'}" stroke-dasharray="4 3"/>
+                        ${[2, 3, 4, 5].map((val, idx) => {
+                            const cx = 345 + idx * 115;
+                            return `
+                            <g transform="translate(${cx}, 180)">
+                                <circle cx="0" cy="0" r="21" fill="#064e3b" stroke="${hooked ? '#f59e0b' : '#34d399'}" stroke-width="2.5"/>
+                                <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold" font-family="JetBrains Mono">${val}</text>
+                                ${idx === 0 ? `<text x="0" y="38" text-anchor="middle" fill="#34d399" font-size="11" font-weight="bold" font-family="JetBrains Mono">👆 l2 头</text>` : ''}
+                                ${idx < 3 ? `<line x1="23" y1="0" x2="90" y2="0" stroke="${hooked ? '#f59e0b' : '#34d399'}" stroke-width="2.5" marker-end="url(#${hooked ? 'c5-amber' : 'c5-emerald'})"/>` : ''}
+                            </g>`;
+                        }).join('')}
+                    </svg>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950/70 border border-slate-800 rounded-xl p-4">
+                    <div class="md:col-span-8 space-y-1">
+                        <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider">📌 一句话直觉结论（无论用不用 new_node，收尾都一样！）</div>
+                        <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                            即便在循环里用了 <code class="text-amber-400">new_node</code>，一旦跳出循环，剩余非空轨道上的车厢<strong>本来就已经按升序首尾相连</strong>，直接写 <code class="text-amber-400">if l1: merge.next = l1 else: merge.next = l2</code> 即可 <code class="text-emerald-400">O(1)</code> 整列挂上！
+                        </p>
+                    </div>
+                    <div class="md:col-span-4 flex flex-col items-end justify-center border-t md:border-t-0 md:border-l border-slate-800 pt-3 md:pt-0 md:pl-4">
+                        <span class="text-[11px] font-mono text-slate-400">代码直投影</span>
+                        <span class="text-xs font-bold text-emerald-400 mt-0.5">✅ 残局收官已切至最小原子</span>
+                        <code class="text-[11px] text-amber-300 font-mono mt-0.5">if l1: merge.next = l1 else: merge.next = l2</code>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // -------------------- 🎯 第 6 刀（收官刀）：左码右图 · 双版本四态同构工作台 & 宇宙 A 基因对比 --------------------
+        function setCut6ViewMode(mode) {
+            cut6ViewMode = mode;
+            renderCurrentCut();
+        }
+
+        function setCut6State(stateNum) {
+            cut6ActiveState = stateNum;
+            renderCurrentCut();
+        }
+
+        function stepCut6Zipper(delta) {
+            cut6ActiveState = 3;
+            cut6ZipperStep = Math.max(0, Math.min(5, cut6ZipperStep + delta));
+            renderCurrentCut();
+        }
+
+        function renderCut6IsoHTML() {
+            const meta = CUTS_METADATA[6];
+            const isNewNodeView = cut6ViewMode === 'newnode';
+            const isInplaceView = cut6ViewMode === 'inplace';
+            const isEvoView = cut6ViewMode === 'evolution';
+
+            // 视图 ① (new_node 版) 行点击映射到 4 个逻辑态
+            const clickableNewNodeMap = {
+                3: 'setCut6State(1)', 4: 'setCut6State(1)', 5: 'setCut6State(1)', 6: 'setCut6State(1)',
+                7: 'setCut6State(2)', 8: 'setCut6State(2)',
+                9: 'setCut6State(3)', 10: 'setCut6State(3)', 11: 'setCut6State(3)', 12: 'setCut6State(3)',
+                13: 'setCut6State(3)', 14: 'setCut6State(3)', 15: 'setCut6State(3)', 16: 'setCut6State(3)', 17: 'setCut6State(3)',
+                18: 'setCut6State(4)', 19: 'setCut6State(4)', 20: 'setCut6State(4)', 21: 'setCut6State(4)'
+            };
+
+            const stateNewNodeActiveLines = {
+                1: [3, 4, 5, 6],
+                2: [7, 8],
+                3: [9, 10, 11, 12, 13, 14, 15, 16, 17],
+                4: [18, 19, 20, 21]
+            }[cut6ActiveState] || [9, 10, 11, 12, 13, 14, 15, 16, 17];
+
+            // 视图 ② (O(1) 原地版) 行点击映射
+            const clickableInplaceMap = {
+                3: 'setCut6State(1)', 4: 'setCut6State(1)', 5: 'setCut6State(1)',
+                6: 'setCut6State(2)', 7: 'setCut6State(2)',
+                8: 'setCut6State(3)', 9: 'setCut6State(3)', 10: 'setCut6State(3)', 11: 'setCut6State(3)',
+                12: 'setCut6State(3)', 13: 'setCut6State(3)', 14: 'setCut6State(3)',
+                15: 'setCut6State(4)', 16: 'setCut6State(4)', 17: 'setCut6State(4)'
+            };
+
+            const stateInplaceActiveLines = {
+                1: [3, 4, 5],
+                2: [6, 7],
+                3: [8, 9, 10, 11, 12, 13, 14],
+                4: [15, 16, 17]
+            }[cut6ActiveState] || [8, 9, 10, 11, 12, 13, 14];
+
+            // 视图 ③：203 题 vs 21 题基因对比代码行
+            const code203Lines = [
+                { num: 1, indent: 0, html: `<span class="tok-cmt"># 203. 移除链表元素 (单轨拆危桥)</span>` },
+                { num: 2, indent: 0, html: `<span class="tok-var-cur">dummy</span> = <span class="tok-cls">ListNode</span>(-<span class="tok-num">1</span>, head)` },
+                { num: 3, indent: 0, html: `<span class="tok-var-cur">cur</span> = <span class="tok-var-cur">dummy</span>` },
+                { num: 4, indent: 0, html: `<span class="tok-kw">while</span> <span class="tok-var-cur">cur</span>.<span class="tok-prop">next</span>:  <span class="tok-cmt"># 1点守恒</span>` },
+                { num: 5, indent: 4, html: `<span class="tok-kw">if</span> <span class="tok-var-cur">cur</span>.<span class="tok-prop">next</span>.<span class="tok-prop">val</span> == val:` },
+                { num: 6, indent: 8, html: `<span class="tok-var-cur">cur</span>.<span class="tok-prop">next</span> = <span class="tok-var-cur">cur</span>.<span class="tok-prop">next</span>.<span class="tok-prop">next</span>` },
+                { num: 7, indent: 4, html: `<span class="tok-kw">else</span>:` },
+                { num: 8, indent: 8, html: `<span class="tok-var-cur">cur</span> = <span class="tok-var-cur">cur</span>.<span class="tok-prop">next</span>` },
+                { num: 9, indent: 0, html: `<span class="tok-kw">return</span> <span class="tok-var-cur">dummy</span>.<span class="tok-prop">next</span>` }
+            ];
+
+            const code21NewNodeCompact = [
+                { num: 1, indent: 0, html: `<span class="tok-cmt"># 21. 合并两个有序链表 (你的 new_node 优化版)</span>` },
+                { num: 2, indent: 0, html: `<span class="tok-var-cur">dummy</span> = <span class="tok-var-cur">merge</span> = <span class="tok-cls">ListNode</span>(-<span class="tok-num">1</span>)` },
+                { num: 3, indent: 0, html: `<span class="tok-var-l1">l1</span>, <span class="tok-var-l2">l2</span> = list1, list2` },
+                { num: 4, indent: 0, html: `<span class="tok-kw">while</span> <span class="tok-var-l1">l1</span> <span class="tok-kw">and</span> <span class="tok-var-l2">l2</span>:  <span class="tok-cmt"># 双轨1点守恒</span>` },
+                { num: 5, indent: 4, html: `<span class="tok-var-cur">new_node</span> = <span class="tok-cls">ListNode</span>(-<span class="tok-num">1</span>)` },
+                { num: 6, indent: 4, html: `<span class="tok-kw">if</span> <span class="tok-var-l1">l1</span>.<span class="tok-prop">val</span> <= <span class="tok-var-l2">l2</span>.<span class="tok-prop">val</span>:` },
+                { num: 7, indent: 8, html: `<span class="tok-var-cur">new_node</span>.<span class="tok-prop">val</span>, <span class="tok-var-l1">l1</span> = <span class="tok-var-l1">l1</span>.<span class="tok-prop">val</span>, <span class="tok-var-l1">l1</span>.<span class="tok-prop">next</span>` },
+                { num: 8, indent: 4, html: `<span class="tok-kw">else</span>:` },
+                { num: 9, indent: 8, html: `<span class="tok-var-cur">new_node</span>.<span class="tok-prop">val</span>, <span class="tok-var-l2">l2</span> = <span class="tok-var-l2">l2</span>.<span class="tok-prop">val</span>, <span class="tok-var-l2">l2</span>.<span class="tok-prop">next</span>` },
+                { num: 10, indent: 4, html: `<span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-cur">new_node</span>  <span class="tok-cmt"># 搭桥</span>` },
+                { num: 11, indent: 4, html: `<span class="tok-var-cur">merge</span> = <span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span>      <span class="tok-cmt"># 跨步</span>` },
+                { num: 12, indent: 0, html: `<span class="tok-var-cur">merge</span>.<span class="tok-prop">next</span> = <span class="tok-var-l1">l1</span> <span class="tok-kw">if</span> <span class="tok-var-l1">l1</span> <span class="tok-kw">else</span> <span class="tok-var-l2">l2</span>` },
+                { num: 13, indent: 0, html: `<span class="tok-kw">return</span> <span class="tok-var-cur">dummy</span>.<span class="tok-prop">next</span>` }
+            ];
+
+            return `
+            <div class="p-5 lg:p-6 space-y-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">${meta.tag}</span>
+                            <h2 class="text-base sm:text-lg font-bold text-white">${meta.knifeName}</h2>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-200/90 font-medium">❓ 引导提问：${meta.question}</p>
+                    </div>
+                    <!-- 3 视图切换 -->
+                    <div class="flex flex-wrap items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0 gap-1">
+                        <button onclick="setCut6ViewMode('newnode')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${isNewNodeView ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
+                            🌟 视图 ①：你的 new_node 优化版
+                        </button>
+                        <button onclick="setCut6ViewMode('inplace')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${isInplaceView ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'}">
+                            ⚡ 视图 ②：O(1) 原地挂钩版
+                        </button>
+                        <button onclick="setCut6ViewMode('evolution')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${isEvoView ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'}">
+                            🧬 视图 ③：宇宙 A 基因对比 (203 ➔ 21)
+                        </button>
+                    </div>
+                </div>
+
+                ${!isEvoView ? `
+                <!-- 四态按钮切换栏 -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <button onclick="setCut6State(1)" class="p-2.5 rounded-xl border text-left transition ${cut6ActiveState === 1 ? 'bg-amber-500/20 border-amber-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'}">
+                        <div class="text-xs font-bold text-amber-300">态 ①：头部壳初始化</div>
+                        <div class="text-[11px] mt-0.5">立 dummy(-1) 与施工员 merge</div>
+                    </button>
+                    <button onclick="setCut6State(2)" class="p-2.5 rounded-xl border text-left transition ${cut6ActiveState === 2 ? 'bg-amber-500/20 border-amber-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'}">
+                        <div class="text-xs font-bold text-cyan-300">态 ②：双轨探照灯门卫</div>
+                        <div class="text-[11px] mt-0.5">while l1 and l2: (1点守恒)</div>
+                    </button>
+                    <button onclick="setCut6State(3)" class="p-2.5 rounded-xl border text-left transition ${cut6ActiveState === 3 ? 'bg-amber-500/20 border-amber-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'}">
+                        <div class="text-xs font-bold text-emerald-300">态 ③：洋葱心三步曲</div>
+                        <div class="text-[11px] mt-0.5">${isNewNodeView ? '造砖抄数 ➔ 搭桥 ➔ 跨步' : '择小搭桥 ➔ 原轨前移 ➔ 跨步'}</div>
+                    </button>
+                    <button onclick="setCut6State(4)" class="p-2.5 rounded-xl border text-left transition ${cut6ActiveState === 4 ? 'bg-amber-500/20 border-amber-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'}">
+                        <div class="text-xs font-bold text-purple-300">态 ④：甩尾移交与返回</div>
+                        <div class="text-[11px] mt-0.5">merge.next = l1/l2 ➔ return</div>
+                    </button>
+                </div>
+
+                <!-- 左码右图主体 -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+                    <!-- 左侧代码（带 4 空格缩进线，支持点击任意行切换物理快照） -->
+                    <div class="lg:col-span-6 bg-slate-950 rounded-xl border border-slate-800 p-3 flex flex-col justify-between">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+                            <span class="text-xs font-bold text-slate-300">
+                                👇 点击任意代码行，右侧实时投影物理快照
+                            </span>
+                            <button onclick="copyTextToClipboard(${isNewNodeView ? 'RAW_USER_NEWNODE_CODE' : 'RAW_STANDARD_CODE'}, 'btn-copy-cut6')" id="btn-copy-cut6" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-mono transition">
+                                📋 复制当前版本代码
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto code-container py-1">
+                            ${isNewNodeView
+                                ? renderPythonLines(USER_NEWNODE_PYTHON_LINES, stateNewNodeActiveLines, clickableNewNodeMap)
+                                : renderPythonLines(STANDARD_PYTHON_LINES, stateInplaceActiveLines, clickableInplaceMap)
+                            }
+                        </div>
+                    </div>
+
+                    <!-- 右侧同步物理快照 + 态 ③ 内置微缩步进器 -->
+                    <div class="lg:col-span-6 bg-slate-950 rounded-xl border border-slate-800 p-4 flex flex-col justify-between space-y-3">
+                        ${renderCut6RightSnapshot(isNewNodeView)}
+                    </div>
+                </div>
+                ` : `
+                <!-- 宇宙 A 基因演进对比视图 (203 ➔ 21) -->
+                <div class="space-y-4">
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                        <h3 class="text-sm font-bold text-amber-300 mb-2">🏛️ 为什么说「21. 合并两个有序链表」和「203. 移除链表元素」是同一具骨架？</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            回顾我们在笔记本中提炼的<strong>「母本一：宇宙 A · 链表重构施工机」</strong>：两道题都因为头节点可能变化而立了 <code class="text-amber-300">dummy</code> 定海神针，都派施工员 <code class="text-amber-300">cur / merge</code> 从 <code class="text-amber-300">dummy</code> 出发改写 <code class="text-amber-300">.next</code>，最后都通过 <code class="text-amber-300">return dummy.next</code> 交卷。
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                <span class="text-xs font-bold text-cyan-300">🧱 203. 移除链表元素（单轨拆危桥）</span>
+                                <span class="text-[11px] font-mono text-slate-400">单轨 1 点守恒</span>
+                            </div>
+                            <div class="overflow-x-auto code-container">
+                                ${renderPythonLines(code203Lines, [2, 3, 4, 9])}
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                <span class="text-xs font-bold text-amber-300">🌟 21. 合并两个有序链表（你的 new_node 优化版）</span>
+                                <span class="text-[11px] font-mono text-slate-400">双轨 1 点守恒 + 黄金三步</span>
+                            </div>
+                            <div class="overflow-x-auto code-container">
+                                ${renderPythonLines(code21NewNodeCompact, [2, 4, 10, 11, 13])}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `}
+            </div>`;
+        }
+
+        function renderCut6RightSnapshot(isNewNodeView) {
+            // 针对 l1 = [1, 4], l2 = [2] 的清晰轨迹演示
+            const stepsData = [
+                { built: [], l1Idx: 0, l2Idx: 0, desc: '态 ① & ②：merge 站在 dummy(-1)，探照灯确认 l1(1) 与 l2(2) 均非空' },
+                { built: [1], l1Idx: 1, l2Idx: 0, desc: '第 1 轮 (1 <= 2)：① 造新砖 new_node(1)，l1 移向 4 ➔ ② merge.next 搭桥 ➔ ③ merge 跨步踩上 1' },
+                { built: [1, 2], l1Idx: 1, l2Idx: 1, desc: '第 2 轮 (4 > 2)：① 造新砖 new_node(2)，l2 移向 None ➔ ② merge.next 搭桥 ➔ ③ merge 跨步踩上 2' },
+                { built: [1, 2, 4], l1Idx: 1, l2Idx: 1, desc: '态 ④：l2 为空跳出循环，merge.next = l1 直接把剩余 [4] 挂在 2 后面，return dummy.next！' }
+            ];
+
+            let snapIdx = 0;
+            if (cut6ActiveState === 1 || cut6ActiveState === 2) snapIdx = 0;
+            if (cut6ActiveState === 3) snapIdx = Math.min(2, Math.max(1, cut6ZipperStep));
+            if (cut6ActiveState === 4) snapIdx = 3;
+
+            const curSnap = stepsData[snapIdx];
+
+            return `
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span class="text-xs font-bold text-amber-300">
+                        🖼️ 物理拓扑快照 (${isNewNodeView ? '你的 new_node 造砖视角' : 'O(1) 原地挂钩视角'})
+                    </span>
+                    ${cut6ActiveState === 3 ? `
+                    <div class="flex items-center gap-1">
+                        <button onclick="stepCut6Zipper(-1)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-white">◀ 上一轮</button>
+                        <button onclick="stepCut6Zipper(1)" class="px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-400 text-xs text-slate-950 font-bold">👣 下一轮 ▶</button>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-2">
+                    <svg viewBox="0 0 520 235" class="w-full h-auto">
+                        <!-- 上方原轨 l1=[1,4], l2=[2] -->
+                        <rect x="15" y="10" width="490" height="86" rx="8" fill="#0f172a" stroke="#1e293b"/>
+                        <text x="28" y="28" fill="#38bdf8" font-size="10" font-weight="bold" font-family="JetBrains Mono">原轨 l1: [1 ➔ 4]</text>
+                        <text x="280" y="28" fill="#34d399" font-size="10" font-weight="bold" font-family="JetBrains Mono">原轨 l2: [2]</text>
+
+                        <!-- l1: 1 -> 4 -->
+                        <g transform="translate(115, 60)">
+                            <circle cx="0" cy="0" r="17" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold" font-family="JetBrains Mono">1</text>
+                            ${curSnap.l1Idx === 0 ? `<text x="0" y="-22" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="bold" font-family="JetBrains Mono">👇l1</text>` : ''}
+                            <line x1="18" y1="0" x2="62" y2="0" stroke="#38bdf8" stroke-width="2"/>
+                        </g>
+                        <g transform="translate(198, 60)">
+                            <circle cx="0" cy="0" r="17" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold" font-family="JetBrains Mono">4</text>
+                            ${curSnap.l1Idx === 1 ? `<text x="0" y="-22" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="bold" font-family="JetBrains Mono">👇l1</text>` : ''}
+                        </g>
+
+                        <!-- l2: 2 -->
+                        <g transform="translate(365, 60)">
+                            <circle cx="0" cy="0" r="17" fill="#064e3b" stroke="#34d399" stroke-width="2"/>
+                            <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold" font-family="JetBrains Mono">2</text>
+                            ${curSnap.l2Idx === 0 ? `<text x="0" y="-22" text-anchor="middle" fill="#34d399" font-size="10" font-weight="bold" font-family="JetBrains Mono">👇l2</text>` : ''}
+                        </g>
+                        ${curSnap.l2Idx >= 1 ? `<text x="425" y="64" fill="#fb7185" font-size="11" font-weight="bold" font-family="JetBrains Mono">l2=None</text>` : ''}
+
+                        <!-- 下方新链表轨道 dummy -> ... -> merge -->
+                        <rect x="15" y="110" width="490" height="112" rx="10" fill="rgba(245, 158, 11, 0.06)" stroke="#f59e0b" stroke-dasharray="5 3"/>
+                        <text x="28" y="130" fill="#fbbf24" font-size="11" font-weight="bold" font-family="JetBrains Mono">
+                            🏗️ 成品链: dummy(-1) ${curSnap.built.map(v => '➔ ' + v).join(' ')}
+                        </text>
+
+                        <!-- dummy 节点 -->
+                        <g transform="translate(70, 175)">
+                            <rect x="-32" y="-18" width="64" height="36" rx="8" fill="#451a03" stroke="#f59e0b" stroke-width="2"/>
+                            <text x="0" y="4" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold" font-family="JetBrains Mono">dummy</text>
+                            ${curSnap.built.length === 0 ? `
+                            <rect x="-30" y="22" width="60" height="18" rx="4" fill="#f59e0b"/>
+                            <text x="0" y="34" text-anchor="middle" fill="#0f172a" font-size="10" font-weight="bold" font-family="JetBrains Mono">👆merge</text>
+                            ` : ''}
+                        </g>
+
+                        <!-- 已构建的节点 -->
+                        ${curSnap.built.map((val, idx) => {
+                            const cx = 180 + idx * 105;
+                            const isLastBuilt = (idx === curSnap.built.length - 1 && cut6ActiveState !== 4) || (cut6ActiveState === 4 && idx === 1);
+                            const isTailAttached = (cut6ActiveState === 4 && idx === 2);
+                            return `
+                            <line x1="${idx === 0 ? 104 : cx - 83}" y1="175" x2="${cx - 22}" y2="175" stroke="${isTailAttached ? '#34d399' : '#f59e0b'}" stroke-width="3"/>
+                            <g transform="translate(${cx}, 175)">
+                                <circle cx="0" cy="0" r="20" fill="${isTailAttached ? '#0c4a6e' : '#451a03'}" stroke="${isTailAttached ? '#34d399' : '#f59e0b'}" stroke-width="2.5"/>
+                                <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold" font-family="JetBrains Mono">${val}</text>
+                                <text x="0" y="-25" text-anchor="middle" fill="${isTailAttached ? '#34d399' : '#fde68a'}" font-size="9" font-family="JetBrains Mono">${isTailAttached ? '甩尾挂接' : (isNewNodeView ? 'new_node' : '原节点')}</text>
+                                ${isLastBuilt ? `
+                                <rect x="-30" y="23" width="60" height="18" rx="4" fill="#f59e0b"/>
+                                <text x="0" y="35" text-anchor="middle" fill="#0f172a" font-size="10" font-weight="bold" font-family="JetBrains Mono">👆merge</text>
+                                ` : ''}
+                            </g>`;
+                        }).join('')}
+                    </svg>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 leading-relaxed">
+                    <span class="font-bold text-amber-400">状态解说：</span>${curSnap.desc}
+                </div>
+            `;
+        }
+
+        // ==================== 5. 模式二：双引擎三阶段解耦沙盒 ====================
+        const SANDBOX_PRESETS = [
+            { name: '示例1标准双轨', l1: [1, 2, 4], l2: [1, 3, 4] },
+            { name: '极简反例照妖镜', l1: [1, 4], l2: [2] },
+            { name: '单边空链表', l1: [], l2: [0] },
+            { name: '双空链表', l1: [], l2: [] }
+        ];
+
+        let sandboxEngine = 'newnode'; // 'newnode' (默认展示用户的 new_node 优化版) | 'inplace'
+        let currentPresetIdx = 0;
+        let sbL1Values = [1, 2, 4];
+        let sbL2Values = [1, 3, 4];
+        let sbTrace = [];
+        let sbStepIndex = 0;
+        let sbAutoTimer = null;
+
+        function switchSandboxEngine(engine) {
+            sandboxStopAuto();
+            sandboxEngine = engine;
+            const btnNew = document.getElementById('btn-engine-newnode');
+            const btnIn = document.getElementById('btn-engine-inplace');
+            const codeTitle = document.getElementById('sandbox-code-title');
+            const sub2 = document.getElementById('stage-2-subtitle');
+
+            if (engine === 'newnode') {
+                btnNew.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow';
+                btnIn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+                codeTitle.textContent = '🌟 你的 new_node 优化版 (实时行级追踪)';
+                sub2.textContent = 'new_node 抄数 ➔ merge.next ➔ merge前移';
+            } else {
+                btnIn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow';
+                btnNew.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+                codeTitle.textContent = '⚡ O(1) 原地指针挂钩版 (实时行级追踪)';
+                sub2.textContent = '择小挂钩 ➔ 原轨前移 ➔ merge前移';
+            }
+
+            sbTrace = buildSandboxTrace(sbL1Values, sbL2Values);
+            sbStepIndex = Math.min(sbStepIndex, sbTrace.length - 1);
+            renderSandbox();
+        }
+
+        /**
+         * 支持双引擎（'newnode' 与 'inplace'）生成三阶段帧序列
+         */
+        function buildSandboxTrace(arr1, arr2) {
+            const isNew = sandboxEngine === 'newnode';
+            const frames = [];
+            let i = 0, j = 0;
+            const stitched = [];
+            let curLabel = 'dummy(-1)';
+
+            // 阶段一：立定海神针
+            frames.push({
+                stage: 1,
+                lines: isNew ? [4, 5, 6] : [4, 5],
+                title: '阶段一：立定海神针 dummy(-1) 与施工员 merge',
+                desc: '初始化 dummy = ListNode(-1)，施工员 merge = dummy 站在起点桩上，l1 与 l2 分别指向两条轨道车头。',
+                i, j,
+                stitched: [...stitched],
+                curNodeId: 'dummy',
+                curLabel,
+                comparing: false,
+                tailHooked: false,
+                finished: false
+            });
+
+            // 阶段二：while l1 and l2 循环
+            while (i < arr1.length && j < arr2.length) {
+                const v1 = arr1[i];
+                const v2 = arr2[j];
+                const l1Wins = v1 <= v2;
+
+                // 帧 A：门卫检查通过 + 比武判断（若为 new_node 版同时创建空白 new_node）
+                frames.push({
+                    stage: 2,
+                    lines: isNew ? [8, 9, 10] : [7, 8],
+                    title: isNew
+                        ? `阶段二：双轨非空 ➔ 造空白砖 new_node(-1) & 比武 (${v1} vs ${v2})`
+                        : `阶段二：双轨探照灯放行 & 比武 (${v1} vs ${v2})`,
+                    desc: `l1(${v1}) 与 l2(${v2}) 均非空。判断 ${v1} <= ${v2} 为 ${l1Wins ? 'True (取 l1 的 ' + v1 + ')' : 'False (取 l2 的 ' + v2 + ')'}。`,
+                    i, j,
+                    stitched: [...stitched],
+                    curNodeId: stitched.length === 0 ? 'dummy' : `${stitched[stitched.length - 1].track}-${stitched[stitched.length - 1].idx}`,
+                    curLabel,
+                    comparing: true,
+                    tailHooked: false,
+                    finished: false
+                });
+
+                // 帧 B：抄数/挂钩 + 搭桥 + 跨步
+                if (l1Wins) {
+                    stitched.push({ track: 'l1', idx: i, val: v1, isNewNode: isNew });
+                    curLabel = isNew ? `new_node(${v1})` : `l1[${i}](${v1})`;
+                    i++;
+                    frames.push({
+                        stage: 2,
+                        lines: isNew ? [11, 12, 16, 17] : [9, 10, 14],
+                        title: isNew
+                            ? `阶段二：抄数 new_node.val=${v1} ➔ 搭桥 merge.next ➔ 跨步 merge=merge.next`
+                            : `阶段二：搭桥 merge.next=l1(${v1}) ➔ l1 前移 ➔ merge 跨步`,
+                        desc: isNew
+                            ? `① new_node 抄入 ${v1}，l1 前移；② merge.next = new_node 完成搭桥；③ merge = merge.next 迈步站上新砖 ${v1}！`
+                            : `merge.next 指向 l1 节点 ${v1}；l1 推进；施工员 merge 迈步站上节点 ${v1}。`,
+                        i, j,
+                        stitched: [...stitched],
+                        curNodeId: `l1-${i - 1}`,
+                        curLabel,
+                        comparing: false,
+                        tailHooked: false,
+                        finished: false
+                    });
+                } else {
+                    stitched.push({ track: 'l2', idx: j, val: v2, isNewNode: isNew });
+                    curLabel = isNew ? `new_node(${v2})` : `l2[${j}](${v2})`;
+                    j++;
+                    frames.push({
+                        stage: 2,
+                        lines: isNew ? [13, 14, 15, 16, 17] : [11, 12, 13, 14],
+                        title: isNew
+                            ? `阶段二：抄数 new_node.val=${v2} ➔ 搭桥 merge.next ➔ 跨步 merge=merge.next`
+                            : `阶段二：搭桥 merge.next=l2(${v2}) ➔ l2 前移 ➔ merge 跨步`,
+                        desc: isNew
+                            ? `① new_node 抄入 ${v2}，l2 前移；② merge.next = new_node 完成搭桥；③ merge = merge.next 迈步站上新砖 ${v2}！`
+                            : `merge.next 指向 l2 节点 ${v2}；l2 推进；施工员 merge 迈步站上节点 ${v2}。`,
+                        i, j,
+                        stitched: [...stitched],
+                        curNodeId: `l2-${j - 1}`,
+                        curLabel,
+                        comparing: false,
+                        tailHooked: false,
+                        finished: false
+                    });
+                }
+            }
+
+            // 门卫短路拦截帧
+            frames.push({
+                stage: 2,
+                lines: isNew ? [8] : [7],
+                title: '阶段二结束：探照灯检测到单轨/双轨为空，短路跳出 while',
+                desc: `此时 l1=${i < arr1.length ? arr1[i] : 'None'}, l2=${j < arr2.length ? arr2[j] : 'None'}，while l1 and l2 条件为 False，安全跳出循环。`,
+                i, j,
+                stitched: [...stitched],
+                curNodeId: stitched.length === 0 ? 'dummy' : `${stitched[stitched.length - 1].track}-${stitched[stitched.length - 1].idx}`,
+                curLabel,
+                comparing: false,
+                tailHooked: false,
+                finished: false
+            });
+
+            // 阶段三：O(1) 整列甩尾挂接
+            const remTrack = i < arr1.length ? 'l1' : (j < arr2.length ? 'l2' : 'None');
+            const tailStitched = [...stitched];
+            let k1 = i, k2 = j;
+            while (k1 < arr1.length) {
+                tailStitched.push({ track: 'l1', idx: k1, val: arr1[k1], isTailHook: true });
+                k1++;
+            }
+            while (k2 < arr2.length) {
+                tailStitched.push({ track: 'l2', idx: k2, val: arr2[k2], isTailHook: true });
+                k2++;
+            }
+
+            frames.push({
+                stage: 3,
+                lines: isNew ? (i < arr1.length ? [19] : [20]) : [16],
+                title: '阶段三：剩余轨道整列一键移交 (merge.next = l1 / l2)',
+                desc: remTrack === 'None'
+                    ? '两条轨道均已无剩余节点，merge.next 挂上 None。'
+                    : `此时施工员 merge 稳稳站在最新尾巴上，执行 merge.next = ${remTrack}，直接将剩余非空轨道整串挂在后面！`,
+                i, j,
+                stitched: tailStitched,
+                curNodeId: stitched.length === 0 ? 'dummy' : `${stitched[stitched.length - 1].track}-${stitched[stitched.length - 1].idx}`,
+                curLabel,
+                comparing: false,
+                tailHooked: true,
+                finished: false
+            });
+
+            // 最终返回帧
+            frames.push({
+                stage: 3,
+                lines: isNew ? [21] : [17],
+                title: '阶段三收官：卸载 dummy(-1)，返回 dummy.next',
+                desc: tailStitched.length === 0
+                    ? 'dummy.next 为 None，返回空链表 []。'
+                    : `返回 dummy.next（即首节点 ${tailStitched[0].val}），完整升序链表 [${tailStitched.map(x => x.val).join(' -> ')}] 组装完成！`,
+                i, j,
+                stitched: tailStitched,
+                curNodeId: stitched.length === 0 ? 'dummy' : `${stitched[stitched.length - 1].track}-${stitched[stitched.length - 1].idx}`,
+                curLabel,
+                comparing: false,
+                tailHooked: true,
+                finished: true
+            });
+
+            return frames;
+        }
+
+        function loadSandboxPreset(idx) {
+            sandboxStopAuto();
+            currentPresetIdx = idx;
+            const p = SANDBOX_PRESETS[idx];
+            sbL1Values = [...p.l1];
+            sbL2Values = [...p.l2];
+            document.getElementById('input-custom-l1').value = sbL1Values.join(',');
+            document.getElementById('input-custom-l2').value = sbL2Values.join(',');
+            sbTrace = buildSandboxTrace(sbL1Values, sbL2Values);
+            sbStepIndex = 0;
+            renderSandbox();
+        }
+
+        function applyCustomSandboxInput() {
+            sandboxStopAuto();
+            const raw1 = document.getElementById('input-custom-l1').value.trim();
+            const raw2 = document.getElementById('input-custom-l2').value.trim();
+
+            const parseArr = (str) => {
+                if (!str) return [];
+                return str.split(/[,，\s]+/).map(s => parseInt(s, 10)).filter(n => !isNaN(n)).slice(0, 7).sort((a, b) => a - b);
+            };
+
+            sbL1Values = parseArr(raw1);
+            sbL2Values = parseArr(raw2);
+            document.getElementById('input-custom-l1').value = sbL1Values.join(',');
+            document.getElementById('input-custom-l2').value = sbL2Values.join(',');
+            currentPresetIdx = -1;
+            sbTrace = buildSandboxTrace(sbL1Values, sbL2Values);
+            sbStepIndex = 0;
+            renderSandbox();
+        }
+
+        function sandboxReset() {
+            sandboxStopAuto();
+            sbStepIndex = 0;
+            renderSandbox();
+        }
+
+        function sandboxStep(delta) {
+            sandboxStopAuto();
+            sbStepIndex = Math.max(0, Math.min(sbTrace.length - 1, sbStepIndex + delta));
+            renderSandbox();
+        }
+
+        function sandboxJumpTo(val) {
+            sandboxStopAuto();
+            sbStepIndex = parseInt(val, 10) || 0;
+            renderSandbox();
+        }
+
+        function sandboxToggleAuto() {
+            if (sbAutoTimer) {
+                sandboxStopAuto();
+            } else {
+                if (sbStepIndex >= sbTrace.length - 1) {
+                    sbStepIndex = 0;
+                }
+                const btn = document.getElementById('btn-sb-auto');
+                if (btn) btn.innerHTML = '⏸ 暂停播放';
+                sbAutoTimer = setInterval(() => {
+                    if (sbStepIndex < sbTrace.length - 1) {
+                        sbStepIndex++;
+                        renderSandbox();
+                    } else {
+                        sandboxStopAuto();
+                    }
+                }, 950);
+            }
+        }
+
+        function sandboxStopAuto() {
+            if (sbAutoTimer) {
+                clearInterval(sbAutoTimer);
+                sbAutoTimer = null;
+            }
+            const btn = document.getElementById('btn-sb-auto');
+            if (btn) btn.innerHTML = '⏯ 自动播放';
+        }
+
+        function renderSandbox() {
+            if (!sbTrace || sbTrace.length === 0) {
+                sbTrace = buildSandboxTrace(sbL1Values, sbL2Values);
+            }
+            const frame = sbTrace[sbStepIndex];
+
+            // 1. 更新预设按钮高亮
+            for (let k = 0; k < 4; k++) {
+                const btn = document.getElementById(`preset-btn-${k}`);
+                if (btn) {
+                    btn.className = (k === currentPresetIdx)
+                        ? 'px-3 py-1.5 rounded-lg text-xs font-semibold border transition bg-amber-500/20 text-amber-300 border-amber-500/50'
+                        : 'px-3 py-1.5 rounded-lg text-xs font-semibold border transition bg-slate-950 text-slate-400 border-slate-800 hover:text-white';
+                }
+            }
+
+            // 2. 更新三阶段横幅高亮
+            for (let s = 1; s <= 3; s++) {
+                const badge = document.getElementById(`stage-badge-${s}`);
+                const dot = document.getElementById(`stage-dot-${s}`);
+                if (s === frame.stage) {
+                    badge.className = 'px-3.5 py-2 rounded-xl border flex items-center justify-between transition bg-amber-500/15 border-amber-500/50 text-amber-200';
+                    dot.className = 'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-amber-500 text-slate-950';
+                } else {
+                    badge.className = 'px-3.5 py-2 rounded-xl border flex items-center justify-between transition bg-slate-950/60 border-slate-800 text-slate-400';
+                    dot.className = 'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-slate-800 text-slate-400';
+                }
+            }
+
+            // 3. 更新步骤说明与进度条
+            document.getElementById('sandbox-step-badge').textContent = `帧 ${sbStepIndex} / ${sbTrace.length - 1}`;
+            document.getElementById('sandbox-step-title').textContent = frame.title;
+            document.getElementById('sandbox-step-desc').textContent = frame.desc;
+
+            const slider = document.getElementById('sandbox-slider');
+            slider.max = sbTrace.length - 1;
+            slider.value = sbStepIndex;
+
+            document.getElementById('btn-sb-prev').disabled = (sbStepIndex === 0);
+            document.getElementById('btn-sb-next').disabled = (sbStepIndex === sbTrace.length - 1);
+
+            // 4. 更新寄存器监视面板
+            document.getElementById('watch-cur').textContent = frame.curLabel;
+            document.getElementById('watch-l1').textContent = frame.i < sbL1Values.length ? `节点(${sbL1Values[frame.i]})` : 'None';
+            document.getElementById('watch-l2').textContent = frame.j < sbL2Values.length ? `节点(${sbL2Values[frame.j]})` : 'None';
+            document.getElementById('watch-merged').textContent = frame.stitched.length > 0
+                ? `[${frame.stitched.map(x => x.val).join(' ➔ ')}]`
+                : '[] (空)';
+
+            // 5. 渲染右侧代码高亮（根据当前选择的引擎切换代码）
+            const activeCodeLines = sandboxEngine === 'newnode' ? USER_NEWNODE_PYTHON_LINES : STANDARD_PYTHON_LINES;
+            document.getElementById('sandbox-code-viewer').innerHTML = renderPythonLines(activeCodeLines, frame.lines);
+
+            // 6. 渲染左侧双轨拉链 + 成品链 SVG
+            document.getElementById('sandbox-svg-container').innerHTML = renderSandboxSVG(frame);
+        }
+
+        function renderSandboxSVG(frame) {
+            const isNew = sandboxEngine === 'newnode';
+            const maxLen = Math.max(sbL1Values.length, sbL2Values.length, 1);
+            const totalMergedLen = sbL1Values.length + sbL2Values.length;
+            const svgWidth = Math.max(660, 200 + Math.max(maxLen, totalMergedLen) * 92);
+
+            // 计算节点坐标表
+            const coords = {
+                'dummy': { x: 65, y: 125 }
+            };
+            sbL1Values.forEach((v, idx) => {
+                coords[`l1-${idx}`] = { x: 195 + idx * 100, y: 65, val: v, track: 'l1' };
+            });
+            sbL2Values.forEach((v, idx) => {
+                coords[`l2-${idx}`] = { x: 195 + idx * 100, y: 185, val: v, track: 'l2' };
+            });
+
+            // 绘制已缝合的黄金折线
+            const chainIds = ['dummy', ...frame.stitched.map(s => `${s.track}-${s.idx}`)];
+            let stitchedLinesSvg = '';
+            for (let k = 0; k < chainIds.length - 1; k++) {
+                const p1 = coords[chainIds[k]];
+                const p2 = coords[chainIds[k + 1]];
+                if (p1 && p2) {
+                    const isTailEdge = frame.stitched[k] && frame.stitched[k].isTailHook;
+                    stitchedLinesSvg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${isTailEdge ? '#10b981' : '#f59e0b'}" stroke-width="3.5"/>`;
+                }
+            }
+
+            const curCoord = coords[frame.curNodeId] || coords['dummy'];
+
+            return `
+            <svg viewBox="0 0 ${svgWidth} 310" class="w-full h-auto">
+                <!-- 轨道背景与标题 -->
+                <rect x="145" y="22" width="${svgWidth - 165}" height="78" rx="10" fill="#0f172a" stroke="#1e293b"/>
+                <text x="158" y="41" fill="#38bdf8" font-size="11" font-weight="bold" font-family="JetBrains Mono">上轨 l1</text>
+
+                <rect x="145" y="142" width="${svgWidth - 165}" height="78" rx="10" fill="#0f172a" stroke="#1e293b"/>
+                <text x="158" y="161" fill="#34d399" font-size="11" font-weight="bold" font-family="JetBrains Mono">下轨 l2</text>
+
+                <!-- 原生轨道连接虚线 -->
+                ${sbL1Values.map((_, idx) => idx < sbL1Values.length - 1
+                    ? `<line x1="${195 + idx * 100}" y1="65" x2="${195 + (idx + 1) * 100}" y2="65" stroke="#1e293b" stroke-width="2" stroke-dasharray="4 4"/>`
+                    : ''
+                ).join('')}
+                ${sbL2Values.map((_, idx) => idx < sbL2Values.length - 1
+                    ? `<line x1="${195 + idx * 100}" y1="185" x2="${195 + (idx + 1) * 100}" y2="185" stroke="#1e293b" stroke-width="2" stroke-dasharray="4 4"/>`
+                    : ''
+                ).join('')}
+
+                <!-- 比武雷达光束 -->
+                ${frame.comparing && frame.i < sbL1Values.length && frame.j < sbL2Values.length ? `
+                <line x1="${curCoord.x}" y1="${curCoord.y}" x2="${195 + frame.i * 100}" y2="65" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 4"/>
+                <line x1="${curCoord.x}" y1="${curCoord.y}" x2="${195 + frame.j * 100}" y2="185" stroke="#34d399" stroke-width="2" stroke-dasharray="5 4"/>
+                ` : ''}
+
+                <!-- 已缝合黄金路径 -->
+                ${stitchedLinesSvg}
+
+                <!-- Dummy 节点 -->
+                <g transform="translate(65, 125)" opacity="${frame.finished ? '0.4' : '1'}">
+                    <rect x="-34" y="-22" width="68" height="44" rx="10" fill="#451a03" stroke="#f59e0b" stroke-width="2.5"/>
+                    <text x="0" y="-2" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold" font-family="JetBrains Mono">dummy</text>
+                    <text x="0" y="13" text-anchor="middle" fill="#fde68a" font-size="10" font-family="JetBrains Mono">val: -1</text>
+                </g>
+
+                <!-- 上轨 l1 节点 -->
+                ${sbL1Values.map((val, idx) => {
+                    const id = `l1-${idx}`;
+                    const c = coords[id];
+                    const stitchedItem = frame.stitched.find(s => s.track === 'l1' && s.idx === idx);
+                    const strokeColor = stitchedItem ? (stitchedItem.isTailHook ? '#34d399' : '#f59e0b') : '#38bdf8';
+                    return `
+                    <g transform="translate(${c.x}, ${c.y})">
+                        <circle cx="0" cy="0" r="20" fill="#0c4a6e" stroke="${strokeColor}" stroke-width="${stitchedItem ? '3' : '2'}"/>
+                        <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold" font-family="JetBrains Mono">${val}</text>
+                        ${frame.i === idx ? `<text x="0" y="-26" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold" font-family="JetBrains Mono">👇 l1</text>` : ''}
+                    </g>`;
+                }).join('')}
+
+                ${frame.i >= sbL1Values.length ? `
+                <text x="${195 + sbL1Values.length * 100}" y="69" fill="#fb7185" font-size="12" font-weight="bold" font-family="JetBrains Mono">l1 = None</text>
+                ` : ''}
+
+                <!-- 下轨 l2 节点 -->
+                ${sbL2Values.map((val, idx) => {
+                    const id = `l2-${idx}`;
+                    const c = coords[id];
+                    const stitchedItem = frame.stitched.find(s => s.track === 'l2' && s.idx === idx);
+                    const strokeColor = stitchedItem ? (stitchedItem.isTailHook ? '#34d399' : '#f59e0b') : '#34d399';
+                    return `
+                    <g transform="translate(${c.x}, ${c.y})">
+                        <circle cx="0" cy="0" r="20" fill="#064e3b" stroke="${strokeColor}" stroke-width="${stitchedItem ? '3' : '2'}"/>
+                        <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold" font-family="JetBrains Mono">${val}</text>
+                        ${frame.j === idx ? `<text x="0" y="34" text-anchor="middle" fill="#34d399" font-size="11" font-weight="bold" font-family="JetBrains Mono">👆 l2</text>` : ''}
+                    </g>`;
+                }).join('')}
+
+                ${frame.j >= sbL2Values.length ? `
+                <text x="${195 + sbL2Values.length * 100}" y="189" fill="#fb7185" font-size="12" font-weight="bold" font-family="JetBrains Mono">l2 = None</text>
+                ` : ''}
+
+                <!-- 施工员 merge 徽章 -->
+                <g transform="translate(${curCoord.x}, ${curCoord.y + 34})">
+                    <rect x="-32" y="-11" width="64" height="19" rx="5" fill="#f59e0b"/>
+                    <text x="0" y="3" text-anchor="middle" fill="#0f172a" font-size="10" font-weight="bold" font-family="JetBrains Mono">👷 merge</text>
+                </g>
+
+                <!-- 底部独立新链表 / 线性拉直预览条 -->
+                <rect x="20" y="236" width="${svgWidth - 40}" height="62" rx="10" fill="#0f172a" stroke="#334155"/>
+                <text x="35" y="256" fill="#fbbf24" font-size="11" font-weight="bold" font-family="JetBrains Mono">
+                    ${isNew ? '🌟 你的 new_node 独立新轨道 (dummy ➔ ... ➔ merge):' : '⚡ O(1) 原地拼接线性视图 (dummy.next):'}
+                </text>
+                <text x="35" y="282" fill="#f8fafc" font-size="12" font-weight="bold" font-family="JetBrains Mono">
+                    dummy(-1) ${frame.stitched.length === 0 ? '➔ None' : '➔ ' + frame.stitched.map(s => (s.isNewNode ? `new(${s.val})` : `原(${s.val})`)).join(' ➔ ') + (frame.tailHooked ? ' ➔ None' : ' ➔ ... (👷merge 在尾端)')}
+                </text>
+            </svg>`;
+        }
+
+        // ==================== 6. 初始化启动 ====================
+        window.onload = function () {
+            renderCutTabs();
+            renderCurrentCut();
+            sbTrace = buildSandboxTrace(sbL1Values, sbL2Values);
+        };
+    </script>
+</body>
+</html>

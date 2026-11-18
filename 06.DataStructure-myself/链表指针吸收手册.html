@@ -1,0 +1,1561 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>链表指针 · 吸收手册｜206 / 203 逐帧推演</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230F1417'/%3E%3Crect x='4' y='12' width='9' height='9' fill='none' stroke='%23C8892B'/%3E%3Crect x='19' y='12' width='9' height='9' fill='none' stroke='%234C8E85'/%3E%3Cpath d='M13 16.5h6' stroke='%23C8892B' stroke-width='1.5'/%3E%3Cpath d='M17.5 14.5l2 2-2 2' stroke='%23C8892B' stroke-width='1.5' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://miaoda.feishu.cn">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap">
+<style>
+:root{
+  --bg:#0F1417; --panel:#141C20; --panel2:#19232A; --line:#26333A; --line-soft:#1C262C;
+  --tx:#C4D0D7; --dim:#7C8C96; --strong:#E9F0F3;
+  --amber:#C8892B; --amber-dim:#6E4C15; --teal:#4C8E85; --teal-dim:#22423F;
+  --verm:#B25248; --verm-dim:#40231F;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --rail:236px;
+}
+[data-theme="light"]{
+  --bg:#F1F4F3; --panel:#FFFFFF; --panel2:#E8EDEB; --line:#C9D4D0; --line-soft:#DCE4E1;
+  --tx:#1F2B2D; --dim:#5C6D6F; --strong:#0B1517;
+  --amber:#8A5C12; --amber-dim:#EFDFC2; --teal:#256B63; --teal-dim:#D6E9E5;
+  --verm:#8E3F36; --verm-dim:#F3DCD7;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--tx);
+  font-family:var(--sans); font-size:15px; line-height:1.72;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.wrap{display:grid;grid-template-columns:1fr;max-width:1440px;margin:0 auto}
+@media(min-width:1024px){ .wrap{grid-template-columns:var(--rail) minmax(0,1fr)} }
+
+/* ---------- 左栏 ---------- */
+.rail{
+  border-right:1px solid var(--line); background:var(--panel);
+  padding:22px 18px 40px; position:relative;
+}
+@media(min-width:1024px){
+  .rail{position:sticky;top:0;height:100vh;overflow-y:auto}
+}
+.rail-tag{
+  font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--dim);
+  text-transform:uppercase; padding-bottom:14px; border-bottom:1px solid var(--line-soft);
+}
+.rail-title{font-size:17px;font-weight:600;color:var(--strong);margin:16px 0 4px;letter-spacing:-.01em}
+.rail-sub{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:18px}
+.nav{display:flex;flex-direction:column;gap:1px}
+.nav a{
+  display:grid; grid-template-columns:28px 1fr; align-items:baseline; gap:8px;
+  padding:8px 6px; text-decoration:none; color:var(--dim); font-size:13.5px;
+  border-left:2px solid transparent; transition:color .15s,border-color .15s,background .15s;
+}
+.nav a:hover{color:var(--tx);background:var(--panel2)}
+.nav a.on{color:var(--strong);border-left-color:var(--amber);background:var(--panel2)}
+.nav a .n{font-family:var(--mono);font-size:11px;color:var(--amber);opacity:.8}
+.rail-foot{
+  margin-top:22px;padding-top:14px;border-top:1px solid var(--line-soft);
+  font-size:11.5px;color:var(--dim);font-family:var(--mono);line-height:1.9;
+}
+.theme-btn{
+  margin-top:16px;width:100%;padding:7px 10px;background:transparent;color:var(--dim);
+  border:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+  cursor:pointer;transition:.15s;
+}
+.theme-btn:hover{color:var(--amber);border-color:var(--amber-dim)}
+
+/* ---------- 主体 ---------- */
+.main{padding:0 22px 80px;min-width:0}
+@media(min-width:768px){ .main{padding:0 48px 100px} }
+
+header.hero{padding:52px 0 34px;border-bottom:1px solid var(--line)}
+.kicker{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;color:var(--amber);
+  text-transform:uppercase;margin-bottom:18px
+}
+h1{
+  font-size:clamp(28px,5.2vw,48px);line-height:1.18;margin:0 0 14px;
+  color:var(--strong);font-weight:700;letter-spacing:-.02em
+}
+h1 .mono{font-size:.92em;color:var(--amber)}
+.lede{max-width:62ch;color:var(--tx);font-size:15.5px;line-height:1.7;margin:0 0 26px}
+.hero-chain{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:13px;padding:16px 14px;
+  background:var(--panel);border:1px solid var(--line);margin-bottom:22px
+}
+.hc-cell{
+  min-width:34px;padding:5px 7px;text-align:center;border:1px solid var(--line);
+  background:var(--panel2);color:var(--tx)
+}
+.hc-cell.dead{border-color:var(--verm-dim);color:var(--verm);text-decoration:line-through}
+.hc-arrow{color:var(--dim)}
+.hc-ptr{color:var(--amber);font-size:11px;padding-left:2px}
+.hc-note{margin-left:auto;color:var(--dim);font-size:11px;padding-left:12px}
+.meta{
+  display:flex;flex-wrap:wrap;gap:8px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)
+}
+.meta b{color:var(--tx);font-weight:400}
+
+section.sec{padding:46px 0 40px;border-bottom:1px solid var(--line-soft);scroll-margin-top:24px}
+.sec-head{display:flex;gap:14px;align-items:baseline;margin-bottom:10px}
+.sec-num{font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:.1em}
+h2{font-size:22px;line-height:1.3;margin:0;color:var(--strong);font-weight:650;letter-spacing:-.01em}
+.sub{color:var(--dim);font-size:13.5px;margin:0 0 26px;max-width:76ch}
+h3{font-size:15px;margin:30px 0 10px;color:var(--strong);font-weight:650;
+   padding-left:10px;border-left:2px solid var(--amber-dim)}
+h3 .mono{color:var(--amber);font-size:12px;margin-right:8px}
+p{margin:0 0 14px;max-width:74ch}
+.quote{
+  border-left:2px solid var(--amber); background:var(--panel); padding:14px 16px; margin:20px 0;
+  font-size:14.5px; color:var(--strong);
+}
+.quote span{color:var(--dim);font-size:12px;display:block;margin-top:6px;font-family:var(--mono)}
+
+/* ---------- 表格 ---------- */
+.tbl-wrap{overflow-x:auto;margin:18px 0 22px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;table-layout:fixed;min-width:560px;font-size:13px}
+th{
+  background:var(--panel2);color:var(--strong);font-weight:600;text-align:left;
+  padding:9px 11px;border-bottom:1px solid var(--line);font-size:12.5px;white-space:nowrap
+}
+td{padding:10px 11px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--tx)}
+tr:last-child td{border-bottom:0}
+td.mono,th.mono{font-family:var(--mono);font-size:12px}
+td.k{color:var(--strong)}
+.bad{color:var(--verm)}
+.good{color:var(--teal)}
+.warn{color:var(--amber)}
+
+/* ---------- 列表块 ---------- */
+.row-list{margin:14px 0 20px;border-top:1px solid var(--line-soft)}
+.row-list li{
+  list-style:none;display:grid;grid-template-columns:34px 1fr;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:14px
+}
+.row-list li .idx{font-family:var(--mono);font-size:11px;color:var(--amber);padding-top:3px}
+ul{margin:0;padding:0}
+.row-list li b{color:var(--strong);font-weight:600}
+p.note{font-size:12.5px;color:var(--dim);max-width:74ch}
+
+/* ---------- 代码块 ---------- */
+.code{
+  background:#0A1013;border:1px solid var(--line);overflow-x:auto;
+  font-family:var(--mono);font-size:12.5px;line-height:1.85;margin:14px 0 20px
+}
+[data-theme="light"] .code{background:#101A1D}
+.cl{display:grid;grid-template-columns:34px 1fr;padding:0 4px}
+.cl-n{color:#46555E;text-align:right;padding-right:10px;user-select:none;font-size:11px}
+.cl-t{color:#C4D0D7;white-space:pre}
+.cl-on{background:rgba(200,137,43,.14);box-shadow:inset 2px 0 0 var(--amber)}
+.cl-on .cl-t{color:#F0E2C8}
+.cl-on .cl-n{color:var(--amber)}
+.code-head{
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:11px;color:var(--dim);
+  padding:7px 10px;border-bottom:1px solid var(--line);background:var(--panel)
+}
+
+/* ---------- 步进器 ---------- */
+.stepper{background:var(--panel);border:1px solid var(--line);margin:16px 0 26px}
+.sp-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.sp-round{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em}
+.sp-atom{
+  font-family:var(--mono);font-size:11px;color:var(--amber);border:1px solid var(--amber-dim);
+  padding:2px 7px;letter-spacing:.06em
+}
+.sp-atom.write{color:var(--verm);border-color:var(--verm-dim)}
+.sp-count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.sp-stage{overflow-x:auto;padding:6px 4px 0;background:
+  radial-gradient(circle at 1px 1px, var(--line-soft) 1px, transparent 0) 0 0/18px 18px}
+.stage-svg{display:block;width:100%;min-width:600px;height:auto}
+.stepper[data-stepper="slab"] .stage-svg{max-width:630px;margin:0 auto}
+.sp-ctrl{display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--line-soft);flex-wrap:wrap}
+.btn{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;
+  padding:6px 12px;background:transparent;color:var(--tx);border:1px solid var(--line);
+  cursor:pointer;min-height:32px;transition:.15s
+}
+.btn:hover{border-color:var(--amber);color:var(--amber)}
+.btn:disabled{opacity:.35;cursor:not-allowed;border-color:var(--line);color:var(--dim)}
+.btn.primary{color:var(--amber);border-color:var(--amber-dim)}
+.sp-lower{display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid var(--line-soft)}
+@media(min-width:900px){ .sp-lower{grid-template-columns:1fr 1.05fr} }
+.sp-read{padding:14px 14px 16px;border-bottom:1px solid var(--line-soft);min-width:0}
+@media(min-width:900px){ .sp-read{border-bottom:0;border-right:1px solid var(--line-soft)} }
+.sp-note{font-size:13px;color:var(--tx);margin:0 0 12px;min-height:40px}
+.sp-inv{
+  font-family:var(--mono);font-size:11.5px;color:var(--teal);
+  border-top:1px dashed var(--line);padding-top:10px;line-height:1.7
+}
+.sp-inv i{color:var(--dim);font-style:normal}
+.sp-code{overflow-x:auto;background:#0A1013;min-width:0}
+[data-theme="light"] .sp-code{background:#101A1D}
+.sp-code .cl{font-size:11.5px}
+
+/* SVG 样式 */
+.stage-svg .box-node{fill:var(--panel2);stroke:var(--line);stroke-width:1}
+.stage-svg .box-hidden{fill:transparent;stroke:var(--verm-dim);stroke-width:1;stroke-dasharray:4 3}
+.stage-svg .box-null{fill:transparent;stroke:var(--line);stroke-dasharray:3 3}
+.stage-svg .box-dummy{fill:transparent;stroke:var(--amber);stroke-width:1.4}
+.stage-svg .t-val{fill:var(--strong);font-size:15px;font-family:var(--mono)}
+.stage-svg .t-hidden{fill:var(--verm);font-size:15px;font-family:var(--mono);opacity:.7}
+.stage-svg .t-null{fill:var(--dim);font-size:11px;font-family:var(--mono);letter-spacing:.08em}
+.stage-svg .t-dummy{fill:var(--amber);font-size:11px;font-family:var(--mono);letter-spacing:.06em}
+.stage-svg .tt-addr{fill:#4E6068;font-size:9px;font-family:var(--mono);letter-spacing:.04em}
+.stage-svg .strike{stroke:var(--verm);stroke-width:1;opacity:.8}
+.stage-svg .edge{stroke:var(--teal);stroke-width:1.3;fill:none}
+.stage-svg .edge-hot{stroke:var(--amber);stroke-width:2;fill:none}
+.stage-svg #arw path{fill:var(--teal)}
+.stage-svg .ptrline{stroke:var(--line);stroke-width:1}
+.stage-svg .ptr{stroke:var(--line);stroke-width:1;fill:var(--panel2)}
+.stage-svg .ptr-cur{stroke:var(--amber);fill:rgba(200,137,43,.18)}
+.stage-svg .ptr-pre{stroke:var(--teal);fill:rgba(76,142,133,.16)}
+.stage-svg .ptr-nxt{stroke:var(--dim);fill:var(--panel2)}
+.stage-svg .ptr-ret{stroke:var(--verm);fill:rgba(178,82,72,.20)}
+.judge{
+  margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);
+  font-family:var(--mono);font-size:11.5px;color:var(--tx);line-height:1.7
+}
+.judge span{color:var(--amber);margin-right:6px}
+.judge em{font-style:normal;color:var(--teal)}
+.stage-svg .tt-ptr{font-size:10px;font-family:var(--mono);fill:var(--tx);letter-spacing:.02em}
+
+/* ---------- 区间模型 ---------- */
+.interval{margin:18px 0 22px;border:1px solid var(--line);background:var(--panel)}
+.iv-bar{display:flex;height:52px;font-family:var(--mono);font-size:11px}
+.iv-seg{display:flex;align-items:center;justify-content:center;letter-spacing:.06em}
+.iv-a{background:rgba(76,142,133,.14);color:var(--teal);border-right:0;flex:0 0 52%}
+.iv-b{background:rgba(200,137,43,.10);color:var(--amber);flex:1}
+.iv-mark{position:relative;height:26px}
+.iv-mark .bar{position:absolute;left:52%;top:0;width:1px;height:26px;background:var(--amber)}
+.iv-mark .lbl{
+  position:absolute;left:52%;transform:translateX(-50%);top:6px;
+  font-family:var(--mono);font-size:10px;color:var(--amber);background:var(--panel);padding:0 6px;white-space:nowrap
+}
+.iv-legend{padding:12px 14px;font-size:12.5px;color:var(--dim);border-top:1px solid var(--line-soft)}
+.iv-legend b{color:var(--tx);font-weight:600}
+
+/* ---------- 参照链 ---------- */
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-family:var(--mono);font-size:12.5px;margin:12px 0}
+.chain .c{padding:4px 8px;border:1px solid var(--line);background:var(--panel2);min-width:30px;text-align:center}
+.chain .c.a{border-color:var(--amber-dim);color:var(--amber)}
+.chain .c.v{border-color:var(--verm);color:var(--verm);text-decoration:line-through}
+.chain .ar{color:var(--dim)}
+.chain .out{margin-left:10px;color:var(--teal);font-size:11.5px}
+.chain .err{margin-left:10px;color:var(--verm);font-size:11.5px}
+
+/* ---------- 双栏对照 ---------- */
+.duo{display:grid;grid-template-columns:1fr;gap:14px;margin:18px 0 24px}
+@media(min-width:860px){ .duo{grid-template-columns:1fr 1fr} }
+.pane{border:1px solid var(--line);background:var(--panel);padding:14px}
+.pane-t{font-family:var(--mono);font-size:11px;letter-spacing:.08em;margin-bottom:10px}
+.pane.ok .pane-t{color:var(--teal)}
+.pane.no .pane-t{color:var(--verm)}
+.pane p{font-size:12.5px;color:var(--dim);margin:8px 0 0}
+
+/* ---------- 判据 ---------- */
+.rule{
+  display:grid;grid-template-columns:44px 1fr;border-top:1px solid var(--line-soft);padding:12px 0
+}
+.rule .rid{font-family:var(--mono);font-size:12px;color:var(--amber);padding-top:2px}
+.rule .body{min-width:0}
+.rule .iff{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-bottom:3px}
+.rule .then{font-size:13.5px;color:var(--strong)}
+.rule .why{font-size:11.5px;color:var(--dim);margin-top:4px;font-family:var(--mono)}
+
+/* ---------- 协议 ---------- */
+.proto{display:grid;grid-template-columns:1fr;gap:0;border:1px solid var(--line);background:var(--panel)}
+@media(min-width:860px){ .proto{grid-template-columns:repeat(3,1fr)} }
+.pr{padding:14px;border-bottom:1px solid var(--line-soft);min-width:0}
+@media(min-width:860px){ .pr{border-bottom:0;border-right:1px solid var(--line-soft)} }
+.pr:last-child{border:0}
+.pr-q{font-family:var(--mono);font-size:10.5px;color:var(--amber);letter-spacing:.08em;margin-bottom:6px}
+.pr-t{font-size:14px;color:var(--strong);margin-bottom:6px}
+.pr-b{font-size:12.5px;color:var(--dim);font-family:var(--mono);line-height:1.7}
+
+/* ---------- 时间轴 ---------- */
+.tl{display:grid;grid-template-columns:64px 18px minmax(0,1fr);margin:20px 0 24px;align-items:stretch}
+.tl .d{font-family:var(--mono);font-size:11px;color:var(--amber);padding-top:9px;text-align:right;padding-right:6px}
+.tl .ax{position:relative;justify-self:center;width:1px;background:var(--line);align-self:stretch;min-height:100%}
+.tl .dot{position:absolute;left:50%;transform:translateX(-50%);top:9px;width:7px;height:7px;background:var(--amber)}
+.tl .c{padding:0 0 20px 12px;min-width:0}
+.tl .c b{display:block;color:var(--strong);font-size:13.5px;font-weight:600}
+.tl .c span{display:block;color:var(--dim);font-size:12.5px;margin-top:2px}
+.tl .c .k{font-family:var(--mono);font-size:11px;color:var(--teal);margin-top:4px}
+
+/* ---------- 图表：实测 ---------- */
+.bars{margin:18px 0 22px;border:1px solid var(--line);background:var(--panel);padding:16px 14px}
+.bar-row{display:grid;grid-template-columns:96px 1fr 52px;gap:10px;align-items:center;margin-bottom:10px;font-size:12px}
+.bar-row .l{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.bar-track{height:8px;background:var(--panel2);position:relative}
+.bar-fill{height:100%;background:var(--teal)}
+.bar-fill.a{background:var(--amber)}
+.bar-row .v{font-family:var(--mono);font-size:11px;color:var(--tx);text-align:right}
+
+.foot{padding:36px 0 0;color:var(--dim);font-size:12px;font-family:var(--mono);line-height:1.9}
+.foot b{color:var(--tx);font-weight:400}
+
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+
+/* ---------- 移动端侧栏 ---------- */
+@media(max-width:1023px){
+  .rail{padding:14px 16px 16px;border-right:0;border-bottom:1px solid var(--line)}
+  .rail-tag{padding-bottom:8px;font-size:10.5px}
+  .rail-title{font-size:15.5px;margin:10px 0 2px}
+  .rail-sub{display:none}
+  .nav{flex-direction:row;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .nav a{border:1px solid var(--line);border-left:1px solid var(--line);padding:5px 9px;
+         grid-template-columns:22px 1fr;gap:4px;font-size:12.5px;min-height:34px;align-items:center}
+  .nav a.on{border-color:var(--amber);background:rgba(200,137,43,.10)}
+  .nav a:hover{background:var(--panel2)}
+  .rail-foot{display:none}
+  .theme-btn{width:auto;margin-top:10px;padding:5px 10px;font-size:10.5px}
+  header.hero{padding:30px 0 24px}
+  .main{padding:0 16px 60px}
+}
+
+@media print{
+  html[data-theme]{--bg:#fff;--panel:#fff;--panel2:#F2F4F3;--line:#C9D4D0;--line-soft:#DCE4E1;--tx:#1F2B2D;--dim:#5C6D6F;--strong:#0B1517;--amber:#8A5C12;--teal:#256B63;--verm:#8E3F36}
+  .rail,.sp-ctrl{display:none}
+  .wrap{display:block}
+  .code,.sp-code{background:#F7F9F8;color:#1F2B2D}
+  .cl-t,.cl-on .cl-t{color:#1F2B2D}
+  .cl-n{color:#7A8A8E}
+  .cl-on{background:#EDE0C4;box-shadow:inset 2px 0 0 #8A5C12}
+  .sp-stage{background:none}
+  section.sec{break-inside:avoid-page}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ================= 左栏 ================= -->
+<aside class="rail">
+  <div class="rail-tag">LeetCode / 206 · 203</div>
+  <div class="rail-title">链表指针 · 吸收手册</div>
+  <div class="rail-sub">从「脑内图像」到「可编译的原子序列」</div>
+  <nav class="nav" id="nav">
+    <a href="#s1"><span class="n">01</span>卡壳的机制解释</a>
+    <a href="#s1b"><span class="n">02</span>指针身份层</a>
+    <a href="#s2"><span class="n">03</span>区间模型（通用轴）</a>
+    <a href="#s3"><span class="n">04</span>原子操作 DSL</a>
+    <a href="#s4"><span class="n">05</span>206 逐帧推演</a>
+    <a href="#s5"><span class="n">06</span>203 逐帧推演</a>
+    <a href="#s6"><span class="n">07</span>判据库 R1–R5</a>
+    <a href="#s7"><span class="n">08</span>30 秒急救协议</a>
+    <a href="#s8"><span class="n">09</span>训练机制与执行表</a>
+    <a href="#s9"><span class="n">10</span>实测数据与结论</a>
+  </nav>
+  <div class="rail-foot">
+    环境 vm / 云主机<br>
+    Python 3.12.11<br>
+    校验 2000 组随机 · 0 失败
+  </div>
+  <button class="theme-btn" id="themeBtn" type="button">切换 深色 / 浅色</button>
+</aside>
+
+<!-- ================= 主体 ================= -->
+<main class="main">
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <div class="kicker">LeetCode 206 / 203 &nbsp;·&nbsp; 逐帧推演版</div>
+  <h1>图不是画出来的<br>是被<span class="mono">编译</span>出来的</h1>
+  <p class="lede">你的问题不在「不会画图」——你画得很好。问题在从「一张结果图」到「一行赋值语句」之间，缺一层<b>逐帧原子序列</b>。这张手册只做一件事：把这层补上，并把 206 / 203 的每一帧都摊开给你看。</p>
+
+  <div class="hero-chain">
+    <span class="hc-cell">1</span><span class="hc-arrow">→</span>
+    <span class="hc-cell">2</span><span class="hc-arrow">→</span>
+    <span class="hc-cell dead">6</span><span class="hc-arrow">→</span>
+    <span class="hc-cell">3</span><span class="hc-arrow">→</span>
+    <span class="hc-cell">4</span><span class="hc-arrow">→</span>
+    <span class="hc-cell">5</span><span class="hc-arrow">→</span>
+    <span class="hc-cell dead">6</span>
+    <span class="hc-ptr">↑ cur 站这里</span>
+    <span class="hc-note">这就是你脑内的图 —— 它只有一个状态，代码需要一整条轨迹</span>
+  </div>
+
+  <div class="meta">
+    <span>运行环境 <b>云主机（vm）· Python 3.12.11</b></span>
+    <span>样本 <b>206 反转 / 203 移除</b></span>
+    <span>校验 <b>2000 组随机 · 0 失败</b></span>
+    <span>读者 <b>INTJ · 模型优先</b></span>
+  </div>
+</header>
+
+<!-- ===== 01 卡壳的机制解释 ===== -->
+<section class="sec" id="s1">
+  <div class="sec-head"><span class="sec-num">01</span><h2>卡壳的机制解释：不是能力问题，是表示问题</h2></div>
+  <p class="sub">先定位断点，再谈改进。五条机制，按依赖顺序排列——第 1 条解释了后面四条。</p>
+
+  <h3><span class="mono">1.1</span>你持有的是「结果态图像」，代码需要的是「过程态序列」</h3>
+  <p>206 你脑中是 <span class="mono">1←2←3←4←5</span>；203 你脑中是 <span class="mono">1→2→␣→3→4→5</span>。两者都是<b>终点</b>。而代码要的是：<span class="mono">读下一帧 → 写指针 → 移动游标</span> 组成的<b>轨迹</b>。</p>
+  <p style="margin-bottom:6px">从终点直接跳到代码，等于要求 <span class="mono">f(结果) → 源码</span> 一步完成。正确链路是两步：</p>
+  <div class="chain">
+    <span class="c a">结果态图</span><span class="ar">⟶</span>
+    <span class="c v">原子序列（缺失）</span><span class="ar">⟶</span>
+    <span class="c">源码</span>
+    <span class="err">← 你每次都在这一步之外求解，所以必卡</span>
+  </div>
+  <div class="quote">不要把「图更清楚」当作解法。缺的不是清晰度，是<b>分辨率层级</b>：图是整张，代码是单帧。<span>这是卡壳的唯一数学原因，与天赋、经验、语言熟练度无关。</span></div>
+
+  <h3><span class="mono">1.2</span>粒度失配：概念操作 vs 原子操作</h3>
+  <p>你脑内的最小单位是「概念」——「删掉 6」是一个动作。代码的最小单位是「单次赋值」。中间差了一次展开：</p>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:26%"><col style="width:44%"><col style="width:30%"></colgroup>
+      <thead><tr><th>你脑内的单位</th><th>代码里必须展开成</th><th>展开倍率</th></tr></thead>
+      <tbody>
+        <tr><td class="k">「删掉 6」</td><td class="mono">读 cur.next.val → 命中则 cur.next = cur.next.next</td><td class="mono">1 → 2 原子 + 1 决策</td></tr>
+        <tr><td class="k">「反转一根箭头」</td><td class="mono">nxt = cur.next → cur.next = pre → 两个游标前移</td><td class="mono">1 → 4 原子</td></tr>
+        <tr><td class="k">「往前找」</td><td class="mono">while cur.next is not None: …</td><td class="mono">1 → 1 循环头 + n 轮</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>你的思维以概念为单位（高效、抽象、可上卷），代码以赋值为单位（低效、序列化、不可压缩）。<b>中间没有「概念 → 原子」展开器，写第一行时脑内就没有「下一个原子」。</b>这就是「心中有图，手上懵」的语义学定义：你存的是名字，代码要的是动作。</p>
+
+  <h3><span class="mono">1.3</span>注意力架构：编码时你在做全局推演</h3>
+  <p>链表错误只有三种：断链（丢后继）、丢前驱（删不掉/回不去）、死循环（指针打转）。三者同一个根因：<b>你在写第 3 行时已经开始推演第 9 行，第 3 行的局部状态被挤出。</b></p>
+  <p>链表题的正确性只依赖<b>当前局部不变量</b>，完全不依赖全局图。你在编码时加载整张图 → 认知负荷超载 → 局部状态溢出。这是可修的结构问题：<span class="mono">编码期只允许持有 3 个变量的状态</span>。</p>
+
+  <h3><span class="mono">1.4</span>三类记忆被混为一谈（效率低的根因）</h3>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:16%"><col style="width:40%"><col style="width:44%"></colgroup>
+      <thead><tr><th>层</th><th>定义</th><th>你的现状</th></tr></thead>
+      <tbody>
+        <tr><td class="k mono">L1 陈述性</td><td>看懂、能讲、有图</td><td class="good">已具备（206/203 你都懂了）</td></tr>
+        <tr><td class="k mono">L2 程序性</td><td>手能自动写出，不需要回忆</td><td class="bad">缺失 —— 所以一写就卡</td></tr>
+        <tr><td class="k mono">L3 判据性</td><td>换皮题能识别出同一模型</td><td class="bad">缺失 —— 206 的坑 203 又踩一遍</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="quote">INTJ 的吸收瓶颈 90% 发生在 L2 / L3，而他们往往把 L1 的完成误判为任务结束。<span>你不是学得慢，是学得快、停得早：L1 十分钟就通了，然后进入下一题的新鲜感，L2/L3 永远是 0。</span></div>
+
+  <h3><span class="mono">1.5</span>上一题的坑没有上卷为判据，所以必然复发</h3>
+  <p>206 踩的是 <span class="mono">ListNode = ListNode.next</span>（变量遮蔽类名）；203 卡的是「不知道该站在哪个节点」。表面两个坑，实际一个投影：</p>
+  <p><b>共同根因：做「高层语义操作」时，没有经过「原子操作合法性检查」这一关。</b></p>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:20%"><col style="width:34%"><col style="width:46%"></colgroup>
+      <thead><tr><th>题</th><th>违规动作</th><th>被违反的合法性</th></tr></thead>
+      <tbody>
+        <tr><td class="k">206</td><td class="mono">ListNode = ListNode.next</td><td>类型名不是可写变量（命名合法性）</td></tr>
+        <tr><td class="k">203</td><td class="mono">cur = head（游标站在待删节点）</td><td>删除必须站前驱（位置合法性）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>你复盘时存的是「这道题的正确代码」（叶子节点），而不是「合法性判据」（可上卷的高层节点）。<b>存储层级错了 → 无法迁移 → 同类题必然复发。</b></p>
+
+  <h3><span class="mono">1.6</span>为什么 203 比 206 更卡</h3>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:18%"><col style="width:38%"><col style="width:44%"></colgroup>
+      <thead><tr><th>维度</th><th>206 反转</th><th>203 删除</th></tr></thead>
+      <tbody>
+        <tr><td class="k">图的性质</td><td>几何变换（箭头反向），一张图覆盖全程</td><td>拓扑剪接（跨越边），且<b>起点可能被删</b></td></tr>
+        <tr><td class="k">可闭合性</td><td class="good">静态可闭合</td><td class="bad">在「head 是否消失」处分叉 → <b>需要两张图</b></td></tr>
+        <tr><td class="k">头节点</td><td>一定存在，最后变成尾节点</td><td>可能被删光（<span class="mono">[7,7,7,7]</span>）</td></tr>
+        <tr><td class="k">原子数</td><td>4 个（读 / 写 / 两次游标移动）</td><td>5 个（多一个「是否前移」的决策）</td></tr>
+        <tr><td class="k">建节点</td><td>栈法要建；双指针不建</td><td>dummy 要建 1 个 → 触发「类名是否可用」问题</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="quote">203 的图不是一张图，是两张（head 存活 / head 被删）。你脑内只有一张，所以必在第二张的分支处崩。<span>解决方案不是画得更细，而是用哨兵把两张图<b>归并</b>成一张 —— 这才是 dummy 的建模意义，而不是一个技巧。</span></div>
+</section>
+
+<!-- ===== 02 指针身份层 ===== -->
+<section class="sec" id="s1b">
+  <div class="sec-head"><span class="sec-num">02</span><h2>指针身份层：你手上到底有什么</h2></div>
+  <p class="sub">这一节不解决算法，只解决一个前置问题：变量、对象、返回值分别是什么。跳过它，后面 6 个原子全部落空——因为你会不知道该对谁赋值。</p>
+
+  <div class="quote">判定：你卡的从来不是「没想清楚」，而是<b>把「变量」当成「对象」</b>。<br>换标签不改图，改盒子才改图。<span>这条不通，206 与 203 会反复回来找你。</span></div>
+
+  <h3><span class="mono">2.1</span>判题机的 5 步（发生在你函数被调用之前）</h3>
+  <p>你在界面上看到的输入是一个<b>数组</b>；函数里拿到的却是一个<b>节点对象</b>。中间这层转换由判题机完成：</p>
+  <div class="code">
+    <div class="code-head"><span>判题机的实际动作（简化重写）</span><span>不是 LeetCode 源码，是等价过程</span></div>
+    <div class="cl"><span class="cl-n">1</span><span class="cl-t">arr   = [1, 2, 6, 3, 4, 5, 6]              <span style="color:#7C8C96"># 输入是数组</span></span></div>
+    <div class="cl"><span class="cl-n">2</span><span class="cl-t">nodes = [ListNode(v) for v in arr]        <span style="color:#C8892B"># ① 造盒子：7 个对象进内存</span></span></div>
+    <div class="cl"><span class="cl-n">3</span><span class="cl-t">for i in range(len(nodes) - 1):</span></div>
+    <div class="cl"><span class="cl-n">4</span><span class="cl-t">    nodes[i].next = nodes[i + 1]          <span style="color:#4C8E85"># ② 串起来：改盒子的 next</span></span></div>
+    <div class="cl"><span class="cl-n">5</span><span class="cl-t">ret = Solution().removeElements(nodes[0], 6)   <span style="color:#C8892B"># ③ 只把第 1 个盒子的引用传给你</span></span></div>
+    <div class="cl"><span class="cl-n">6</span><span class="cl-t">seen = walk(ret)                          <span style="color:#7C8C96"># ④ 从你 return 的盒子开始，沿 .next 走</span></span></div>
+    <div class="cl"><span class="cl-n">7</span><span class="cl-t">assert seen == [1, 2, 3, 4, 5]             <span style="color:#7C8C96"># ⑤ 与期望数组逐项比较</span></span></div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:11%"><col style="width:33%"><col style="width:26%"><col style="width:30%"></colgroup>
+      <thead><tr><th>步</th><th>判题机在做什么</th><th>你此刻拿到的东西</th><th>你能做的</th></tr></thead>
+      <tbody>
+        <tr><td class="k mono">①</td><td>把数组元素逐个 new 成 ListNode</td><td>无（你看不见）</td><td>无</td></tr>
+        <tr><td class="k mono">②</td><td>把相邻节点的 <span class="mono">.next</span> 串好</td><td>无</td><td>无</td></tr>
+        <tr><td class="k mono">③</td><td>把<b>第一个对象</b>的引用作为 head 传参</td><td class="good">一个节点对象 + 一张叫 head 的标签</td><td>读它、改它、顺着 .next 摸</td></tr>
+        <tr><td class="k mono">④</td><td>拿你的返回值当新头，遍历收集 val</td><td>无（你已退出函数）</td><td>只能提前决定 return 谁</td></tr>
+        <tr><td class="k mono">⑤</td><td>与期望数组比较</td><td>Accept / Wrong Answer</td><td>无</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="quote">所以「判题机不关心你函数里干了什么」这句话要精确化成：<b>它只关心「你 return 的那个盒子，往后能不能走出期望序列」。</b><span>你函数里所有操作，只有能改变「从返回值可达的节点集合及其顺序」时，才算数。</span></div>
+
+  <h3><span class="mono">2.2</span>你手上只有三层，没有第四层</h3>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:14%"><col style="width:28%"><col style="width:22%"><col style="width:18%"><col style="width:18%"></colgroup>
+      <thead><tr><th>层</th><th>具体对象</th><th>典型动作</th><th>改得动链表</th><th>判题机可见</th></tr></thead>
+      <tbody>
+        <tr><td class="k">变量层<span class="mono" style="color:var(--dim);font-size:10px"> 贴纸</span></td><td class="mono">head / cur / pre / tra</td><td class="mono">cur = cur.next</td><td class="bad">否，只是换贴纸</td><td>仅通过 return 间接</td></tr>
+        <tr style="background:rgba(200,137,43,.08)"><td class="k">对象层<span class="mono" style="color:var(--dim);font-size:10px"> 盒子</span></td><td class="mono">任意节点的 .val / .next</td><td class="mono">cur.next = x</td><td class="good"><b>是，唯一通道</b></td><td class="good">间接（结构变→序列变）</td></tr>
+        <tr><td class="k">返回层</td><td class="mono">return 的那个节点</td><td class="mono">return dummy.next</td><td>—</td><td class="good"><b>唯一入口</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">没有第四层。你不能「操作整条链表」——链表不是对象，它是一个<b>从某个盒子出发的可达集合</b>。这句话解释了两件事：为什么「丢失的引用找不回」（没有反向可达），以及为什么「删头必须换返回值或加哨兵」（头的可达集合变了，但你没别的通道通知判题机）。</p>
+
+  <h3><span class="mono">2.3</span>交互实验台：贴纸与盒子，哪个才改图</h3>
+  <p>7 帧，样例 <span class="mono">1 → 2 → 3 → 4</span>。每一帧同时给你三样：图、执行的那行代码、<b>判题机从 return 位置看到的序列</b>。重点看第 4 帧与第 3 帧的差别。</p>
+
+  <div class="stepper" data-stepper="slab">
+    <div class="sp-head">
+      <span class="sp-round" data-round>第 0 帧 / 入口</span>
+      <span class="sp-atom" data-atom>入参</span>
+      <span class="sp-count" data-count>1 / 7</span>
+    </div>
+    <div class="sp-stage" data-stage></div>
+    <div class="sp-ctrl">
+      <button class="btn" data-act="prev" type="button">← 上一帧</button>
+      <button class="btn primary" data-act="next" type="button">下一帧 →</button>
+      <button class="btn" data-act="play" type="button">自动播放</button>
+      <button class="btn" data-act="reset" type="button">重置</button>
+    </div>
+    <div class="sp-lower">
+      <div class="sp-read">
+        <p class="sp-note" data-note>判题机把节点 1 的引用传给你，head 贴在这个盒子上。</p>
+        <div class="sp-inv" data-inv><i>本帧结论：</i>你只有一个入口</div>
+        <div class="judge" data-judge><span>判题机看到：</span></div>
+      </div>
+      <div class="sp-code" data-code></div>
+    </div>
+  </div>
+
+  <h3><span class="mono">2.4</span>八组实测（云主机 vm · Python 3.12.11）</h3>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:9%"><col style="width:26%"><col style="width:37%"><col style="width:28%"></colgroup>
+      <thead><tr><th>编号</th><th>动作</th><th>实测输出</th><th>结论</th></tr></thead>
+      <tbody>
+        <tr><td class="k mono">E1</td><td class="mono">alias = a; alias.val = 99</td><td class="mono">a.val 也变成 99；a is alias → True</td><td>两个名字 = 同一个盒子</td></tr>
+        <tr><td class="k mono">E2</td><td class="mono">cur = cur.next</td><td class="mono">从 h 出发仍是 [1,2,3]</td><td class="good">换贴纸，图不变</td></tr>
+        <tr><td class="k mono">E3</td><td class="mono">h = h.next</td><td class="mono">从 h 出发 [2,3]（原链仍是 3 个盒子）</td><td>起点变了，不是删了</td></tr>
+        <tr><td class="k mono">E4</td><td class="mono">h.next = h.next.next</td><td class="mono">[1,3]</td><td class="good">改盒子，图才变</td></tr>
+        <tr><td class="k mono">E5</td><td>删头后仍 return 旧头</td><td class="mono">旧头仍能走出 [1,2,3]</td><td class="bad">交错贴纸 = 等于没删</td></tr>
+        <tr><td class="k mono">E6</td><td class="mono">d = ListNode(0); d.next = h</td><td class="mono">从 d.next 出发 [1,2,3]</td><td>dummy 是新起点，不是新链</td></tr>
+        <tr><td class="k mono">E7</td><td class="mono">1 → 4 跳过 2、3，仍持有 node2</td><td class="mono">head 侧 [1,4]；私藏侧 [2,3,4]</td><td class="bad">单向：丢了就回不去</td></tr>
+        <tr><td class="k mono">E8</td><td class="mono">None.val</td><td class="mono">AttributeError: 'NoneType' …</td><td>读 .val 前必须确认盒子存在</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">对应实验脚本已在云主机实跑；E5 与 E7 是「为什么必须返回 dummy.next / 为什么顺序公理不可违」的物理证据，不是记忆点。</p>
+
+  <h3><span class="mono">2.5</span>口诀与骨架：把身份层接回 A1–A6</h3>
+  <div class="quote">
+    <b>进门只拿一张贴纸（head）→ 顺 .next 摸盒子 → 只能改盒子的 .next → 出门只交一张贴纸（return）。</b>
+    <span>七个动作、六个原子、三层身份，一一对应。背口诀，不背题。</span>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:30%"><col style="width:18%"><col style="width:52%"></colgroup>
+      <thead><tr><th>动作</th><th>属于哪层 / 哪个原子</th><th>为什么</th></tr></thead>
+      <tbody>
+        <tr><td class="k">挪贴纸 <span class="mono">cur = cur.next</span></td><td class="mono">变量层 · A5</td><td>只换视角，结构不动；所以它永远安全，也永远单独不产生效果</td></tr>
+        <tr><td class="k">改盒子 <span class="mono">cur.next = x</span></td><td class="mono">对象层 · A4</td><td>唯一能改图的动作；也是唯一会销毁旧信息的动作（顺序公理来源）</td></tr>
+        <tr><td class="k">造盒子 <span class="mono">ListNode(0)</span></td><td class="mono">对象层 · A6</td><td>唯一能凭空产生节点的动作；dummy 就是靠它存在</td></tr>
+        <tr><td class="k">交贴纸 <span class="mono">return ...</span></td><td class="mono">返回层</td><td>判题机唯一入口；交谁，决定它看见哪条链</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code">
+    <div class="code-head"><span>七行骨架：每一行都标注「贴纸 / 盒子」</span><span>建议手抄三遍</span></div>
+    <div class="cl"><span class="cl-n">1</span><span class="cl-t">dummy = ListNode(0)        <span style="color:#C8892B"># 造盒子（A6）</span></span></div>
+    <div class="cl"><span class="cl-n">2</span><span class="cl-t">dummy.next = head          <span style="color:#B25248"># 改盒子（A4）</span></span></div>
+    <div class="cl"><span class="cl-n">3</span><span class="cl-t">pre = dummy                <span style="color:#4C8E85"># 贴纸（A5）</span></span></div>
+    <div class="cl"><span class="cl-n">4</span><span class="cl-t">while pre.next:            <span style="color:#7C8C96"># 读盒子</span></span></div>
+    <div class="cl"><span class="cl-n">5</span><span class="cl-t">    if pre.next.val == val:</span></div>
+    <div class="cl"><span class="cl-n">6</span><span class="cl-t">        pre.next = pre.next.next   <span style="color:#B25248"># 改盒子（A4，贴纸不动）</span></span></div>
+    <div class="cl"><span class="cl-n">7</span><span class="cl-t">    else: pre = pre.next           <span style="color:#4C8E85"># 贴纸（A5）</span></span></div>
+    <div class="cl"><span class="cl-n">8</span><span class="cl-t">return dummy.next          <span style="color:#C8892B"># 交贴纸</span></span></div>
+  </div>
+
+  <p class="note">为什么 INTJ 特别容易卡在这一层：你的建模单位是「关系」，但这里有两套关系叠在一起——<b>名字→对象的绑定关系</b>（可以随便改，无副作用）和<b>对象→对象的边关系</b>（改了就是改图）。混层的瞬间，你的模型会同时出现两个"当前节点"，于是必然卡壳。分开它们，卡壳消失。</p>
+</section>
+
+<!-- ===== 03 区间模型 ===== -->
+<section class="sec" id="s2">
+  <div class="sec-head"><span class="sec-num">03</span><h2>区间模型：所有指针题共享的那根轴</h2></div>
+  <p class="sub">这一节是通用模块，不只服务链表。它把「双指针 / 滑动窗口 / 链表游标」统一成同一句话：<b>指针题的实质是维护两个区间的边界。</b></p>
+
+  <p>任何指针类题目，在任意一帧都只有三个对象：<b>已处理区间</b>、<b>未处理区间</b>、以及<b>边界游标</b>。正确性不来自你能否想象全图，而来自「已处理区间的不变量」始终成立。</p>
+
+  <div class="interval">
+    <div class="iv-bar">
+      <div class="iv-seg iv-a">已验证区（不变量在此成立）</div>
+      <div class="iv-seg iv-b">未验证区（尚未触碰）</div>
+    </div>
+    <div class="iv-mark"><span class="bar"></span><span class="lbl">↑ 游标 = 唯一边界</span></div>
+    <div class="iv-legend">
+      <b>操作只有两种：</b>扩张（把下一个元素纳入已验证区）／ 收缩（把元素踢出窗口）。<br>
+      <b>编码只有一句判据：</b>每次移动游标之前，确认「已验证区的不变量仍成立」。
+    </div>
+  </div>
+
+  <h3><span class="mono">3.1</span>同一根轴在三类题上的实例</h3>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:19%"><col style="width:27%"><col style="width:27%"><col style="width:27%"></colgroup>
+      <thead><tr><th>题族</th><th>已验证区</th><th>边界游标</th><th>不变量</th></tr></thead>
+      <tbody>
+        <tr><td class="k">206 反转</td><td>已反转段（箭头向左）</td><td class="mono">cur</td><td class="mono">pre = 已反转段的头</td></tr>
+        <tr><td class="k">203 删除</td><td>已确认保留段（无 val）</td><td class="mono">cur（其 next 待校验）</td><td class="mono">cur 指向已确认保留的最后一个节点</td></tr>
+        <tr><td class="k">滑动窗口</td><td>窗口内元素（满足约束）</td><td class="mono">[l, r) 半开区间</td><td class="mono">r 之前的全部处理完；窗口内恒满足条件</td></tr>
+        <tr><td class="k">快慢指针</td><td>慢指针之前（已确认无环区）</td><td class="mono">slow / fast</td><td class="mono">fast - slow 恒为 k</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quote">区间模型是你已有的资产，但要升级一个用法：<b>把「画图」换成「写不变量」。</b>图只能表达一个状态；不变量能表达一整族状态。<span>INTJ 擅长不变量，不擅长逐帧记忆 —— 这正好是你的优势区，别浪费在画图上。</span></div>
+
+  <p class="note">顺带一条工程习惯：区间一律用<b>半开</b> <span class="mono">[l, r)</span>，长度 = <span class="mono">r - l</span>，空区间 = <span class="mono">l == r</span>，无需 ±1 修正。链表里的对应表达是「cur 指向已确认段的最后一个」，等价于 <span class="mono">[dummy.next, cur]</span> 闭区间。</p>
+</section>
+
+<!-- ===== 03 原子操作 DSL ===== -->
+<section class="sec" id="s3">
+  <div class="sec-head"><span class="sec-num">04</span><h2>原子操作 DSL：链表只有 6 个动作，且写操作只有 1 个</h2></div>
+  <p class="sub">这是本手册的核心资产。掌握它，链表模块从「无数道题」坍缩为「一个操作符的排列组合」。</p>
+
+  <p>云主机实测确认：ListNode 实例的读写面只有 <span class="mono">val</span> 与 <span class="mono">next</span> 两个字段。由此可推出链表领域的<b>最小完备操作集</b>。</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:11%"><col style="width:24%"><col style="width:19%"><col style="width:46%"></colgroup>
+      <thead><tr><th>编号</th><th>原子操作</th><th>代码形态</th><th>性质</th></tr></thead>
+      <tbody>
+        <tr><td class="k mono">A1</td><td>读值</td><td class="mono">x.val</td><td>读，无副作用</td></tr>
+        <tr><td class="k mono">A2</td><td>读后继</td><td class="mono">x.next</td><td>读，无副作用</td></tr>
+        <tr><td class="k mono">A3</td><td>判空</td><td class="mono">x is None</td><td>读，无副作用</td></tr>
+        <tr style="background:rgba(178,82,72,.09)"><td class="k mono warn">A4</td><td><b>改后继</b></td><td class="mono">x.next = y</td><td><b>唯一的结构写操作 · 破坏性</b></td></tr>
+        <tr><td class="k mono">A5</td><td>移动游标</td><td class="mono">p = x</td><td>绑定，不改图</td></tr>
+        <tr><td class="k mono">A6</td><td>新建节点</td><td class="mono">ListNode(v)</td><td>构造，分配新内存</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quote">反转、删除、插入、合并、拆分、环检测修复 —— 全部只是 <b>A4 的时序编排 + A5 的游标管理</b>。<span>你要背的不是题型，是一个操作符的排列组合规则。</span></div>
+
+  <h3><span class="mono">4.1</span>顺序公理（唯一必须背死的一条）</h3>
+  <p><b>A4 是破坏性写：一旦执行，旧的 <span class="mono">x.next</span> 永久丢失。因此任何 A4 之前，必须完成所有「需要旧 next 信息」的读取。</b></p>
+
+  <div class="duo">
+    <div class="pane ok">
+      <div class="pane-t">✓ 先读后写（正确）</div>
+      <div class="chain">
+        <span class="c">1</span><span class="ar">→</span><span class="c">2</span><span class="ar">→</span><span class="c">3</span>
+        <span class="out">输出 3←2←1</span>
+      </div>
+      <p class="mono" style="color:var(--dim)">nxt = cur.next &nbsp;→&nbsp; cur.next = pre</p>
+      <p>旧 next 先进 <span class="mono">nxt</span> 安全区，A4 执行后仍能找到下一个节点。</p>
+    </div>
+    <div class="pane no">
+      <div class="pane-t">✗ 先写后读（实测崩）</div>
+      <div class="chain">
+        <span class="c">1</span><span class="ar">→</span><span class="c">NULL</span>
+        <span class="c v">2</span><span class="c v">3</span>
+        <span class="err">实测输出 [1]</span>
+      </div>
+      <p class="mono" style="color:var(--dim)">cur.next = pre &nbsp;→&nbsp; nxt = cur.next</p>
+      <p>写完再读，「下一个」已经是 <span class="mono">None</span>，链表在第一个节点处断掉，节点 2、3 成为孤儿。</p>
+    </div>
+  </div>
+  <p class="note">这不是理论推演。云主机脚本里 <span class="mono">wrong_order()</span> 函数对 <span class="mono">[1,2,3,4,5]</span> 的实测输出就是 <span class="mono">[1]</span>，预期 <span class="mono">[5,4,3,2,1]</span>。<b>一条公理覆盖了你 90% 的断链 / 丢后继 / 死循环。</b></p>
+
+  <h3><span class="mono">4.2</span>编译规则表：脑内意图 → 原子序列</h3>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:30%"><col style="width:46%"><col style="width:24%"></colgroup>
+      <thead><tr><th>脑内意图（概念）</th><th>编译出的原子序列</th><th>原子编号</th></tr></thead>
+      <tbody>
+        <tr><td class="k">「删掉 cur 后面的节点」</td><td class="mono">cur.next = cur.next.next（游标不动）</td><td class="mono">A4</td></tr>
+        <tr><td class="k">「保留它，往下走」</td><td class="mono">cur = cur.next</td><td class="mono">A5</td></tr>
+        <tr><td class="k">「反转一根箭头」</td><td class="mono">nxt = cur.next → cur.next = pre → pre = cur → cur = nxt</td><td class="mono">A2 A4 A5 A5</td></tr>
+        <tr><td class="k">「插入 x 到 p 后面」</td><td class="mono">x.next = p.next → p.next = x（<b>先接后，再接前</b>）</td><td class="mono">A2 A4 A4</td></tr>
+        <tr><td class="k">「保证起点不被删」</td><td class="mono">dummy = ListNode(0) → dummy.next = head</td><td class="mono">A6 A4</td></tr>
+        <tr><td class="k">「返回链表」</td><td class="mono">return dummy.next 或 return pre（<b>永不 return cur</b>）</td><td class="mono">A5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3><span class="mono">4.3</span>命名合法性（206 报错的直接修补）</h3>
+  <p>把 206 的坑固化为一条前置检查，而不是记住那道题：<b>类型名 / 类名 / 导入名，一律禁止作为可写变量。</b></p>
+  <div class="code">
+    <div class="code-head"><span>命名合法性 · 反例与正例</span><span>Python 3.12</span></div>
+    <div class="cl"><span class="cl-n">1</span><span class="cl-t">ListNode = ListNode.next      <span style="color:#B25248"># ✗ 遮蔽类名 → UnboundLocalError</span></span></div>
+    <div class="cl"><span class="cl-n">2</span><span class="cl-t">cur = head                    <span style="color:#4C8E85"># ✓ 游标用独立命名</span></span></div>
+  </div>
+  <p>原因：函数体内任何对 <span class="mono">ListNode</span> 的赋值，会让 Python 把它判定为<b>局部变量</b>；此时再写 <span class="mono">ListNode(...)</span> 就是在赋值前访问未绑定名。这不是「不熟悉语法」，是<b>命名空间被覆盖</b>。</p>
+</section>
+
+<!-- ===== 04 206 ===== -->
+<section class="sec" id="s4">
+  <div class="sec-head"><span class="sec-num">05</span><h2>206. 反转链表 —— 逐帧推演</h2></div>
+  <p class="sub">样例 <span class="mono">1 → 2 → 3 → 4 → 5</span>。每一帧只允许做一个原子动作。用「下一步」走完，你会看到「图」与「代码行」在同一帧里对齐。</p>
+
+  <div class="stepper" data-stepper="s206">
+    <div class="sp-head">
+      <span class="sp-round" data-round>第 0 轮 / 初始</span>
+      <span class="sp-atom" data-atom>初始</span>
+      <span class="sp-count" data-count>1 / 22</span>
+    </div>
+    <div class="sp-stage" data-stage></div>
+    <div class="sp-ctrl">
+      <button class="btn" data-act="prev" type="button">← 上一步</button>
+      <button class="btn primary" data-act="next" type="button">下一步 →</button>
+      <button class="btn" data-act="play" type="button">自动播放</button>
+      <button class="btn" data-act="reset" type="button">重置</button>
+    </div>
+    <div class="sp-lower">
+      <div class="sp-read">
+        <p class="sp-note" data-note>初始：cur 指向原表头，pre 悬空（新的表尾）。</p>
+        <div class="sp-inv" data-inv><i>不变量：</i>pre 指向已反转段的头节点（初始为 None）</div>
+      </div>
+      <div class="sp-code" data-code></div>
+    </div>
+  </div>
+
+  <h3><span class="mono">5.1</span>三种写法（全部保留，实跑通过）</h3>
+
+  <p><b>解法 A｜栈重建法</b> —— 你的原始思路：线性序列化 → 逆序弹出 → 重建链表。空间 O(n)，逻辑最直观。</p>
+  <div class="code">
+    <div class="code-head"><span>A｜栈重建 · O(n) 空间</span><span>2 次遍历</span></div>
+    <div class="cl"><span class="cl-n">1</span><span class="cl-t">class Solution:</span></div>
+    <div class="cl"><span class="cl-n">2</span><span class="cl-t">    def reverseList(self, head: ListNode | None) -&gt; ListNode | None:</span></div>
+    <div class="cl"><span class="cl-n">3</span><span class="cl-t">        if head is None:                     <span style="color:#7C8C96"># 空链表直接返回</span></span></div>
+    <div class="cl"><span class="cl-n">4</span><span class="cl-t">            return None</span></div>
+    <div class="cl"><span class="cl-n">5</span><span class="cl-t">        tmp, cur = [], head</span></div>
+    <div class="cl"><span class="cl-n">6</span><span class="cl-t">        while cur:                           <span style="color:#7C8C96"># 阶段1 遍历入栈</span></span></div>
+    <div class="cl"><span class="cl-n">7</span><span class="cl-t">            tmp.append(cur.val)</span></div>
+    <div class="cl"><span class="cl-n">8</span><span class="cl-t">            cur = cur.next</span></div>
+    <div class="cl"><span class="cl-n">9</span><span class="cl-t">        newHead = ListNode(tmp.pop())        <span style="color:#C8892B"># 阶段2 弹出栈顶作新头</span></span></div>
+    <div class="cl"><span class="cl-n">10</span><span class="cl-t">        t = newHead</span></div>
+    <div class="cl"><span class="cl-n">11</span><span class="cl-t">        while tmp:                           <span style="color:#7C8C96"># 阶段3 串成新链表</span></span></div>
+    <div class="cl"><span class="cl-n">12</span><span class="cl-t">            t.next = ListNode(tmp.pop())</span></div>
+    <div class="cl"><span class="cl-n">13</span><span class="cl-t">            t = t.next</span></div>
+    <div class="cl"><span class="cl-n">14</span><span class="cl-t">        return newHead</span></div>
+  </div>
+  <p class="note">这里的 <span class="mono">if head is None</span> 不是为了图解——是因为 <span class="mono">tmp.pop()</span> 对空数组会抛 IndexError。属于「算法之外的结构性边界」，必须单独记住。</p>
+
+  <p><b>解法 B｜原地双指针</b> —— 最优范式，空间 O(1)，面试首选。</p>
+  <div class="code">
+    <div class="code-head"><span>B｜双指针原地 · O(1) 空间</span><span>1 次遍历 · 3 个变量</span></div>
+    <div class="cl"><span class="cl-n">1</span><span class="cl-t">class Solution:</span></div>
+    <div class="cl"><span class="cl-n">2</span><span class="cl-t">    def reverseList(self, head: ListNode | None) -&gt; ListNode | None:</span></div>
+    <div class="cl"><span class="cl-n">3</span><span class="cl-t">        pre = None</span></div>
+    <div class="cl"><span class="cl-n">4</span><span class="cl-t">        cur = head</span></div>
+    <div class="cl"><span class="cl-n">5</span><span class="cl-t">        while cur:</span></div>
+    <div class="cl"><span class="cl-n">6</span><span class="cl-t">            nxt = cur.next      <span style="color:#C8892B"># A2｜顺序公理：必须在写之前</span></span></div>
+    <div class="cl"><span class="cl-n">7</span><span class="cl-t">            cur.next = pre      <span style="color:#B25248"># A4｜唯一写操作，破坏性</span></span></div>
+    <div class="cl"><span class="cl-n">8</span><span class="cl-t">            pre = cur           <span style="color:#4C8E85"># A5｜cur 划入已反转段</span></span></div>
+    <div class="cl"><span class="cl-n">9</span><span class="cl-t">            cur = nxt           <span style="color:#4C8E85"># A5｜进入下一个待反转节点</span></span></div>
+    <div class="cl"><span class="cl-n">10</span><span class="cl-t">        return pre</span></div>
+  </div>
+
+  <p><b>解法 C｜递归</b> —— 拓展范式，栈深 = 链表长度，适合理解分治结构。</p>
+  <div class="code">
+    <div class="code-head"><span>C｜递归 · O(n) 调用栈</span><span>慎用于长链</span></div>
+    <div class="cl"><span class="cl-n">1</span><span class="cl-t">class Solution:</span></div>
+    <div class="cl"><span class="cl-n">2</span><span class="cl-t">    def reverseList(self, head: ListNode | None) -&gt; ListNode | None:</span></div>
+    <div class="cl"><span class="cl-n">3</span><span class="cl-t">        if head is None or head.next is None:   <span style="color:#7C8C96"># 递归基</span></span></div>
+    <div class="cl"><span class="cl-n">4</span><span class="cl-t">            return head</span></div>
+    <div class="cl"><span class="cl-n">5</span><span class="cl-t">        newHead = self.reverseList(head.next)   <span style="color:#7C8C96"># 子问题：反转后半段</span></span></div>
+    <div class="cl"><span class="cl-n">6</span><span class="cl-t">        head.next.next = head                   <span style="color:#B25248"># A4｜后驱指回自己</span></span></div>
+    <div class="cl"><span class="cl-n">7</span><span class="cl-t">        head.next = None                        <span style="color:#B25248"># A4｜断开旧指向</span></span></div>
+    <div class="cl"><span class="cl-n">8</span><span class="cl-t">        return newHead</span></div>
+  </div>
+
+  <h3><span class="mono">5.2</span>对比矩阵</h3>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:15%"><col style="width:10%"><col style="width:13%"><col style="width:13%"><col style="width:29%"><col style="width:30%"></colgroup>
+      <thead><tr><th>方案</th><th>时间</th><th>空间</th><th>新建节点</th><th>优点</th><th>缺陷 / 适用</th></tr></thead>
+      <tbody>
+        <tr><td class="k">A 栈重建</td><td class="mono">O(n)</td><td class="mono">O(n)</td><td class="mono">全部新建</td><td>逻辑线性，好验证</td><td>内存开销大；仅适合初学验证</td></tr>
+        <tr><td class="k">B 双指针</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td class="mono">0</td><td class="good">时空最优、无分配</td><td>需掌握顺序公理</td></tr>
+        <tr><td class="k">C 递归</td><td class="mono">O(n)</td><td class="mono">O(n) 栈</td><td class="mono">0</td><td>代码极简，结构清晰</td><td>长链栈溢出；面试慎用</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3><span class="mono">5.3</span>报错复盘（原始故障，机制化保留）</h3>
+  <div class="code">
+    <div class="code-head"><span>你当时的报错</span><span>LeetCode.cn Runtime</span></div>
+    <div class="cl"><span class="cl-n">!</span><span class="cl-t" style="color:#B25248">UnboundLocalError: cannot access local variable 'ListNode'</span></div>
+    <div class="cl"><span class="cl-n"> </span><span class="cl-t" style="color:#B25248">where it is not associated with a value</span></div>
+  </div>
+  <div class="row-list">
+    <ul>
+      <li><span class="idx">01</span><span><b>机制</b>：局部变量遮蔽（Local Shadowing）。函数内出现 <span class="mono">ListNode = ...</span> 后，Python 在编译期即把该名字判为局部变量；后续 <span class="mono">ListNode(tmp.pop(-1))</span> 属于「赋值前访问」→ 未绑定。</span></li>
+      <li><span class="idx">02</span><span><b>错误一</b>：判断对象错了。<span class="mono">if ListNode == None</span> 应判入参 <span class="mono">head</span>，不是类名。</span></li>
+      <li><span class="idx">03</span><span><b>错误二</b>：遍历变量选错。类名 <span class="mono">ListNode</span> 是类型构造器，不是游标。</span></li>
+      <li><span class="idx">04</span><span><b>上卷判据</b>：类型名 / 类名 / 导入名禁止作为可写变量（见 3.3）。</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 05 203 ===== -->
+<section class="sec" id="s5">
+  <div class="sec-head"><span class="sec-num">06</span><h2>203. 移除链表元素 —— 逐帧推演</h2></div>
+  <p class="sub">样例 <span class="mono">1 → 2 → 6 → 3 → 4 → 5 → 6</span>，val = 6。重点看两处：命中后 cur <b>为什么不动</b>；dummy 如何把「head 是否被删」这张额外分支图归并掉。</p>
+
+  <div class="stepper" data-stepper="s203">
+    <div class="sp-head">
+      <span class="sp-round" data-round>第 0 步 / 建哨兵</span>
+      <span class="sp-atom" data-atom>A6</span>
+      <span class="sp-count" data-count>1 / 16</span>
+    </div>
+    <div class="sp-stage" data-stage></div>
+    <div class="sp-ctrl">
+      <button class="btn" data-act="prev" type="button">← 上一步</button>
+      <button class="btn primary" data-act="next" type="button">下一步 →</button>
+      <button class="btn" data-act="play" type="button">自动播放</button>
+      <button class="btn" data-act="reset" type="button">重置</button>
+    </div>
+    <div class="sp-lower">
+      <div class="sp-read">
+        <p class="sp-note" data-note>建哨兵 dummy 并绑定 head：从此 head 是否被删都不改变代码路径。</p>
+        <div class="sp-inv" data-inv><i>不变量：</i>cur 指向「已确认保留」的最后一个节点（初始为 dummy）</div>
+      </div>
+      <div class="sp-code" data-code></div>
+    </div>
+  </div>
+
+  <h3><span class="mono">6.1</span>三种写法（全部保留，实跑通过）</h3>
+
+  <p><b>解法 A｜哨兵 dummy</b> —— 面试标准。核心价值不是「省事」，而是<b>把两张图归并成一张</b>。</p>
+  <div class="code">
+    <div class="code-head"><span>A｜dummy 哨兵 · O(1) 空间</span><span>统一路径，无头特判</span></div>
+    <div class="cl"><span class="cl-n">1</span><span class="cl-t">class Solution:</span></div>
+    <div class="cl"><span class="cl-n">2</span><span class="cl-t">    def removeElements(self, head: ListNode | None, val: int) -&gt; ListNode | None:</span></div>
+    <div class="cl"><span class="cl-n">3</span><span class="cl-t">        dummy = ListNode(0)                  <span style="color:#C8892B"># A6</span></span></div>
+    <div class="cl"><span class="cl-n">4</span><span class="cl-t">        dummy.next = head                    <span style="color:#C8892B"># A4</span></span></div>
+    <div class="cl"><span class="cl-n">5</span><span class="cl-t">        cur = dummy                          <span style="color:#4C8E85"># A5｜cur 站前驱位</span></span></div>
+    <div class="cl"><span class="cl-n">6</span><span class="cl-t">        while cur.next is not None:          <span style="color:#7C8C96"># 看后继，不看自己</span></span></div>
+    <div class="cl"><span class="cl-n">7</span><span class="cl-t">            if cur.next.val == val:</span></div>
+    <div class="cl"><span class="cl-n">8</span><span class="cl-t">                cur.next = cur.next.next     <span style="color:#B25248"># A4｜命中：跨越，cur 不动</span></span></div>
+    <div class="cl"><span class="cl-n">9</span><span class="cl-t">            else:</span></div>
+    <div class="cl"><span class="cl-n">10</span><span class="cl-t">                cur = cur.next               <span style="color:#4C8E85"># A5｜保留：才前移</span></span></div>
+    <div class="cl"><span class="cl-n">11</span><span class="cl-t">        return dummy.next                    <span style="color:#C8892B"># 不是 cur，也不是 head</span></span></div>
+  </div>
+
+  <p><b>解法 B｜无哨兵（你的原始思路）</b> —— 必须单独一段循环处理头部，代码被切成两段。</p>
+  <div class="code">
+    <div class="code-head"><span>B｜无 dummy</span><span>头部必须特判</span></div>
+    <div class="cl"><span class="cl-n">1</span><span class="cl-t">class Solution:</span></div>
+    <div class="cl"><span class="cl-n">2</span><span class="cl-t">    def removeElements(self, head: ListNode | None, val: int) -&gt; ListNode | None:</span></div>
+    <div class="cl"><span class="cl-n">3</span><span class="cl-t">        while head and head.val == val:      <span style="color:#B25248"># 独立处理：头部连续命中</span></span></div>
+    <div class="cl"><span class="cl-n">4</span><span class="cl-t">            head = head.next</span></div>
+    <div class="cl"><span class="cl-n">5</span><span class="cl-t">        cur = head</span></div>
+    <div class="cl"><span class="cl-n">6</span><span class="cl-t">        while cur and cur.next:</span></div>
+    <div class="cl"><span class="cl-n">7</span><span class="cl-t">            if cur.next.val == val:</span></div>
+    <div class="cl"><span class="cl-n">8</span><span class="cl-t">                cur.next = cur.next.next</span></div>
+    <div class="cl"><span class="cl-n">9</span><span class="cl-t">            else:</span></div>
+    <div class="cl"><span class="cl-n">10</span><span class="cl-t">                cur = cur.next</span></div>
+    <div class="cl"><span class="cl-n">11</span><span class="cl-t">        return head                          <span style="color:#B25248"># 注意：head 可能已被改</span></span></div>
+  </div>
+
+  <p><b>解法 C｜递归</b> —— 先修好子链，再决定当前节点去留。</p>
+  <div class="code">
+    <div class="code-head"><span>C｜递归</span><span>O(n) 栈</span></div>
+    <div class="cl"><span class="cl-n">1</span><span class="cl-t">class Solution:</span></div>
+    <div class="cl"><span class="cl-n">2</span><span class="cl-t">    def removeElements(self, head: ListNode | None, val: int) -&gt; ListNode | None:</span></div>
+    <div class="cl"><span class="cl-n">3</span><span class="cl-t">        if head is None:</span></div>
+    <div class="cl"><span class="cl-n">4</span><span class="cl-t">            return None</span></div>
+    <div class="cl"><span class="cl-n">5</span><span class="cl-t">        head.next = self.removeElements(head.next, val)   <span style="color:#C8892B"># 先修好后继</span></span></div>
+    <div class="cl"><span class="cl-n">6</span><span class="cl-t">        return head.next if head.val == val else head</span></div>
+  </div>
+
+  <h3><span class="mono">6.2</span>对比矩阵</h3>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:14%"><col style="width:9%"><col style="width:12%"><col style="width:11%"><col style="width:22%"><col style="width:22%"><col style="width:10%"></colgroup>
+      <thead><tr><th>方案</th><th>时间</th><th>空间</th><th>建节点</th><th>图的分支</th><th>边界处理</th><th>结论</th></tr></thead>
+      <tbody>
+        <tr><td class="k">A 哨兵</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td class="mono">1 dummy</td><td class="good">1 张（head 被删也归并）</td><td>无需特判</td><td class="good">首选</td></tr>
+        <tr><td class="k">B 无哨兵</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td class="mono">0</td><td class="bad">2 张（分叉）</td><td>必须特判头部</td><td class="warn">易漏</td></tr>
+        <tr><td class="k">C 递归</td><td class="mono">O(n)</td><td class="mono">O(n) 栈</td><td class="mono">0</td><td class="good">1 张</td><td>栈深 = 长度</td><td class="warn">慎用</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3><span class="mono">6.3</span>避坑清单（与 206 同源）</h3>
+  <div class="row-list">
+    <ul>
+      <li><span class="idx">01</span><span><b>游标直接站到待删节点</b>（<span class="mono">cur = head</span>）→ 删掉后找不到前驱。删除必须站<b>前驱</b>。</span></li>
+      <li><span class="idx">02</span><span><b>删除后又写 <span class="mono">cur = cur.next</span></b> → 连续命中漏删（<span class="mono">[7,7,7,7]</span> 必错）。命中时 cur 必须原地不动。</span></li>
+      <li><span class="idx">03</span><span><b>循环条件写 <span class="mono">while cur is not None</span></b> → 会去读越界位置的 <span class="mono">cur.next.val</span>。必须是 <span class="mono">while cur.next</span>。</span></li>
+      <li><span class="idx">04</span><span><b>返回 cur / 返回 head</b> → 必须 <span class="mono">return dummy.next</span>。cur 循环结束时站在尾节点。</span></li>
+      <li><span class="idx">05</span><span><b>类名当循环变量</b>（206 原坑 <span class="mono">ListNode = ListNode.next</span>）→ UnboundLocalError。</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 06 判据库 ===== -->
+<section class="sec" id="s6">
+  <div class="sec-head"><span class="sec-num">07</span><h2>判据库 R1–R5：把题解上卷成规则</h2></div>
+  <p class="sub">你之前的复盘存的是「203 的正确代码」——它挂在知识树的叶子上，遇到 19 / 82 时调不出来。改成 if-then 判据后，会自动上卷成一个「链表删除范式」节点。</p>
+
+  <div class="rule"><div class="rid">R1</div><div class="body">
+    <div class="iff">IF 涉及删除 / 插入，且头部可能被删</div>
+    <div class="then">THEN 先建 dummy，结尾 return dummy.next</div>
+    <div class="why">依据：把「head 存活 / head 被删」两张图归并成一张</div>
+  </div></div>
+  <div class="rule"><div class="rid">R2</div><div class="body">
+    <div class="iff">IF 需要修改 next 指向</div>
+    <div class="then">THEN 先确认旧 next 是否还被需要；需要就先读进临时变量</div>
+    <div class="why">依据：顺序公理 · A4 是破坏性写</div>
+  </div></div>
+  <div class="rule"><div class="rid">R3</div><div class="body">
+    <div class="iff">IF 删除完成后，新的 next 可能同样命中</div>
+    <div class="then">THEN 游标不前移，原地再判一次</div>
+    <div class="why">依据：不变量 · cur = 已确认保留的最后一个节点</div>
+  </div></div>
+  <div class="rule"><div class="rid">R4</div><div class="body">
+    <div class="iff">IF 循环内需要访问 cur.next.val</div>
+    <div class="then">THEN 条件写成 while cur.next is not None</div>
+    <div class="why">依据：读后继即要求后继存在</div>
+  </div></div>
+  <div class="rule"><div class="rid">R5</div><div class="body">
+    <div class="iff">IF 函数需要返回链表</div>
+    <div class="then">THEN return dummy.next 或 return pre，永不 return cur</div>
+    <div class="why">依据：cur 在循环终止时必为 None 或尾节点</div>
+  </div></div>
+
+  <div class="quote" style="margin-top:26px">判据与题解的区别只有一个：<b>判据能被别的题调用，题解只能被这道题调用。</b><span>这五条写进笔记后，19（删倒数第 N 个）、82（删排序链表重复元素 II）、83（删重复元素）都能直接命中。</span></div>
+</section>
+
+<!-- ===== 07 急救协议 ===== -->
+<section class="sec" id="s7">
+  <div class="sec-head"><span class="sec-num">08</span><h2>30 秒急救协议：写代码之前的固定仪式</h2></div>
+  <p class="sub">不提笔，先回答三问三写。唯一目的：把卡壳从「代码层」前置到「语言层」——在那里卡壳的代价是 30 秒，不是 40 分钟。</p>
+
+  <div class="proto">
+    <div class="pr">
+      <div class="pr-q">Q1 · 10s</div>
+      <div class="pr-t">我站在哪个节点？</div>
+      <div class="pr-b">写下来：cur = ?<br>必须明确是「前驱」还是「当前」。</div>
+    </div>
+    <div class="pr">
+      <div class="pr-q">Q2 · 10s</div>
+      <div class="pr-t">我要改谁的 next？</div>
+      <div class="pr-b">写出那一行唯一的 A4。<br>若写不出，说明你还没定位前驱。</div>
+    </div>
+    <div class="pr">
+      <div class="pr-q">Q3 · 10s</div>
+      <div class="pr-t">改完还要找谁？</div>
+      <div class="pr-b">那个引用现在在哪？<br>答「找不到了」→ 立刻在前面补 A2 缓存。</div>
+    </div>
+  </div>
+
+  <h3><span class="mono">8.1</span>三写（顺序固定，禁止先写循环体）</h3>
+  <div class="code">
+    <div class="code-head"><span>书写顺序 = 正确性顺序</span><span>违反顺序 → 状态溢出</span></div>
+    <div class="cl"><span class="cl-n">1</span><span class="cl-t"><span style="color:#7C8C96"># ① 不变量注释（一行，先写这个）</span></span></div>
+    <div class="cl"><span class="cl-n">2</span><span class="cl-t"><span style="color:#4C8E85"># cur 始终指向「已确认保留」的最后一个节点</span></span></div>
+    <div class="cl"><span class="cl-n">3</span><span class="cl-t">&nbsp;</span></div>
+    <div class="cl"><span class="cl-n">4</span><span class="cl-t"><span style="color:#7C8C96"># ② 循环条件（依赖后继则看后继）</span></span></div>
+    <div class="cl"><span class="cl-n">5</span><span class="cl-t">while cur.next is not None:</span></div>
+    <div class="cl"><span class="cl-n">6</span><span class="cl-t">&nbsp;</span></div>
+    <div class="cl"><span class="cl-n">7</span><span class="cl-t"><span style="color:#7C8C96"># ③ if / else 两个分支，每个分支只放一个原子</span></span></div>
+    <div class="cl"><span class="cl-n">8</span><span class="cl-t">    if cur.next.val == val:   cur.next = cur.next.next   <span style="color:#B25248"># A4</span></span></div>
+    <div class="cl"><span class="cl-n">9</span><span class="cl-t">    else:                     cur = cur.next             <span style="color:#4C8E85"># A5</span></span></div>
+  </div>
+  <div class="quote">硬规则：<b>分支内出现第二个原子，说明你需要拆帧。</b><span>这条能拦掉你 80% 的「写着写着乱了」。它不是格式要求，是认知负荷控制器。</span></div>
+</section>
+
+<!-- ===== 08 训练机制 ===== -->
+<section class="sec" id="s8">
+  <div class="sec-head"><span class="sec-num">09</span><h2>训练机制：用「变体」替代你厌恶的「重复」</h2></div>
+  <p class="sub">你不喜欢机械重复，这是事实，不用改。改的是训练对象：把重复投射到「动作自动化」，把新鲜感投射到「边界探索」。</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:22%"><col style="width:44%"><col style="width:20%"><col style="width:14%"></colgroup>
+      <thead><tr><th>机制</th><th>具体做法</th><th>补哪一层</th><th>时长</th></tr></thead>
+      <tbody>
+        <tr><td class="k">预编译训练<br><span class="mono" style="color:var(--amber);font-size:10px">最关键</span></td><td>拿到题<b>不写代码</b>，只把动作写成 6–8 个分号分隔的原子序列，口述一遍</td><td>L2 的「概念 → 原子」展开器</td><td class="mono">5 min/题</td></tr>
+        <tr><td class="k">模板三振</td><td>同一模板在第 1 / 3 / 7 天<b>不看答案手写</b>，只练动作自动化</td><td>L2 程序性记忆</td><td class="mono">5 min×3</td></tr>
+        <tr><td class="k">变体生成</td><td>一题派生 3 个变体，<b>只写判据不写代码</b>：203 → 82 删重复Ⅱ / 19 删倒数第 N / 删区间</td><td>L3 模型识别</td><td class="mono">8 min/题</td></tr>
+        <tr><td class="k">双阶段隔离</td><td>阶段 1 只求 AC，<b>禁止优化</b>；阶段 2 再优化</td><td>隔离全局推演，防状态溢出</td><td>—</td></tr>
+        <tr><td class="k">时间盒 + 反推</td><td>中等题 25 min 超时即看题解；先看代码<b>反推原子序列</b>，合上重写</td><td>防止无效死磕</td><td class="mono">25 min</td></tr>
+        <tr><td class="k">白板无补全</td><td>关 IDE，纯文本写，不运行</td><td>L2 真实水平</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3><span class="mono">9.1</span>两周执行表</h3>
+  <div class="tl">
+    <div class="d">D1–D2</div><div class="ax"><span class="dot"></span></div>
+      <div class="c"><b>只做 206 / 203 / 83，全部走「预编译 → 编码 → 变体验收」</b>
+      <span>重点不是做对，是产出原子序列卡片</span><span class="k">产出：原子 DSL 卡片 + 8 条判据</span></div>
+    <div class="d">D3–D5</div><div class="ax"><span class="dot"></span></div>
+      <div class="c"><b>19 删倒数第 N / 82 删重复Ⅱ / 21 合并两个有序链表</b>
+      <span>测 R1–R5 的复用率：每题能否命中至少 3 条判据</span><span class="k">产出：判据复用验证记录</span></div>
+    <div class="d">D6–D7</div><div class="ax"><span class="dot"></span></div>
+      <div class="c"><b>关图重写：不看图直接编译，图只用于验收</b>
+      <span>最关键的一次角色切换：图从生成器降级为校验器</span><span class="k">产出：卡壳率数据</span></div>
+    <div class="d">D8–D10</div><div class="ax"><span class="dot"></span></div>
+      <div class="c"><b>三振：模板 1 / 3 / 7 天手写；白板无补全</b>
+      <span>目标是把「想」与「写」解耦，写不再消耗认知</span><span class="k">产出：隔日通过率</span></div>
+    <div class="d">D11–D14</div><div class="ax"><span class="dot"></span></div>
+      <div class="c"><b>闭卷综合 + 自造 3 个变体并写出判据</b>
+      <span>自造变体是 INTJ 的最优训练：它探索模型边界，不是重复模型</span><span class="k">产出：规则库 v1（链表删除范式节点）</span></div>
+  </div>
+
+  <h3><span class="mono">9.2</span>可量化自检（2 周，用数据代替感觉）</h3>
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:26%"><col style="width:38%"><col style="width:18%"><col style="width:18%"></colgroup>
+      <thead><tr><th>指标</th><th>定义</th><th>基线 → 目标</th><th>测法</th></tr></thead>
+      <tbody>
+        <tr><td class="k">卡壳率</td><td>读题后 30s 内写不出第一个原子</td><td class="bad mono">~100% → &lt;20%</td><td>每题打勾</td></tr>
+        <tr><td class="k">首次 AC 率</td><td>不看答案一次通过</td><td class="mono">? → &gt;70%</td><td>每日统计</td></tr>
+        <tr><td class="k">隔日重写通过率</td><td>次日不看答案重写</td><td class="mono">0 → &gt;90%</td><td>次日抽 2 题</td></tr>
+        <tr><td class="k">判据产出数</td><td>每题沉淀的 if-then 条数</td><td class="mono">0 → ≥3 条/题</td><td>规则库计数</td></tr>
+        <tr><td class="k">遮蔽类错误复发</td><td>类名当变量</td><td class="mono">2 次 → 0</td><td>出现即记</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 09 实测与结论 ===== -->
+<section class="sec" id="s9">
+  <div class="sec-head"><span class="sec-num">10</span><h2>实测数据与结论</h2></div>
+  <p class="sub">下列数字来自云主机实跑（Environment: vm / Python 3.12.11），脚本 <span class="mono">linked_list_206_203_atomic_dsl_verify.py</span>，不是估算。</p>
+
+  <div class="bars">
+    <div class="bar-row"><span class="l">203 固定用例</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="v">24 / 24</span></div>
+    <div class="bar-row"><span class="l">206 固定用例</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="v">12 / 12</span></div>
+    <div class="bar-row"><span class="l">随机压测</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="v">2000 组</span></div>
+    <div class="bar-row"><span class="l">随机失败数</span><span class="bar-track"><span class="bar-fill a" style="width:0%"></span></span><span class="v">0</span></div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <colgroup><col style="width:42%"><col style="width:58%"></colgroup>
+      <thead><tr><th>验证项</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td class="k">203 三写法 × 8 固定用例</td><td class="good">24 / 24 PASS（含空表、全删、连续命中、单节点）</td></tr>
+        <tr><td class="k">206 三写法 × 4 固定用例</td><td class="good">12 / 12 PASS</td></tr>
+        <tr><td class="k">随机压测（长度 0–12，值 0–5）</td><td class="good">2000 组，失败数 0</td></tr>
+        <tr><td class="k">节点读写面探测</td><td class="mono">仅 val / next → 证明 A4 是唯一写操作</td></tr>
+        <tr><td class="k">顺序公理反例（先写后读）</td><td class="bad mono">[1,2,3,4,5] → 输出 [1]，预期 [5,4,3,2,1]</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quote" style="border-left-color:var(--teal)">
+    <b>一句话结论</b><br>
+    你不是「图不够清楚」，你是「图停在终点、代码需要路径，中间缺一层原子序列」。<br>
+    补上这层（A4 唯一写操作 + 顺序公理 + 30 秒三问），卡壳消失；<br>
+    把图从<b>生成器</b>改为<b>校验器</b>，卡壳再消失一半；<br>
+    把复盘产物从「题解」升级为「if-then 判据」，吸收效率才真正提升 —— 因为 INTJ 的知识增益来自<b>可上卷的规则</b>，不是<b>更多的叶子</b>。
+    <span>三层改动的顺序不能反：先补表示层，再换角色，最后改存储层级。</span>
+  </div>
+
+  <div class="foot">
+    <b>产物</b> 链表指针吸收手册.html ｜ 同目录验证脚本 linked_list_206_203_atomic_dsl_verify.py<br>
+    <b>环境</b> 云主机 vm · Python 3.12.11 · 无第三依赖<br>
+    <b>数据</b> 全部来自本地实跑输出，未做估算或美化
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ================= 主题切换 ================= */
+  var root = document.documentElement;
+  var btn = document.getElementById('themeBtn');
+  try{ var saved = localStorage.getItem('ll-theme'); if(saved){ root.setAttribute('data-theme', saved); } }catch(e){}
+  btn.addEventListener('click', function(){
+    var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    try{ localStorage.setItem('ll-theme', next); }catch(e){}
+  });
+
+  /* ================= 目录滚动高亮 ================= */
+  var links = [].slice.call(document.querySelectorAll('#nav a'));
+  var secs  = links.map(function(a){ return document.querySelector(a.getAttribute('href')); })
+                   .filter(function(x){ return !!x; });
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          links.forEach(function(a){
+            a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id);
+          });
+        }
+      });
+    }, { rootMargin: '-8% 0px -70% 0px', threshold: 0 });
+    secs.forEach(function(s){ io.observe(s); });
+  }
+
+  /* ================= 链表帧渲染器 ================= */
+  var NODEW = 86, NODEH = 46, GAP = 50, STARTX = 150, BOXX = 38, BOXW = 86, TOPY = 88, HGT = 218;
+  var DEFS = '<defs>'
+    + '<marker id="arw" viewBox="0 0 8 8" refX="7.2" refY="4" markerWidth="7" markerHeight="7" orient="auto">'
+    + '<path d="M0 .6 L8 4 L0 7.4 Z" fill="#4C8E85"/></marker>'
+    + '<marker id="arw2" viewBox="0 0 8 8" refX="7.2" refY="4" markerWidth="7" markerHeight="7" orient="auto">'
+    + '<path d="M0 .6 L8 4 L0 7.4 Z" fill="#C8892B"/></marker>'
+    + '</defs>';
+
+  function xAt(i, sx){ return sx + i * (NODEW + GAP); }
+  function addr(i){ var h = (i + 1).toString(16); return '0x' + (h.length < 2 ? '0' + h : h); }
+
+  function edgePts(from, to, sx){
+    var x1, x2;
+    if(from === 'd'){ x1 = BOXX + BOXW; }
+    else if(to === null){ return [xAt(from, sx), BOXX + BOXW]; }
+    else if(to === 'd'){ return [xAt(from, sx), BOXX + BOXW]; }
+    else { x1 = (to > from) ? xAt(from, sx) + NODEW : xAt(from, sx); }
+    x2 = (to > from) ? xAt(to, sx) : xAt(to, sx) + NODEW;
+    return [x1, x2];
+  }
+
+  function draw(f){
+    var vals = f.vals, n = vals.length;
+    var sx = f.noLeft ? 46 : STARTX;
+    var total = sx + n * (NODEW + GAP) - GAP + 20;
+    var out = [DEFS];
+    var midY = TOPY + NODEH / 2;
+
+    /* 左侧 NULL / dummy 盒（noLeft 模式下不画） */
+    var isD = !!f.dummy;
+    if(!f.noLeft){
+      out.push('<rect x="' + BOXX + '" y="' + TOPY + '" width="' + BOXW + '" height="' + NODEH
+        + '" rx="1.5" class="' + (isD ? 'box-dummy' : 'box-null') + '"/>');
+      out.push('<text x="' + (BOXX + BOXW / 2) + '" y="' + (TOPY + (isD ? 20 : 27)) + '" text-anchor="middle" class="'
+        + (isD ? 't-dummy' : 't-null') + '">' + (isD ? 'dummy' : 'NULL') + '</text>');
+      if(isD){
+        out.push('<text x="' + (BOXX + BOXW / 2) + '" y="' + (TOPY + NODEH - 9)
+          + '" text-anchor="middle" class="tt-addr">0x00</text>');
+      }
+    }
+
+    /* 节点 */
+    vals.forEach(function(v, i){
+      var x = xAt(i, sx), hid = (f.hidden || []).indexOf(i) > -1;
+      out.push('<rect x="' + x + '" y="' + TOPY + '" width="' + NODEW + '" height="' + NODEH
+        + '" rx="1.5" class="' + (hid ? 'box-hidden' : 'box-node') + '"/>');
+      out.push('<text x="' + (x + NODEW / 2) + '" y="' + (TOPY + 27) + '" text-anchor="middle" class="'
+        + (hid ? 't-hidden' : 't-val') + '">' + v + '</text>');
+      out.push('<text x="' + (x + NODEW / 2) + '" y="' + (TOPY + NODEH - 9)
+        + '" text-anchor="middle" class="tt-addr">' + addr(i) + '</text>');
+      if(hid){
+        out.push('<line x1="' + (x + 10) + '" y1="' + midY + '" x2="' + (x + NODEW - 10)
+          + '" y2="' + midY + '" class="strike"/>');
+      }
+    });
+
+    /* 边（方向即指针方向，向左的箭头就是已反转） */
+    (f.edges || []).forEach(function(e){
+      var from = e[0], to = e[1];
+      if(f.noLeft && to === null){ return; }
+      var p = edgePts(from, to, sx);
+      var dist = Math.abs(p[1] - p[0]);
+      var bow = dist > GAP * 1.45 ? Math.min(54, dist * 0.23) : 14;
+      var hot = f.hot && f.hot[0] === from && f.hot[1] === to;
+      out.push('<path d="M' + p[0] + ' ' + midY + ' Q ' + ((p[0] + p[1]) / 2) + ' ' + (midY - bow)
+        + ' ' + p[1] + ' ' + midY + '" class="' + (hot ? 'edge-hot' : 'edge')
+        + '" marker-end="url(#' + (hot ? 'arw2' : 'arw') + ')"/>');
+    });
+
+    /* 指针徽标（同一节点上多个指针自动上下错位） */
+    var groups = {}, order = [];
+    (f.ptrs || []).forEach(function(pt){
+      var k = String(pt.i);
+      if(!groups[k]){ groups[k] = []; order.push(k); }
+      groups[k].push(pt.n);
+    });
+    order.forEach(function(k){
+      var names = groups[k];
+      var cx = (k === 'null' || k === 'd') ? BOXX + BOXW / 2 : xAt(parseInt(k, 10), sx) + NODEW / 2;
+      out.push('<line x1="' + cx + '" y1="' + (TOPY + NODEH) + '" x2="' + cx + '" y2="' + (168 - 9)
+        + '" class="ptrline"/>');
+      names.forEach(function(nm, idx){
+        var yy = 168 + idx * 22;
+        var tw = nm.length * 7.4 + 16;
+        var cls = (nm === 'cur' || nm === 'head' || nm === 'dummy') ? 'ptr-cur'
+          : ((nm === 'pre' || nm === 'keep') ? 'ptr-pre'
+          : (nm === 'return' ? 'ptr-ret' : 'ptr'));
+        out.push('<rect x="' + (cx - tw / 2) + '" y="' + (yy - 8) + '" width="' + tw
+          + '" height="18" rx="1.5" class="' + cls + '"/>');
+        out.push('<text x="' + cx + '" y="' + (yy + 4.5) + '" text-anchor="middle" class="tt-ptr">' + nm + '</text>');
+      });
+    });
+
+    return '<svg viewBox="0 0 ' + total + ' ' + HGT + '" xmlns="http://www.w3.org/2000/svg" class="stage-svg">'
+      + out.join('') + '</svg>';
+  }
+
+  /* ================= 代码表 ================= */
+  var CODE206 = [
+    'def reverseList(self, head):',
+    '    pre = None',
+    '    cur = head',
+    '    while cur:',
+    '        nxt = cur.next          # A2 先缓存（顺序公理）',
+    '        cur.next = pre          # A4 唯一写操作',
+    '        pre = cur               # A5 划入已反转段',
+    '        cur = nxt               # A5 进入下一节点',
+    '    return pre'
+  ];
+
+  var CODE203 = [
+    'def removeElements(self, head, val):',
+    '    dummy = ListNode(0)',
+    '    dummy.next = head',
+    '    cur = dummy                          # cur 站在前驱位',
+    '    while cur.next is not None:',
+    '        if cur.next.val == val:',
+    '            cur.next = cur.next.next     # A4 命中：跨越，cur 不动',
+    '        else:',
+    '            cur = cur.next               # A5 未命中：保留才前移',
+    '    return dummy.next'
+  ];
+
+  /* ================= 206 帧序列 ================= */
+  function frames206(vals){
+    var n = vals.length, edges = [], F = [], i;
+    for(i = 0; i < n - 1; i++){ edges.push([i, i + 1]); }
+    var pre = null, cur = n ? 0 : null, nxt = null, round = 1;
+
+    function push(o){
+      o.vals = vals;
+      o.edges = edges.map(function(e){ return e.slice(); });
+      o.hidden = [];
+      F.push(o);
+    }
+
+    push({ line: [1, 2], atom: 'A5 初始', round: '第 0 轮 / 初始',
+      note: 'cur 指向原表头，pre 悬空 —— 这里先把两个游标摆好，图还没动。',
+      ptrs: [{ n: 'pre', i: 'null' }, { n: 'cur', i: 0 }],
+      inv: 'pre 指向已反转段的头节点（初始为 None）' });
+
+    if(n === 0){
+      push({ line: [8], atom: '返回', round: '空链表',
+        note: 'head 为 None，while 条件不成立，循环体不执行，直接 return None。',
+        ptrs: [{ n: 'cur', i: 'null' }], inv: '空链表无需反转' });
+      return F;
+    }
+
+    while(cur !== null){
+      nxt = (cur + 1 < n) ? cur + 1 : null;
+
+      push({ line: [4], atom: 'A2 读', round: '第 ' + round + ' 轮',
+        note: '先缓存 cur.next（节点 ' + (nxt === null ? 'NULL' : vals[nxt])
+          + '）进 nxt。这是顺序公理要求的保护动作：不缓存，A4 一写就找不到下一个。',
+        ptrs: [{ n: 'pre', i: (pre === null ? 'null' : pre) }, { n: 'cur', i: cur },
+               { n: 'nxt', i: (nxt === null ? 'null' : nxt) }],
+        inv: 'pre = 已反转段头；nxt = 下一帧要处理的节点' });
+
+      edges = edges.filter(function(e){ return e[0] !== cur; });
+      edges.push([cur, pre]);
+
+      push({ line: [5], atom: 'A4 写', round: '第 ' + round + ' 轮', hot: [cur, pre],
+        note: 'cur.next = pre：箭头反向。旧的 next 已经在 nxt 里幸存，所以这一写不会断链。',
+        ptrs: [{ n: 'pre', i: (pre === null ? 'null' : pre) }, { n: 'cur', i: cur },
+               { n: 'nxt', i: (nxt === null ? 'null' : nxt) }],
+        inv: '已反转段扩张 1 个节点；nxt 仍指向未反转段' });
+
+      pre = cur;
+      push({ line: [6], atom: 'A5 移动', round: '第 ' + round + ' 轮',
+        note: 'pre = cur：当前节点正式划入「已反转段」，成为该段的新头。',
+        ptrs: [{ n: 'pre', i: pre }, { n: 'cur', i: cur }, { n: 'nxt', i: (nxt === null ? 'null' : nxt) }],
+        inv: '已反转段头 = pre（刚从 cur 接管）' });
+
+      cur = nxt; nxt = null;
+      push({ line: [7], atom: 'A5 移动', round: '第 ' + round + ' 轮',
+        note: (cur === null) ? 'cur 变成 None → 循环条件失败，本帧是最后一轮。'
+                             : 'cur 前移，进入下一个待反转节点；此时 pre 与 cur 之间已断开。',
+        ptrs: [{ n: 'pre', i: pre }, { n: 'cur', i: (cur === null ? 'null' : cur) }],
+        inv: '已反转段 / 未反转段 的边界移到 cur' });
+      round++;
+    }
+
+    push({ line: [8], atom: '返回', round: '结束',
+      note: '循环因 cur === None 退出。此时 pre 就是新表头 —— 不是 cur，cur 已经是 None。',
+      ptrs: [{ n: 'pre', i: pre }, { n: 'cur', i: 'null' }],
+      inv: 'pre = 新链表头' });
+
+    return F;
+  }
+
+  /* ================= 203 帧序列 ================= */
+  function frames203(){
+    var V = [1, 2, 6, 3, 4, 5, 6];
+    var E0 = [['d', 0], [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]];
+    var F = [];
+    function mk(o){
+      o.vals = V.slice(); o.dummy = true;
+      o.edges = (o.edges || E0).map(function(e){ return e.slice(); });
+      o.hidden = o.hidden || [];
+      o.ptrs = o.ptrs || [{ n: 'cur', i: 'd' }];
+      F.push(o);
+    }
+    var INV = 'cur 指向「已确认保留」的最后一个节点';
+
+    mk({ line: [1, 2], atom: 'A6 + A4', round: '第 0 步 / 建哨兵',
+      note: '建哨兵 dummy 并绑定 head。从此 head 是否被删，都不改变代码路径 —— 这是把两张图归并成一张的动作。',
+      inv: INV + '（初始为 dummy）' });
+
+    mk({ line: [4, 5], atom: 'A3 + A1', round: '第 1 步 / 判后继',
+      note: '读 cur.next = 节点 1（值 1）。1 ≠ 6 → 走 else 分支。',
+      inv: INV });
+
+    mk({ line: [8], atom: 'A5', round: '第 2 步 / 前移',
+      note: '保留节点 1，cur 前移。已确认保留段 = [dummy, 1]。',
+      ptrs: [{ n: 'cur', i: 0 }], inv: INV });
+
+    mk({ line: [4, 5], atom: 'A3 + A1', round: '第 3 步 / 判后继',
+      note: '读 cur.next = 节点 2（值 2）。2 ≠ 6。',
+      ptrs: [{ n: 'cur', i: 0 }], inv: INV });
+
+    mk({ line: [8], atom: 'A5', round: '第 4 步 / 前移',
+      note: '保留节点 2，cur 前移到节点 2。',
+      ptrs: [{ n: 'cur', i: 1 }], inv: INV });
+
+    mk({ line: [4, 5], atom: 'A3 + A1', round: '第 5 步 / 命中',
+      note: '读 cur.next = 节点 6（值 6）→ 命中，进入 if 分支。注意：命中判断看的是后继，不是自己。',
+      ptrs: [{ n: 'cur', i: 1 }], inv: INV });
+
+    var E1 = E0.filter(function(e){ return !(e[0] === 1 && e[1] === 2); });
+    E1.push([1, 3]);
+    mk({ line: [6], atom: 'A4', round: '第 6 步 / 跨越', edges: E1, hidden: [2], hot: [1, 3],
+      note: 'cur.next = cur.next.next：把节点 6 从链上摘掉，箭头直接跨到节点 3。cur 原地不动 —— 因为新的 cur.next 还没校验过。',
+      ptrs: [{ n: 'cur', i: 1 }], inv: INV });
+
+    mk({ line: [4, 5], atom: 'A3 + A1', round: '第 7 步 / 再判',
+      note: '读新的 cur.next = 节点 3（值 3），3 ≠ 6。若上一帧 cur 前移过，这里的重复元素就会漏删。',
+      edges: E1, hidden: [2], ptrs: [{ n: 'cur', i: 1 }],
+      inv: INV + '；cur 不前移，保证不漏检连续命中' });
+
+    mk({ line: [8], atom: 'A5', round: '第 8 步 / 前移',
+      note: '保留节点 3，cur 前移到节点 3。',
+      edges: E1, hidden: [2], ptrs: [{ n: 'cur', i: 3 }], inv: INV });
+
+    mk({ line: [4, 5], atom: 'A3 + A1', round: '第 9 步 / 判后继',
+      note: '读 cur.next = 节点 4（值 4），4 ≠ 6。',
+      edges: E1, hidden: [2], ptrs: [{ n: 'cur', i: 3 }], inv: INV });
+
+    mk({ line: [8], atom: 'A5', round: '第 10 步 / 前移',
+      note: '保留节点 4，cur 前移。',
+      edges: E1, hidden: [2], ptrs: [{ n: 'cur', i: 4 }], inv: INV });
+
+    mk({ line: [4, 5], atom: 'A3 + A1', round: '第 11 步 / 判后继',
+      note: '读 cur.next = 节点 5（值 5），5 ≠ 6。',
+      edges: E1, hidden: [2], ptrs: [{ n: 'cur', i: 4 }], inv: INV });
+
+    mk({ line: [8], atom: 'A5', round: '第 12 步 / 前移',
+      note: '保留节点 5，cur 前移到节点 5。',
+      edges: E1, hidden: [2], ptrs: [{ n: 'cur', i: 5 }], inv: INV });
+
+    mk({ line: [4, 5], atom: 'A3 + A1', round: '第 13 步 / 命中',
+      note: '读 cur.next = 节点 6（值 6）→ 命中。这是尾节点。',
+      edges: E1, hidden: [2], ptrs: [{ n: 'cur', i: 5 }], inv: INV });
+
+    var E2 = E1.filter(function(e){ return !(e[0] === 5 && e[1] === 6); });
+    E2.push([5, null]);
+    mk({ line: [6], atom: 'A4', round: '第 14 步 / 跨越', edges: E2, hidden: [2, 6], hot: [5, null],
+      note: 'cur.next = cur.next.next = None：尾节点被摘，cur 不动。',
+      edges2: true, ptrs: [{ n: 'cur', i: 5 }], inv: INV });
+
+    mk({ line: [9], atom: '返回', round: '第 15 步 / 退出', edges: E2, hidden: [2, 6],
+      note: 'cur.next 为 None → while 条件失败，循环退出。返回 dummy.next = 节点 1。注意不是 return cur。',
+      ptrs: [{ n: 'cur', i: 5 }], inv: '已确认保留段 = 整条新链；哨兵在这里完成使命' });
+
+    return F;
+  }
+
+  /* ================= 身份实验台：贴纸 vs 盒子 ================= */
+  var LABCODE = [
+    'cur  = head                          # 又贴一张贴纸',
+    'keep = cur.next                      # 私藏节点2（提前保存引用）',
+    'cur  = cur.next                      # ← 换贴纸：结构没变',
+    'head.next = head.next.next.next      # ← 改盒子：1 直接指 4',
+    'return head                          # 交旧贴纸 → 看到 [1, 4]',
+    'return keep                          # 换交贴纸 → 看到 [2, 3, 4]'
+  ];
+
+  function framesLab(){
+    var V = [1, 2, 3, 4];
+    var F = [];
+    function mk(o){
+      o.vals = V.slice();
+      o.noLeft = true;
+      o.edges = (o.edges || [[0, 1], [1, 2], [2, 3]]).map(function(e){ return e.slice(); });
+      o.hidden = o.hidden || [];
+      F.push(o);
+    }
+
+    mk({ line: [], atom: '入参', round: '第 0 帧 / 入口', ret: 0,
+      ptrs: [{ n: 'head', i: 0 }],
+      note: '判题机把节点 1 的引用传进来，head 贴在这个盒子上。你没有任何别的入口。',
+      inv: '入口唯一：想碰第 k 个盒子，只能顺着 .next 摸 k 次' });
+
+    mk({ line: [0], atom: 'A5 贴纸', round: '第 1 帧 / 再贴一张', ret: 0,
+      ptrs: [{ n: 'head', i: 0 }, { n: 'cur', i: 0 }],
+      note: 'cur = head：现在有两个名字贴在同一个盒子上。这不是"两个节点"，是"两张贴纸"。',
+      inv: '多张标签指向同一盒子 ≠ 多了节点' });
+
+    mk({ line: [1], atom: 'A5 贴纸', round: '第 2 帧 / 私藏引用', ret: 0,
+      ptrs: [{ n: 'head', i: 0 }, { n: 'cur', i: 0 }, { n: 'keep', i: 1 }],
+      note: 'keep = cur.next：把节点 2 的引用先存起来。此刻它还完全可达 —— 这一步就是顺序公理的前置动作。',
+      inv: '私藏引用＝把「之后可能被覆盖的旧值」提前保存' });
+
+    mk({ line: [2], atom: 'A5 贴纸', round: '第 3 帧 / 换贴纸', ret: 0,
+      ptrs: [{ n: 'head', i: 0 }, { n: 'cur', i: 1 }, { n: 'keep', i: 1 }],
+      note: 'cur = cur.next：cur 挪到节点 2。图和上一帧一模一样，判题机看到的序列也没变。',
+      inv: '换贴纸＝零副作用。它能改变「你的视角」，不能改变「链表」' });
+
+    mk({ line: [3], atom: 'A4 盒子', round: '第 4 帧 / 改盒子', ret: 0, hot: [0, 3],
+      edges: [[0, 3], [1, 2], [2, 3]],
+      ptrs: [{ n: 'head', i: 0 }, { n: 'cur', i: 1 }, { n: 'keep', i: 1 }],
+      note: 'head.next = head.next.next.next：节点 1 的 next 直接指向节点 4。这一行才真正改了图。',
+      inv: '改盒子＝唯一能改变结构的动作（A4），也是唯一销毁旧值的动作' });
+
+    mk({ line: [4], atom: '结果', round: '第 5 帧 / 不可达', ret: 0,
+      hidden: [1, 2], edges: [[0, 3], [1, 2], [2, 3]],
+      ptrs: [{ n: 'head', i: 0 }, { n: 'keep', i: 1 }],
+      note: '现在从 head 已经走不到节点 2、3 了（虚线框），但 keep 仍能走到它们 —— 调用栈上的变量还没被回收。',
+      inv: '不可达 ≠ 不存在：单向链表里，丢了引用就等于永久丢失' });
+
+    mk({ line: [5], atom: 'A5 换交', round: '第 6 帧 / 交哪张贴纸', ret: 1,
+      hidden: [1, 2], edges: [[0, 3], [1, 2], [2, 3]],
+      ptrs: [{ n: 'head', i: 0 }, { n: 'keep', i: 1 }, { n: 'return', i: 1 }],
+      note: 'return keep：判题机从节点 2 开始走，看到 [2, 3, 4]。同一份内存，换一张贴纸，判题结果完全不同。',
+      inv: '返回层是判题机唯一入口：交谁，决定它看见哪条链' });
+
+    return F;
+  }
+
+  /* ================= 步进器控制器 ================= */
+  function esc(s){
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /* 从某个节点出发，沿 edges 走出的序列（判题机视角） */
+  function walk(vals, edges, start){
+    var nextOf = {}, i, cur, out = [], guard = 0;
+    for(i = 0; i < edges.length; i++){
+      if(edges[i][1] !== null && edges[i][1] !== undefined){ nextOf[edges[i][0]] = edges[i][1]; }
+    }
+    if(start === null || start === undefined){ return '[]（空）'; }
+    cur = start;
+    while(cur !== null && cur !== undefined && guard++ < 20){
+      out.push(vals[cur]);
+      cur = (cur in nextOf) ? nextOf[cur] : null;
+    }
+    return '[' + out.join(', ') + ']';
+  }
+
+  function initStepper(el){
+    var id = el.getAttribute('data-stepper');
+    var data = id === 's206' ? frames206([1, 2, 3, 4, 5])
+             : id === 's203' ? frames203()
+             : framesLab();
+    var code = id === 's206' ? CODE206 : id === 's203' ? CODE203 : LABCODE;
+    var idx = 0, timer = null;
+
+    var stage   = el.querySelector('[data-stage]'),
+        noteEl  = el.querySelector('[data-note]'),
+        invEl   = el.querySelector('[data-inv]'),
+        codeEl  = el.querySelector('[data-code]'),
+        roundEl = el.querySelector('[data-round]'),
+        atomEl  = el.querySelector('[data-atom]'),
+        countEl = el.querySelector('[data-count]'),
+        judgeEl = el.querySelector('[data-judge]'),
+        prevB   = el.querySelector('[data-act="prev"]'),
+        nextB   = el.querySelector('[data-act="next"]'),
+        playB   = el.querySelector('[data-act="play"]'),
+        resetB  = el.querySelector('[data-act="reset"]');
+
+    function renderCode(hl){
+      var h = Array.isArray(hl) ? hl : [hl];
+      codeEl.innerHTML = code.map(function(line, i){
+        return '<div class="cl' + (h.indexOf(i) > -1 ? ' cl-on' : '') + '">'
+          + '<span class="cl-n">' + (i + 1) + '</span>'
+          + '<span class="cl-t">' + esc(line) + '</span></div>';
+      }).join('');
+    }
+
+    function render(){
+      var f = data[idx];
+      stage.innerHTML = draw(f);
+      if(judgeEl && f.ret !== undefined){
+        judgeEl.innerHTML = '<span>判题机从 return 位置看到：</span>'
+          + '<em>' + walk(f.vals, f.edges, f.ret) + '</em>';
+      }
+      noteEl.textContent = f.note;
+      invEl.innerHTML = '<i>' + (id === 'slab' ? '本帧结论：' : '不变量：') + '</i>' + f.inv;
+      roundEl.textContent = f.round;
+      atomEl.textContent = f.atom;
+      atomEl.className = 'sp-atom' + (f.atom.indexOf('A4') > -1 ? ' write' : '');
+      countEl.textContent = (idx + 1) + ' / ' + data.length;
+      renderCode(f.line);
+      prevB.disabled = (idx === 0);
+      nextB.disabled = (idx === data.length - 1);
+    }
+
+    function stop(){
+      if(timer){ clearInterval(timer); timer = null; playB.textContent = '自动播放'; }
+    }
+
+    nextB.addEventListener('click', function(){
+      stop();
+      if(idx < data.length - 1){ idx++; render(); }
+    });
+    prevB.addEventListener('click', function(){
+      stop();
+      if(idx > 0){ idx--; render(); }
+    });
+    resetB.addEventListener('click', function(){
+      stop(); idx = 0; render();
+    });
+    playB.addEventListener('click', function(){
+      if(timer){ stop(); return; }
+      if(idx === data.length - 1){ idx = 0; render(); }
+      playB.textContent = '暂停';
+      timer = setInterval(function(){
+        if(idx < data.length - 1){ idx++; render(); }
+        else { stop(); }
+      }, 1200);
+    });
+
+    render();
+  }
+
+  [].slice.call(document.querySelectorAll('.stepper')).forEach(initStepper);
+})();
+</script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->

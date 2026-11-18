@@ -1,0 +1,2474 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>142. 环形链表 II — 勺子跑道与八刀切分图像解构</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0b1120;
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .card-surface {
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(71, 85, 105, 0.55);
+    }
+    .cut-pill {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cut-pill.active {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.35);
+      transform: translateY(-1px);
+    }
+    .block-seg {
+      transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cancelled-block {
+      opacity: 0.18;
+      filter: grayscale(85%);
+      transform: scale(0.94);
+      position: relative;
+    }
+    .cancelled-block::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 6px,
+        rgba(244, 63, 94, 0.65) 6px,
+        rgba(244, 63, 94, 0.65) 9px
+      );
+      border-radius: 0.5rem;
+    }
+    .highlight-survive {
+      box-shadow: 0 0 25px rgba(250, 204, 21, 0.45);
+      transform: scale(1.03);
+      border-width: 2px !important;
+    }
+    @keyframes float-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    .landmark-pulse {
+      transform-origin: center;
+      transform-box: fill-box;
+      animation: float-pulse 2.2s infinite ease-in-out;
+    }
+    /* Strict preservation of Python 4-space indentation */
+    .code-pre,
+    .code-line,
+    .code-content {
+      white-space: pre !important;
+      font-family: 'JetBrains Mono', Consolas, monospace !important;
+      tab-size: 4;
+      font-variant-ligatures: none;
+    }
+    .indent-guide {
+      background-image: linear-gradient(to right, rgba(148, 163, 184, 0.16) 1px, transparent 1px);
+      background-size: 4ch 100%;
+      background-position: 0.2ch 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-14 selection:bg-sky-500/30 selection:text-sky-200">
+
+  <!-- Top Navigation Header: Minimal & Focused -->
+  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-400/40 flex items-center justify-center text-xl shadow-inner">
+          🥄
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-mono uppercase px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-700/50">LeetCode 142</span>
+            <h1 class="text-base sm:text-lg font-bold text-white tracking-tight">环形链表 II · 图像直觉与八刀切分法</h1>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">拒绝死记公式 · 先建立「勺子跑道」画面，再用一刀刀切分看懂为什么能找到入环口</p>
+        </div>
+      </div>
+
+      <!-- Mode Switcher: Workspace A vs Workspace B -->
+      <div class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
+        <button id="tab-btn-cuts" onclick="switchWorkspace('cuts')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-1.5 bg-sky-600 text-white shadow">
+          <span>🔪</span> <span>八刀切分·图像解构</span>
+        </button>
+        <button id="tab-btn-sandbox" onclick="switchWorkspace('sandbox')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+          <span>🎮</span> <span>三阶段解耦沙盒</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
+
+    <!-- =================================================================== -->
+    <!-- WORKSPACE A: 🔪 八刀切分·图像解构 (Strictly 1 Concept Per Cut)        -->
+    <!-- =================================================================== -->
+    <div id="workspace-cuts" class="space-y-5">
+
+      <!-- 8-Cut Horizontal Stepper Bar -->
+      <div class="card-surface rounded-2xl p-3 sm:p-4">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="text-xs font-mono uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+            循序渐进 · 每一刀只解决一个问题（可使用键盘 ← → 键切换）
+          </span>
+          <span id="cut-progress-text" class="text-xs font-mono text-slate-400">第 0 刀 / 共 7 刀</span>
+        </div>
+
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-1.5 sm:gap-2" id="cut-pills-container">
+          <!-- Generated dynamically -->
+        </div>
+      </div>
+
+      <!-- Main Uncoupled Single-Concept Stage Card -->
+      <div class="card-surface rounded-2xl p-5 sm:p-7 space-y-6 relative overflow-hidden">
+
+        <!-- 1. Top Single Question Banner -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-700/60">
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2">
+              <span id="cut-badge" class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-400/40">
+                第 0 刀 · 建立画面
+              </span>
+              <span id="cut-subtitle" class="text-xs font-mono text-slate-400">
+                「勺子跑道」与 3 个核心地标
+              </span>
+            </div>
+            <h2 id="cut-question" class="text-lg sm:text-xl font-bold text-white leading-snug">
+              为什么 141 题里快慢指针撞上的地方，偏偏不是我们要找的「入环口」？
+            </h2>
+          </div>
+
+          <!-- Prev / Next Cut Buttons -->
+          <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            <button id="btn-prev-cut" onclick="changeCut(-1)" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-35 disabled:pointer-events-none text-slate-200 border border-slate-700 text-xs sm:text-sm font-medium transition">
+              ← 上一刀
+            </button>
+            <button id="btn-next-cut" onclick="changeCut(1)" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-35 disabled:pointer-events-none text-white font-semibold text-xs sm:text-sm shadow-lg shadow-sky-900/40 transition">
+              下一刀 →
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Center Visual & Interactive Area (100% dedicated to current cut) -->
+        <div id="cut-visual-stage" class="min-h-[370px] flex flex-col items-center justify-center bg-slate-950/80 rounded-2xl border border-slate-800/90 p-4 sm:p-6 relative">
+          <!-- Populated dynamically by renderCurrentCut() -->
+        </div>
+
+        <!-- 3. Bottom Single Crisp Takeaway Box -->
+        <div class="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 rounded-xl p-4 sm:p-5 border-l-4 border-l-amber-400 border border-slate-800 flex items-start gap-3.5">
+          <div class="text-2xl shrink-0 mt-0.5">💡</div>
+          <div class="space-y-1">
+            <div class="text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold">
+              本刀唯一核心结论 (Single Takeaway)
+            </div>
+            <p id="cut-takeaway" class="text-sm sm:text-base text-slate-100 leading-relaxed">
+              <!-- Populated dynamically -->
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- WORKSPACE B: 🎮 三阶段解耦沙盒 (Decoupled 3-Stage Sandbox)            -->
+    <!-- =================================================================== -->
+    <div id="workspace-sandbox" class="hidden space-y-5">
+
+      <!-- Top Preset & 3-Stage Decoupled Switcher -->
+      <div class="card-surface rounded-2xl p-4 sm:p-5 space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div>
+            <span class="text-xs font-mono text-sky-400 uppercase tracking-wider">步骤解耦沙盒 · 拒绝信息过载</span>
+            <h2 class="text-base sm:text-lg font-bold text-white mt-0.5">将复杂过程拆成「追击 ➔ 切分 ➔ 会合」三个纯净阶段</h2>
+          </div>
+
+          <!-- Preset Selector -->
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-mono text-slate-400">选择跑道：</span>
+            <button onclick="loadSandboxPreset(1)" id="sb-preset-1" class="px-2.5 py-1.5 rounded-lg text-xs font-mono border transition">
+              示例1 (a=1, L=3)
+            </button>
+            <button onclick="loadSandboxPreset(2)" id="sb-preset-2" class="px-2.5 py-1.5 rounded-lg text-xs font-mono border transition">
+              经典对称 (a=3, L=5)
+            </button>
+            <button onclick="loadSandboxPreset(3)" id="sb-preset-3" class="px-2.5 py-1.5 rounded-lg text-xs font-mono border transition">
+              长柄多圈 (a=5, L=3, k=2)
+            </button>
+            <button onclick="loadSandboxPreset(4)" id="sb-preset-4" class="px-2.5 py-1.5 rounded-lg text-xs font-mono border transition">
+              示例2·头即入环 (a=0, L=2)
+            </button>
+            <button onclick="loadSandboxPreset(5)" id="sb-preset-5" class="px-2.5 py-1.5 rounded-lg text-xs font-mono border transition">
+              示例3·无环链表 (pos=-1)
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 Uncoupled Stage Tabs -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <button onclick="setSandboxStage(1)" id="sb-stage-btn-1" class="p-3 rounded-xl border text-left transition flex items-center justify-between">
+            <div>
+              <div class="text-xs font-mono text-sky-400 font-bold">STAGE 1 · 只看追击</div>
+              <div class="text-xs sm:text-sm font-semibold text-white mt-0.5">🐢slow(1步) 与 ⚡fast(2步) 找相遇点</div>
+            </div>
+            <span class="text-lg">💥</span>
+          </button>
+
+          <button onclick="setSandboxStage(2)" id="sb-stage-btn-2" class="p-3 rounded-xl border text-left transition flex items-center justify-between">
+            <div>
+              <div class="text-xs font-mono text-amber-400 font-bold">STAGE 2 · 定格切分</div>
+              <div class="text-xs sm:text-sm font-semibold text-white mt-0.5">在碰撞点切出 🟦a、🟧b、🟩c 并对齐</div>
+            </div>
+            <span class="text-lg">🔪</span>
+          </button>
+
+          <button onclick="setSandboxStage(3)" id="sb-stage-btn-3" class="p-3 rounded-xl border text-left transition flex items-center justify-between">
+            <div>
+              <div class="text-xs font-mono text-emerald-400 font-bold">STAGE 3 · 只看会合</div>
+              <div class="text-xs sm:text-sm font-semibold text-white mt-0.5">隐藏 fast！🚶ptr 与 🐢slow 同速迈向🚪</div>
+            </div>
+            <span class="text-lg">🚪</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sandbox Main Canvas & Single-Line Action Bar -->
+      <div class="card-surface rounded-2xl p-5 space-y-4">
+        <!-- Simple Control Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 px-4 py-3 rounded-xl border border-slate-800">
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="sandboxResetStage()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono border border-slate-700 transition">
+              ⏮ 本阶段归零
+            </button>
+            <button onclick="sandboxStep(-1)" id="sb-prev-btn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono border border-slate-700 transition">
+              ◀ 后退一步
+            </button>
+            <button onclick="sandboxStep(1)" id="sb-next-btn" class="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs font-mono shadow transition">
+              下一步 (单步推进) ▶
+            </button>
+            <button onclick="toggleSandboxAutoPlay()" id="sb-auto-btn" class="px-3.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-semibold transition">
+              ▶ 自动播放
+            </button>
+          </div>
+
+          <div id="sb-counter-badge" class="text-xs font-mono px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-amber-300">
+            动作进度：0 / 0
+          </div>
+        </div>
+
+        <!-- Clean Uncoupled SVG Canvas + Live Synchronized Code Trace -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+          <div class="lg:col-span-7 bg-slate-950/85 rounded-2xl border border-slate-800/90 p-3 sm:p-4 flex flex-col items-center justify-center min-h-[340px]">
+            <svg id="sandbox-svg" viewBox="0 0 760 320" class="w-full h-auto max-h-[340px] select-none"></svg>
+          </div>
+
+          <!-- Synchronized Indented Code Panel -->
+          <div class="lg:col-span-5 bg-slate-950 rounded-2xl border border-slate-800/90 p-3.5 flex flex-col justify-between">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+              <span class="text-xs font-mono text-sky-400 font-semibold">🐍 Python 实时执行行追踪 (4空格标准缩进)</span>
+              <span id="sb-code-stage-tag" class="text-[11px] font-mono px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-700/50">STAGE 1</span>
+            </div>
+            <div id="sandbox-code-lines" class="space-y-0.5 text-xs overflow-x-auto py-1">
+              <!-- Populated dynamically with strict white-space: pre -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Single Human-Readable Status Bar -->
+        <div class="bg-slate-900/95 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span id="sb-status-icon" class="text-2xl">🐢</span>
+            <div>
+              <div id="sb-status-title" class="text-sm sm:text-base font-bold text-white">
+                准备就绪
+              </div>
+              <div id="sb-status-desc" class="text-xs sm:text-sm text-slate-300 mt-0.5">
+                点击「下一步」观察指针移动。
+              </div>
+            </div>
+          </div>
+          <button id="sb-next-stage-cta" onclick="advanceToNextSandboxStage()" class="hidden px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm shrink-0 transition shadow-lg shadow-amber-500/20">
+            进入下一阶段 →
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // WORKSPACE SWITCHING LOGIC
+    // =========================================================================
+    let activeWorkspace = 'cuts';
+
+    function switchWorkspace(ws) {
+      activeWorkspace = ws;
+      const cutsEl = document.getElementById('workspace-cuts');
+      const sbEl = document.getElementById('workspace-sandbox');
+      const btnCuts = document.getElementById('tab-btn-cuts');
+      const btnSb = document.getElementById('tab-btn-sandbox');
+
+      if (ws === 'cuts') {
+        cutsEl.classList.remove('hidden');
+        sbEl.classList.add('hidden');
+        btnCuts.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-1.5 bg-sky-600 text-white shadow';
+        btnSb.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+        renderCurrentCut();
+      } else {
+        cutsEl.classList.add('hidden');
+        sbEl.classList.remove('hidden');
+        btnSb.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-1.5 bg-sky-600 text-white shadow';
+        btnCuts.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+        renderSandbox();
+      }
+    }
+
+    // =========================================================================
+    // WORKSPACE A: 🔪 八刀切分·图像解构 DATA & RENDERER
+    // =========================================================================
+    // We use a super intuitive concrete example throughout Cut 0 ~ Cut 6:
+    // Segment a (Blue) = 3 steps (Head -> Entry)
+    // Segment b (Orange) = 2 steps (Entry -> Meet)
+    // Segment c (Green) = 3 steps (Meet -> Entry)
+    // Loop length L = b + c = 5 steps.
+    // Let's verify: when slow walks a + b = 3 + 2 = 5 steps (arriving at Meet),
+    // fast walks 2 * 5 = 10 steps = 3 (a) + 5 (1 full loop) + 2 (b), also arriving at Meet!
+    // And notice how visually clean a = 3 and c = 3 are!
+
+    const CUTS_DATA = [
+      {
+        id: 0,
+        shortLabel: '第0刀·跑道',
+        badge: '第 0 刀 · 建立全局画面',
+        subtitle: '「勺子跑道」与 3 个关键地标',
+        question: '为什么 141 题里快慢指针撞上的地方，偏偏不是我们要找的「🚪入环口」？',
+        takeaway: '因为当乌龟 slow 还在左边直道上慢吞吞走时，闪电 fast 早就冲进圆环里转起来了！等乌龟刚踏进🚪入环口时，fast 已经在环里某个位置从背后包抄它，所以两人必然撞在环内的某个【💥相遇点】，而不是【🚪入环口】。'
+      },
+      {
+        id: 1,
+        shortLabel: '第1刀·切三段',
+        badge: '第 1 刀 · 给跑道动刀',
+        subtitle: '咔嚓两刀，把勺子切成 🟦a、🟧b、🟩c 三段积木',
+        question: '用 🚩起点、🚪入环口、💥相遇点 这三个地标，能把跑道切成哪三段？',
+        takeaway: '任何有环链表，只要发生了碰撞，就会被【🚪入环口】和【💥相遇点】天然切成三段积木：直道走廊 🟦a、入环到碰撞的上半弧 🟧b、碰撞点继续走回入环口的下半弧 🟩c（注意：🟧b + 🟩c 刚好拼成完整一圈环！）。'
+      },
+      {
+        id: 2,
+        shortLabel: '第2刀·切慢指针',
+        badge: '第 2 刀 · 切开慢指针',
+        subtitle: '把乌龟 slow 走过的路拉直成积木条',
+        question: '从 🚩起点 出发，到在 💥相遇点 被逮住，慢指针 slow 一共走了哪几块积木？',
+        takeaway: '慢指针 slow 的轨迹极其单纯：先走完直道【🟦 蓝段 a】，一进环还没来得及跑完一圈，走了【🟧 橙段 b】就在💥相遇点被追上了。所以 slow 的总路程永远是：🟦a + 🟧b。'
+      },
+      {
+        id: 3,
+        shortLabel: '第3刀·快指针倍速',
+        badge: '第 3 刀 · 切开快指针（视角 1：倍速复印机）',
+        subtitle: '利用「速度是 2 倍」把 slow 的积木条直接翻倍',
+        question: '快指针 fast 每回合走 2 步，慢指针走 1 步。相同时间内，fast 的积木条有多长？',
+        takeaway: '先不管 fast 在圆环里是怎么绕的，单凭「速度是 slow 的 2 倍」，把 slow 的积木条放进复印机 ×2，就得到 fast 的总路程：(🟦a + 🟧b) + (🟦a + 🟧b)。'
+      },
+      {
+        id: 4,
+        shortLabel: '第4刀·快指针地图',
+        badge: '第 4 刀 · 切开快指针（视角 2：地图实况轨迹）',
+        subtitle: '回到勺子跑道看实况：fast 到底比 slow 多跑了哪一段？',
+        question: '在跑道地图上，fast 第一次路过 💥相遇点 后没有停，它多绕了哪两段积木才第二次回到 💥？',
+        takeaway: '看地图实况：fast 先走完【🟦a + 🟧b】第一次路过💥相遇点；接着它顺着环继续走完下半弧【🟩c】回到🚪入环口，再走一遍上半弧【🟧b】，第二次到达💥撞上 slow！所以地图上 fast 走的是：(🟦a + 🟧b) + (🟩c + 🟧b)。'
+      },
+      {
+        id: 5,
+        shortLabel: '第5刀·消消乐',
+        badge: '第 5 刀 · 全场最爽的一刀（积木条消消乐）',
+        subtitle: '把第 3 刀和第 4 刀的两根积木条上下对齐，砍掉相同积木！',
+        question: '既然「倍速视角」和「地图视角」画的都是同一个 fast 走过的总路程，上下对齐消去相同项会发现什么？',
+        takeaway: '真相大白！把上下两根等长积木条里一模一样的 🟦a 和 🟧b 统统砍掉，中间剩下的两块积木严丝合缝对齐：【🟦 蓝段 a === 🟩 绿段 c】！也就是说：从🚩起点到🚪入环口的距离，天生等于从💥相遇点继续走到🚪入环口的距离！'
+      },
+      {
+        id: 6,
+        shortLabel: '第6刀·双人同速',
+        badge: '第 6 刀 · 把几何相等变成代码动作',
+        subtitle: '既然 🟦a 与 🟩c 一样长，怎么不靠尺子量就抓出 🚪入环口？',
+        question: '计算机看不见 a 是几步，但既然 🟦a = 🟩c，放两个同速小人分别走这两段路会发生什么？',
+        takeaway: '精妙绝伦的转化：派一个新小人 🚶ptr 站在【🚩起点】准备走 🟦a，让原来的 🐢slow 留在【💥相遇点】准备走 🟩c。两人每次同时迈 1 步，因为两段路一样长，他们必然在同一秒钟一头撞在终点——也就是【🚪入环口】！'
+      },
+      {
+        id: 7,
+        shortLabel: '第7刀·图码同构',
+        badge: '第 7 刀 · 图码同构组装（左码右图 · 实时联动）',
+        subtitle: '点击左侧任意代码块，右侧实时投影对应的「勺子跑道状态与积木等式」',
+        question: '每一行 Python 代码（以及每一层缩进），在勺子跑道上到底对应什么物理动作？',
+        takeaway: '代码只是画面的翻译！① 第 4~5 行对应【🚩同起点 + 2步防崩雷达】；② 第 6~10 行对应【追击定格在💥相遇点】；③ 第 11~16 行（缩进在 if 内部）对应【派 ptr 回🚩，两人同速走完 🟦a === 🟩c 在🚪碰头】；④ 第 18 行对应【直道触底 None】。'
+      }
+    ];
+
+    let currentCutIndex = 0;
+
+    // Interactive sub-states inside specific cuts
+    let cut0AnimStep = 0;      // 0: initial, 1: slow enters, 2: collided at meet
+    let cut1SelectedSeg = 'all'; // 'all' | 'a' | 'b' | 'c'
+    let cut3Copied = true;     // whether x2 copy is shown
+    let cut5Cancelled = false; // whether block cancellation is active
+    let cut5MultiLoop = false; // whether k圈 toggle is active
+    let cut6Mode = 'k1';       // 'k1': a=3,c=3 (single loop) | 'k2': a=5,L=3,c=2 (multi loop k=2)
+    let cut6WalkStep = 0;      // step counter towards entry
+    let cut7ActiveBlock = 3;   // 1: init+radar, 2: chase+collide, 3: converge a==c, 4: acyclic None, 0: overview
+    let cut7Block3Step = 0;    // 0..3 mini-stepper inside Cut 7 Block 3
+    let cut7Compare141 = false; // toggle side-by-side 141 vs 142 comparison
+
+    function renderCutStepperPills() {
+      const container = document.getElementById('cut-pills-container');
+      let html = '';
+      CUTS_DATA.forEach((cut, idx) => {
+        const isActive = idx === currentCutIndex;
+        const isDone = idx < currentCutIndex;
+        html += `
+          <button onclick="goToCut(${idx})" class="cut-pill px-2 py-2 rounded-xl border text-xs font-mono font-medium flex flex-col items-center justify-center gap-0.5 ${
+            isActive
+              ? 'active'
+              : isDone
+              ? 'bg-slate-800/90 text-sky-300 border-sky-700/50 hover:bg-slate-800'
+              : 'bg-slate-900/70 text-slate-400 border-slate-800 hover:bg-slate-800/70 hover:text-slate-200'
+          }">
+            <span class="text-[10px] opacity-75">CUT 0${idx}</span>
+            <span class="truncate max-w-full">${cut.shortLabel.split('·')[1]}</span>
+          </button>
+        `;
+      });
+      container.innerHTML = html;
+      document.getElementById('cut-progress-text').textContent = `当前：第 ${currentCutIndex} 刀 / 共 7 刀`;
+      document.getElementById('btn-prev-cut').disabled = (currentCutIndex === 0);
+      document.getElementById('btn-next-cut').disabled = (currentCutIndex === CUTS_DATA.length - 1);
+    }
+
+    function goToCut(idx) {
+      currentCutIndex = idx;
+      // Set friendly default sub-states when entering a cut
+      if (idx === 5) cut5Cancelled = false;
+      if (idx === 6) cut6WalkStep = 0;
+      if (idx === 7 && cut7ActiveBlock === 0) cut7ActiveBlock = 3;
+      renderCutStepperPills();
+      renderCurrentCut();
+    }
+
+    function changeCut(delta) {
+      const next = currentCutIndex + delta;
+      if (next >= 0 && next < CUTS_DATA.length) {
+        goToCut(next);
+      }
+    }
+
+    // Keyboard Left/Right navigation for Workspace A
+    window.addEventListener('keydown', (e) => {
+      if (activeWorkspace !== 'cuts') return;
+      if (e.key === 'ArrowRight') changeCut(1);
+      if (e.key === 'ArrowLeft') changeCut(-1);
+    });
+
+    // Helper: Generate the canonical Spoon Track SVG for Cuts 0, 1, 2, 4, 6
+    // Coordinates for our 8-node Spoon Track (a=3: nodes 0,1,2; Entry=node 3; b=2: nodes 3->4->5(Meet); c=3: nodes 5->6->7->3(Entry))
+    function getCanonicalSpoonNodes() {
+      const cx = 530;
+      const cy = 155;
+      const r = 98;
+      // Entry node 3 is at 9 o'clock (angle = PI), so (cx - r, cy) = (432, 155)
+      // Stem nodes 0, 1, 2 lead horizontally from left into (432, 155):
+      const nodes = [
+        { id: 0, x: 112, y: 155, label: '0' },
+        { id: 1, x: 218, y: 155, label: '1' },
+        { id: 2, x: 325, y: 155, label: '2' }
+      ];
+      // 5 loop nodes (ids 3, 4, 5, 6, 7) starting at angle PI and going clockwise:
+      // j=0 (id 3): Entry (PI = 180 deg)
+      // j=1 (id 4): top-left (PI + 72 deg)
+      // j=2 (id 5): Meet! (PI + 144 deg -> top-right/right-ish)
+      // j=3 (id 6): bottom-right (PI + 216 deg)
+      // j=4 (id 7): bottom-left (PI + 288 deg)
+      for (let j = 0; j < 5; j++) {
+        const angle = Math.PI + (j * 2 * Math.PI) / 5;
+        nodes.push({
+          id: 3 + j,
+          x: cx + r * Math.cos(angle),
+          y: cy + r * Math.sin(angle),
+          angle,
+          label: String(3 + j)
+        });
+      }
+      return { nodes, cx, cy, r };
+    }
+
+    function renderCurrentCut() {
+      const cut = CUTS_DATA[currentCutIndex];
+      document.getElementById('cut-badge').textContent = cut.badge;
+      document.getElementById('cut-subtitle').textContent = cut.subtitle;
+      document.getElementById('cut-question').textContent = cut.question;
+      document.getElementById('cut-takeaway').textContent = cut.takeaway;
+
+      const stage = document.getElementById('cut-visual-stage');
+
+      if (currentCutIndex === 0) {
+        stage.innerHTML = renderCut0HTML();
+      } else if (currentCutIndex === 1) {
+        stage.innerHTML = renderCut1HTML();
+      } else if (currentCutIndex === 2) {
+        stage.innerHTML = renderCut2HTML();
+      } else if (currentCutIndex === 3) {
+        stage.innerHTML = renderCut3HTML();
+      } else if (currentCutIndex === 4) {
+        stage.innerHTML = renderCut4HTML();
+      } else if (currentCutIndex === 5) {
+        stage.innerHTML = renderCut5HTML();
+      } else if (currentCutIndex === 6) {
+        stage.innerHTML = renderCut6HTML();
+      } else if (currentCutIndex === 7) {
+        stage.innerHTML = renderCut7HTML();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // CUT 0: The Spoon Track & 3 Iconic Landmarks (Why collision != entry)
+    // -------------------------------------------------------------------------
+    function setCut0Step(s) {
+      cut0AnimStep = s;
+      renderCurrentCut();
+    }
+
+    function renderCut0HTML() {
+      let tokens = [];
+      let statusBanner = '';
+      if (cut0AnimStep === 0) {
+        tokens = [
+          { nodeId: 0, text: '🐢 slow (0步)', bg: '#0284c7', offsetY: -34 },
+          { nodeId: 0, text: '⚡ fast (0步)', bg: '#e11d48', offsetY: -58 }
+        ];
+        statusBanner = '⏱️ 帧 1（起跑时刻）：🐢slow 与 ⚡fast 同时站在【🚩起点 0】准备出发。';
+      } else if (cut0AnimStep === 1) {
+        tokens = [
+          { nodeId: 3, text: '🐢 slow (刚进环:3步)', bg: '#0284c7', offsetY: -34 },
+          { nodeId: 6, text: '⚡ fast (已进环:6步)', bg: '#e11d48', offsetY: -34 }
+        ];
+        statusBanner = '⏱️ 帧 2（乌龟刚踏入🚪入环口）：slow 走了 3 步刚到【🚪入环口 3】，但 fast 已经走了 6 步绕到环内【节点 6】从背后包抄它！';
+      } else {
+        tokens = [
+          { nodeId: 5, text: '🐢 slow (5步)', bg: '#0284c7', offsetY: -34 },
+          { nodeId: 5, text: '⚡ fast (10步·撞上!)', bg: '#e11d48', offsetY: -58 }
+        ];
+        statusBanner = '💥 帧 3（环内追尾）：再走 2 个回合，fast 在环内的【💥相遇点 5】追上 slow！看到没？撞车点 [5] 根本不是入环口 [3]！';
+      }
+
+      const svgContent = buildSpoonTrackSVG({
+        colorMode: 'plain',
+        showScissors: false,
+        activeSeg: 'all',
+        tokens
+      });
+
+      return `
+        <div class="w-full flex flex-col items-center space-y-4">
+          <div class="flex flex-wrap items-center justify-center gap-2 bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+            <span class="text-xs font-mono text-slate-400 px-2">点击切换 3 个关键瞬间：</span>
+            <button onclick="setCut0Step(0)" class="px-3 py-1.5 rounded-lg text-xs font-mono transition ${
+              cut0AnimStep === 0 ? 'bg-sky-600 text-white font-bold shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            }">
+              ① 起跑时刻 (同在🚩起点)
+            </button>
+            <button onclick="setCut0Step(1)" class="px-3 py-1.5 rounded-lg text-xs font-mono transition ${
+              cut0AnimStep === 1 ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            }">
+              ② 当 slow 刚踏进🚪入环口时
+            </button>
+            <button onclick="setCut0Step(2)" class="px-3 py-1.5 rounded-lg text-xs font-mono transition ${
+              cut0AnimStep === 2 ? 'bg-rose-600 text-white font-bold shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            }">
+              ③ 最终在💥相遇点撞上
+            </button>
+          </div>
+
+          <svg viewBox="0 0 760 310" class="w-full h-auto max-h-[300px] select-none">
+            ${svgContent}
+          </svg>
+
+          <div class="w-full max-w-2xl text-center px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm font-mono text-sky-200">
+            ${statusBanner}
+          </div>
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------------
+    // CUT 1: Cut the Spoon Track into 3 Colored Segments (a, b, c)
+    // -------------------------------------------------------------------------
+    function selectCut1Seg(seg) {
+      cut1SelectedSeg = seg;
+      renderCurrentCut();
+    }
+
+    function renderCut1HTML() {
+      const svgContent = buildSpoonTrackSVG({
+        colorMode: 'abc',
+        showScissors: true,
+        activeSeg: cut1SelectedSeg,
+        tokens: []
+      });
+
+      return `
+        <div class="w-full flex flex-col items-center space-y-4">
+          <div class="flex flex-wrap items-center justify-center gap-2 bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+            <span class="text-xs font-mono text-slate-400 px-2">点击单独高亮每一段积木：</span>
+            <button onclick="selectCut1Seg('all')" class="px-3 py-1.5 rounded-lg text-xs font-mono transition ${
+              cut1SelectedSeg === 'all' ? 'bg-slate-200 text-slate-950 font-bold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            }">
+              全部显示 (🟦a + 🟧b + 🟩c)
+            </button>
+            <button onclick="selectCut1Seg('a')" class="px-3 py-1.5 rounded-lg text-xs font-mono transition ${
+              cut1SelectedSeg === 'a' ? 'bg-sky-500 text-slate-950 font-bold shadow' : 'bg-sky-950/60 text-sky-300 border border-sky-700/50'
+            }">
+              只看 🟦 蓝段 a (🚩➔🚪: 3步)
+            </button>
+            <button onclick="selectCut1Seg('b')" class="px-3 py-1.5 rounded-lg text-xs font-mono transition ${
+              cut1SelectedSeg === 'b' ? 'bg-orange-500 text-slate-950 font-bold shadow' : 'bg-orange-950/60 text-orange-300 border border-orange-700/50'
+            }">
+              只看 🟧 橙段 b (🚪➔💥: 2步)
+            </button>
+            <button onclick="selectCut1Seg('c')" class="px-3 py-1.5 rounded-lg text-xs font-mono transition ${
+              cut1SelectedSeg === 'c' ? 'bg-emerald-500 text-slate-950 font-bold shadow' : 'bg-emerald-950/60 text-emerald-300 border border-emerald-700/50'
+            }">
+              只看 🟩 绿段 c (💥➔🚪: 3步)
+            </button>
+          </div>
+
+          <svg viewBox="0 0 760 310" class="w-full h-auto max-h-[300px] select-none">
+            ${svgContent}
+          </svg>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full max-w-3xl text-xs font-mono">
+            <div class="p-3 rounded-xl bg-sky-950/40 border border-sky-500/40 text-sky-200">
+              <div class="font-bold text-sky-300">🟦 蓝段 a（勺柄直道）</div>
+              <div class="text-slate-300 mt-0.5">从 🚩起点 走到 🚪入环口（本例为 3 步）</div>
+            </div>
+            <div class="p-3 rounded-xl bg-orange-950/40 border border-orange-500/40 text-orange-200">
+              <div class="font-bold text-orange-300">🟧 橙段 b（环上半弧）</div>
+              <div class="text-slate-300 mt-0.5">从 🚪入环口 顺时针走到 💥相遇点（本例 2 步）</div>
+            </div>
+            <div class="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-200">
+              <div class="font-bold text-emerald-300">🟩 绿段 c（环下半弧）</div>
+              <div class="text-slate-300 mt-0.5">从 💥相遇点 继续顺时针走回 🚪入环口（本例 3 步）</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------------
+    // CUT 2: Unroll Slow Pointer's Path into a Straight Block Bar (a + b)
+    // -------------------------------------------------------------------------
+    function renderCut2HTML() {
+      const svgContent = buildSpoonTrackSVG({
+        colorMode: 'abc',
+        showScissors: false,
+        activeSeg: 'ab',
+        tokens: [
+          { nodeId: 5, text: '🐢 slow 停在💥', bg: '#0284c7', offsetY: -34 }
+        ]
+      });
+
+      return `
+        <div class="w-full flex flex-col items-center space-y-5">
+          <svg viewBox="0 0 760 280" class="w-full h-auto max-h-[250px] select-none">
+            ${svgContent}
+          </svg>
+
+          <!-- Straightened Block Bar for Slow -->
+          <div class="w-full max-w-2xl bg-slate-900/95 p-4 rounded-2xl border border-slate-800 space-y-2.5">
+            <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+              <span>👇 把 🐢 慢指针走过的路径从跑道上剥离，拉直成积木条：</span>
+              <span class="text-sky-300 font-bold">总计：3 + 2 = 5 步</span>
+            </div>
+
+            <div class="flex items-center w-full gap-2">
+              <div class="w-24 shrink-0 text-xs font-mono font-bold text-sky-300">🐢 slow 路程</div>
+              <div class="flex-1 grid grid-cols-5 gap-2">
+                <div class="col-span-3 h-12 rounded-xl bg-sky-500/25 border-2 border-sky-400 flex flex-col items-center justify-center">
+                  <span class="text-xs sm:text-sm font-mono font-bold text-sky-200">🟦 蓝段 a</span>
+                  <span class="text-[11px] font-mono text-sky-300/80">🚩起点 ➔ 🚪入环口 (3步)</span>
+                </div>
+                <div class="col-span-2 h-12 rounded-xl bg-orange-500/25 border-2 border-orange-400 flex flex-col items-center justify-center">
+                  <span class="text-xs sm:text-sm font-mono font-bold text-orange-200">🟧 橙段 b</span>
+                  <span class="text-[11px] font-mono text-orange-300/80">🚪入环口 ➔ 💥相遇点 (2步)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------------
+    // CUT 3: Fast Pointer View 1 — The 2x Speed Photocopier
+    // -------------------------------------------------------------------------
+    function toggleCut3Copy(copied) {
+      cut3Copied = copied;
+      renderCurrentCut();
+    }
+
+    function renderCut3HTML() {
+      return `
+        <div class="w-full max-w-3xl flex flex-col items-center space-y-6 py-2">
+          <div class="flex items-center gap-3 bg-slate-900 p-2 rounded-xl border border-slate-800">
+            <button onclick="toggleCut3Copy(false)" class="px-3.5 py-1.5 rounded-lg text-xs font-mono transition ${
+              !cut3Copied ? 'bg-sky-600 text-white font-bold' : 'bg-slate-800 text-slate-300'
+            }">
+              复印前：只看 🐢 slow 的积木条
+            </button>
+            <button onclick="toggleCut3Copy(true)" class="px-3.5 py-1.5 rounded-lg text-xs font-mono transition ${
+              cut3Copied ? 'bg-rose-600 text-white font-bold shadow' : 'bg-slate-800 text-slate-300'
+            }">
+              ⚡ 启动 2 倍速复印机 (×2)
+            </button>
+          </div>
+
+          <div class="w-full bg-slate-900/90 rounded-2xl p-5 border border-slate-800 space-y-5">
+            <!-- Row 1: Slow -->
+            <div class="space-y-1.5">
+              <div class="text-xs font-mono text-slate-400">基准参考：🐢 慢指针 slow 走了 1 份 <code class="text-sky-300">(🟦a + 🟧b)</code>（共 5 步）</div>
+              <div class="grid grid-cols-10 gap-2">
+                <div class="col-span-3 h-12 rounded-xl bg-sky-500/25 border-2 border-sky-400 flex items-center justify-center font-mono text-xs sm:text-sm font-bold text-sky-200">
+                  🟦 a (3)
+                </div>
+                <div class="col-span-2 h-12 rounded-xl bg-orange-500/25 border-2 border-orange-400 flex items-center justify-center font-mono text-xs sm:text-sm font-bold text-orange-200">
+                  🟧 b (2)
+                </div>
+                <div class="col-span-5 h-12 rounded-xl border border-dashed border-slate-700/70 flex items-center justify-center font-mono text-xs text-slate-500">
+                  （慢指针只走了前半截）
+                </div>
+              </div>
+            </div>
+
+            <!-- Photocopier Divider -->
+            <div class="flex items-center justify-center gap-3 py-1">
+              <div class="h-px bg-slate-800 flex-1"></div>
+              <span class="px-3 py-1 rounded-full bg-rose-950/90 border border-rose-500/40 text-rose-300 text-xs font-mono font-bold">
+                ⚡ 快指针速度是 2 倍 ➔ 路程就是把上面那一截直接复制粘贴一份！
+              </span>
+              <div class="h-px bg-slate-800 flex-1"></div>
+            </div>
+
+            <!-- Row 2: Fast (2x Copy) -->
+            <div class="space-y-1.5">
+              <div class="text-xs font-mono text-rose-300 font-semibold">
+                视角 1（倍速复印视角）：⚡ 快指针 fast 的总路程 = <code class="text-white">(🟦a + 🟧b) + (🟦a + 🟧b)</code>（共 10 步）
+              </div>
+              <div class="grid grid-cols-10 gap-2">
+                <div class="col-span-3 h-14 rounded-xl bg-sky-500/25 border-2 border-sky-400 flex flex-col items-center justify-center font-mono">
+                  <span class="text-xs sm:text-sm font-bold text-sky-200">🟦 a (3)</span>
+                  <span class="text-[10px] text-sky-300">第 1 份</span>
+                </div>
+                <div class="col-span-2 h-14 rounded-xl bg-orange-500/25 border-2 border-orange-400 flex flex-col items-center justify-center font-mono">
+                  <span class="text-xs sm:text-sm font-bold text-orange-200">🟧 b (2)</span>
+                  <span class="text-[10px] text-orange-300">第 1 份</span>
+                </div>
+                <div class="col-span-3 h-14 rounded-xl bg-sky-500/30 border-2 border-sky-300 flex flex-col items-center justify-center font-mono transition-all duration-300 ${
+                  cut3Copied ? 'opacity-100 scale-100' : 'opacity-15 scale-95'
+                }">
+                  <span class="text-xs sm:text-sm font-bold text-sky-100">🟦 a (3)</span>
+                  <span class="text-[10px] text-amber-300 font-bold">复印出的第 2 份</span>
+                </div>
+                <div class="col-span-2 h-14 rounded-xl bg-orange-500/30 border-2 border-orange-300 flex flex-col items-center justify-center font-mono transition-all duration-300 ${
+                  cut3Copied ? 'opacity-100 scale-100' : 'opacity-15 scale-95'
+                }">
+                  <span class="text-xs sm:text-sm font-bold text-orange-100">🟧 b (2)</span>
+                  <span class="text-[10px] text-amber-300 font-bold">复印出的第 2 份</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------------
+    // CUT 4: Fast Pointer View 2 — Real Map Trajectory (a + b + c + b)
+    // -------------------------------------------------------------------------
+    function renderCut4HTML() {
+      const svgContent = buildSpoonTrackSVG({
+        colorMode: 'abc',
+        showScissors: false,
+        activeSeg: 'all',
+        tokens: [
+          { nodeId: 5, text: '⚡ fast 绕一圈再次回到💥', bg: '#e11d48', offsetY: -34 }
+        ]
+      });
+
+      return `
+        <div class="w-full flex flex-col items-center space-y-4">
+          <svg viewBox="0 0 760 265" class="w-full h-auto max-h-[235px] select-none">
+            ${svgContent}
+          </svg>
+
+          <!-- Real Map Bar for Fast -->
+          <div class="w-full max-w-3xl bg-slate-900/95 p-4 rounded-2xl border border-slate-800 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+              <span class="text-slate-300">🗺️ 视角 2（跑道实况录像）：fast 到底在图上踩过了哪几段积木？</span>
+              <span class="text-emerald-300 font-bold">后半截多跑的刚好是整整 1 圈环 (🟩c + 🟧b)！</span>
+            </div>
+
+            <div class="grid grid-cols-10 gap-2 pt-1">
+              <div class="col-span-3 h-14 rounded-xl bg-sky-500/25 border-2 border-sky-400 flex flex-col items-center justify-center font-mono">
+                <span class="text-xs sm:text-sm font-bold text-sky-200">🟦 a (3)</span>
+                <span class="text-[10px] text-slate-300">🚩➔🚪</span>
+              </div>
+              <div class="col-span-2 h-14 rounded-xl bg-orange-500/25 border-2 border-orange-400 flex flex-col items-center justify-center font-mono">
+                <span class="text-xs sm:text-sm font-bold text-orange-200">🟧 b (2)</span>
+                <span class="text-[10px] text-slate-300">第1次到💥</span>
+              </div>
+              <div class="col-span-3 h-14 rounded-xl bg-emerald-500/30 border-2 border-emerald-400 flex flex-col items-center justify-center font-mono shadow-lg shadow-emerald-950/50">
+                <span class="text-xs sm:text-sm font-bold text-emerald-200">🟩 c (3)</span>
+                <span class="text-[10px] text-emerald-300 font-bold">💥继续走回🚪</span>
+              </div>
+              <div class="col-span-2 h-14 rounded-xl bg-orange-500/25 border-2 border-orange-400 flex flex-col items-center justify-center font-mono">
+                <span class="text-xs sm:text-sm font-bold text-orange-200">🟧 b (2)</span>
+                <span class="text-[10px] text-slate-300">第2次到💥!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------------
+    // CUT 5: The Aha Moment! Block Cancellation (消消乐: a === c)
+    // -------------------------------------------------------------------------
+    function toggleCut5Cancel(val) {
+      cut5Cancelled = val;
+      renderCurrentCut();
+    }
+
+    function toggleCut5MultiLoop(val) {
+      cut5MultiLoop = val;
+      renderCurrentCut();
+    }
+
+    function renderCut5HTML() {
+      const cClass = cut5Cancelled ? 'cancelled-block' : '';
+      const surviveClass = cut5Cancelled ? 'highlight-survive' : '';
+
+      return `
+        <div class="w-full max-w-3xl flex flex-col items-center space-y-5 py-1">
+
+          <!-- Interactive Trigger Button -->
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <button onclick="toggleCut5Cancel(!cut5Cancelled)" class="px-5 py-2.5 rounded-xl font-mono text-xs sm:text-sm font-bold transition shadow-lg flex items-center gap-2 ${
+              cut5Cancelled
+                ? 'bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700'
+                : 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-500/25 scale-105'
+            }">
+              <span>${cut5Cancelled ? '↺ 恢复完整积木条' : '🔪 点击执行「积木消消乐」（砍掉上下相同的积木！）'}</span>
+            </button>
+
+            <button onclick="toggleCut5MultiLoop(!cut5MultiLoop)" class="px-3.5 py-2.5 rounded-xl font-mono text-xs border transition ${
+              cut5MultiLoop
+                ? 'bg-purple-950/90 border-purple-400 text-purple-200 font-bold'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+            }">
+              ${cut5MultiLoop ? '✓ 已展开追问：如果多绕了 k 圈呢？' : '🤔 追问：如果环很小，fast 多转了好几圈呢？'}
+            </button>
+          </div>
+
+          <!-- Two Aligned Bars Container -->
+          <div class="w-full bg-slate-900/95 rounded-2xl p-5 border border-slate-800 space-y-4 relative">
+
+            <!-- Bar 1: From Cut 3 (2x Speed) -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-mono text-slate-400">
+                <span>【第 3 刀 · 倍速视角】⚡ fast 路程 = 2 × slow</span>
+                <span>总长：10 步</span>
+              </div>
+              <div class="grid grid-cols-10 gap-2">
+                <div class="block-seg ${cClass} col-span-3 h-14 rounded-xl bg-sky-500/25 border border-sky-400 flex flex-col items-center justify-center font-mono">
+                  <span class="text-xs sm:text-sm font-bold text-sky-200">🟦 蓝段 a</span>
+                  <span class="text-[10px] text-slate-300">一起砍掉</span>
+                </div>
+                <div class="block-seg ${cClass} col-span-2 h-14 rounded-xl bg-orange-500/25 border border-orange-400 flex flex-col items-center justify-center font-mono">
+                  <span class="text-xs sm:text-sm font-bold text-orange-200">🟧 橙段 b</span>
+                  <span class="text-[10px] text-slate-300">一起砍掉</span>
+                </div>
+                <div class="block-seg ${surviveClass} col-span-3 h-14 rounded-xl bg-sky-500/35 border border-sky-300 flex flex-col items-center justify-center font-mono">
+                  <span class="text-sm sm:text-base font-bold text-white">🟦 蓝段 a (3步)</span>
+                  <span class="text-[10px] text-amber-300 font-bold">🚩起点 ➔ 🚪入环口</span>
+                </div>
+                <div class="block-seg ${cClass} col-span-2 h-14 rounded-xl bg-orange-500/25 border border-orange-400 flex flex-col items-center justify-center font-mono">
+                  <span class="text-xs sm:text-sm font-bold text-orange-200">🟧 橙段 b</span>
+                  <span class="text-[10px] text-slate-300">一起砍掉</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alignment Indicator Row -->
+            <div class="grid grid-cols-10 gap-2 py-0.5 text-center font-mono text-xs">
+              <div class="col-span-3 text-slate-600">${cut5Cancelled ? '❌ 已抵消' : '↕ 相同'}</div>
+              <div class="col-span-2 text-slate-600">${cut5Cancelled ? '❌ 已抵消' : '↕ 相同'}</div>
+              <div class="col-span-3 font-bold ${cut5Cancelled ? 'text-amber-300 text-sm animate-bounce' : 'text-sky-400'}">
+                ${cut5Cancelled ? '🎯 严丝合缝相等！' : '↕ 夹在中间的这一截必相等！'}
+              </div>
+              <div class="col-span-2 text-slate-600">${cut5Cancelled ? '❌ 已抵消' : '↕ 相同'}</div>
+            </div>
+
+            <!-- Bar 2: From Cut 4 (Real Map) -->
+            <div class="space-y-1">
+              <div class="grid grid-cols-10 gap-2">
+                <div class="block-seg ${cClass} col-span-3 h-14 rounded-xl bg-sky-500/25 border border-sky-400 flex flex-col items-center justify-center font-mono">
+                  <span class="text-xs sm:text-sm font-bold text-sky-200">🟦 蓝段 a</span>
+                  <span class="text-[10px] text-slate-300">一起砍掉</span>
+                </div>
+                <div class="block-seg ${cClass} col-span-2 h-14 rounded-xl bg-orange-500/25 border border-orange-400 flex flex-col items-center justify-center font-mono">
+                  <span class="text-xs sm:text-sm font-bold text-orange-200">🟧 橙段 b</span>
+                  <span class="text-[10px] text-slate-300">一起砍掉</span>
+                </div>
+                <div class="block-seg ${surviveClass} col-span-3 h-14 rounded-xl bg-emerald-500/35 border border-emerald-300 flex flex-col items-center justify-center font-mono">
+                  <span class="text-sm sm:text-base font-bold text-white">🟩 绿段 c (3步)</span>
+                  <span class="text-[10px] text-amber-300 font-bold">💥相遇点 ➔ 🚪入环口</span>
+                </div>
+                <div class="block-seg ${cClass} col-span-2 h-14 rounded-xl bg-orange-500/25 border border-orange-400 flex flex-col items-center justify-center font-mono">
+                  <span class="text-xs sm:text-sm font-bold text-orange-200">🟧 橙段 b</span>
+                  <span class="text-[10px] text-slate-300">一起砍掉</span>
+                </div>
+              </div>
+              <div class="flex justify-between text-xs font-mono text-slate-400 pt-1">
+                <span>【第 4 刀 · 地图视角】⚡ fast 路程 = (a + b) + 环内多绕一圈 (c + b)</span>
+                <span>总长：10 步</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Optional Multi-loop (k-1 loops) collapsible intuition -->
+          ${cut5MultiLoop ? `
+            <div class="w-full bg-purple-950/40 border border-purple-500/40 rounded-xl p-4 text-xs sm:text-sm text-purple-100 space-y-1.5 font-mono">
+              <div class="font-bold text-purple-300">🌀 如果直道 a 很长、圆环很小，fast 比 slow 多转了 k 圈怎么办？</div>
+              <p class="text-slate-200 font-sans leading-relaxed">
+                完全不影响！多转 <code class="text-purple-300">k</code> 圈无非是消掉以后变成：<strong class="text-amber-300">🟦 蓝段 a = 🟩 绿段 c + (k-1) 个整圈</strong>。
+                这意味着：从【💥相遇点】出发的小人，先花 <strong class="text-emerald-300">🟩 c 步</strong> 走到【🚪入环口】，剩下的步数刚好在环里原地转 <code class="text-purple-300">k-1</code> 个整圈，最后那一秒<strong>依然稳稳停在【🚪入环口】</strong>！（下一刀你可以亲自切换 <code class="text-amber-300">k=2</code> 体验！）
+              </p>
+            </div>
+          ` : ''}
+
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------------
+    // CUT 6: Two Equal-Speed Walkers Converging at Entry (Supports k=1 and k=2!)
+    // -------------------------------------------------------------------------
+    function setCut6Mode(mode) {
+      cut6Mode = mode;
+      cut6WalkStep = 0;
+      renderCurrentCut();
+    }
+
+    function stepCut6Walk(delta) {
+      const maxSteps = cut6Mode === 'k1' ? 3 : 5;
+      if (delta === 0) {
+        cut6WalkStep = 0;
+      } else {
+        cut6WalkStep = Math.max(0, Math.min(maxSteps, cut6WalkStep + delta));
+      }
+      renderCurrentCut();
+    }
+
+    function renderCut6HTML() {
+      if (cut6Mode === 'k1') {
+        // k = 1 mode: a = 3, c = 3 on the canonical 8-node spoon track
+        const ptrNodeId = cut6WalkStep; // 0 -> 1 -> 2 -> 3
+        const slowTrack = [5, 6, 7, 3];
+        const slowNodeId = slowTrack[cut6WalkStep];
+        const arrived = (cut6WalkStep === 3);
+
+        const tokens = [
+          { nodeId: ptrNodeId, text: `🚶 ptr (已走${cut6WalkStep}步)`, bg: '#059669', offsetY: -34 },
+          { nodeId: slowNodeId, text: `🐢 slow (已走${cut6WalkStep}步)`, bg: '#0284c7', offsetY: arrived ? -58 : -34 }
+        ];
+
+        const svgContent = buildSpoonTrackSVG({
+          colorMode: 'abc',
+          showScissors: false,
+          activeSeg: 'ac',
+          tokens
+        });
+
+        return `
+          <div class="w-full flex flex-col items-center space-y-4">
+            <!-- Mode Switcher: k=1 vs k=2 -->
+            <div class="flex flex-wrap items-center justify-center gap-2 bg-slate-900/95 p-2 rounded-xl border border-slate-800">
+              <button onclick="setCut6Mode('k1')" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-sky-600 text-white shadow">
+                场景 A：单圈 (k=1) · 🟦a=3步, 🟩c=3步
+              </button>
+              <button onclick="setCut6Mode('k2')" class="px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800 text-purple-300 hover:bg-slate-700 border border-purple-500/30">
+                场景 B：长柄多圈 (k=2) · 🟦a=5步, 🟩c=2步 + 1整圈(3步)
+              </button>
+            </div>
+
+            <!-- Interactive Step Controls for Cut 6 -->
+            <div class="flex flex-wrap items-center justify-center gap-2.5 bg-slate-900/90 px-4 py-2 rounded-xl border border-slate-800">
+              <button onclick="stepCut6Walk(0)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300">
+                ⏮ 重置回出发点 (0/3步)
+              </button>
+              <button onclick="stepCut6Walk(-1)" ${cut6WalkStep === 0 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-35 text-xs font-mono text-slate-200">
+                ◀ 退一步
+              </button>
+              <button onclick="stepCut6Walk(1)" ${arrived ? 'disabled' : ''} class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-35 text-xs sm:text-sm font-mono font-bold text-white shadow-lg">
+                👣 两人同时迈 1 步 (${cut6WalkStep} / 3) ▶
+              </button>
+            </div>
+
+            <svg viewBox="0 0 760 295" class="w-full h-auto max-h-[275px] select-none">
+              ${svgContent}
+            </svg>
+
+            <div class="w-full max-w-2xl text-center px-4 py-2.5 rounded-xl font-mono text-xs sm:text-sm border ${
+              arrived
+                ? 'bg-amber-500/20 border-amber-400 text-amber-200 font-bold'
+                : 'bg-slate-900 border-slate-800 text-slate-200'
+            }">
+              ${
+                arrived
+                  ? '🎯 第 3 步：两人同时踏上【🚪入环口 3】！ptr 走完 🟦a(3步)，slow 走完 🟩c(3步)，严丝合缝在入环口碰头！'
+                  : `当前已同步迈出 ${cut6WalkStep} 步：🚶ptr 在节点 [${ptrNodeId}]，🐢slow 在节点 [${slowNodeId}]，距离【🚪入环口 3】都还剩 ${3 - cut6WalkStep} 步。`
+              }
+            </div>
+          </div>
+        `;
+      } else {
+        // k = 2 mode: a = 5, L = 3 (b = 1, c = 2).
+        // Meet is at node 6 (since Entry=5, b=1 -> Meet=6).
+        // As ptr walks 5 steps (0->1->2->3->4->5), slow walks 5 steps (6 -> 7 -> 5(Entry!) -> 6 -> 7 -> 5(Entry!)).
+        const ptrNode = cut6WalkStep; // 0..5
+        const slowTrackK2 = [6, 7, 5, 6, 7, 5];
+        const slowNode = slowTrackK2[cut6WalkStep];
+        const arrived = (cut6WalkStep === 5);
+
+        // Render custom SVG for a=5, L=3
+        const cx = 560, cy = 150, r = 85, nodeR = 19;
+        const entryX = cx - r; // 475
+        const nodes = [];
+        for (let i = 0; i < 5; i++) {
+          nodes.push({ id: i, x: 75 + i * 80, y: cy });
+        }
+        for (let j = 0; j < 3; j++) {
+          const ang = Math.PI + (j * 2 * Math.PI) / 3;
+          nodes.push({
+            id: 5 + j,
+            x: cx + r * Math.cos(ang),
+            y: cy + r * Math.sin(ang)
+          });
+        }
+
+        let svgK2 = `
+          <defs>
+            <marker id="k2-a" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+            </marker>
+            <marker id="k2-c" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#4ade80" />
+            </marker>
+          </defs>
+        `;
+        for (let i = 0; i < 5; i++) {
+          const n1 = nodes[i], n2 = nodes[i + 1];
+          svgK2 += `<line x1="${n1.x + nodeR + 2}" y1="${cy}" x2="${n2.x - nodeR - 7}" y2="${cy}" stroke="#38bdf8" stroke-width="3.5" marker-end="url(#k2-a)" />`;
+        }
+        for (let j = 0; j < 3; j++) {
+          const from = nodes[5 + j], to = nodes[5 + ((j + 1) % 3)];
+          const dx = to.x - from.x, dy = to.y - from.y, dist = Math.hypot(dx, dy);
+          const x1 = from.x + (dx / dist) * (nodeR + 2), y1 = from.y + (dy / dist) * (nodeR + 2);
+          const x2 = to.x - (dx / dist) * (nodeR + 8), y2 = to.y - (dy / dist) * (nodeR + 8);
+          const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+          const vx = mx - cx, vy = my - cy, vl = Math.hypot(vx, vy) || 1;
+          const ctrlX = mx + (vx / vl) * 22, ctrlY = my + (vy / vl) * 22;
+          svgK2 += `<path d="M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}" fill="none" stroke="#4ade80" stroke-width="3.5" marker-end="url(#k2-c)" />`;
+        }
+
+        nodes.forEach(n => {
+          const isHead = n.id === 0;
+          const isEntry = n.id === 5;
+          const isMeet = n.id === 6;
+          let stroke = '#475569', fill = '#0f172a';
+          if (isHead) { stroke = '#38bdf8'; fill = '#0c4a6e'; }
+          if (isEntry) { stroke = '#facc15'; fill = '#422006'; }
+          if (isMeet) { stroke = '#f43f5e'; fill = '#4c0519'; }
+          svgK2 += `
+            <g>
+              <circle cx="${n.x}" cy="${n.y}" r="${nodeR}" fill="${fill}" stroke="${stroke}" stroke-width="2.5" />
+              <text x="${n.x}" y="${n.y + 4.5}" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="12" font-weight="700">${n.id}</text>
+            </g>
+          `;
+          if (isHead) svgK2 += `<text x="${n.x}" y="${n.y + 34}" text-anchor="middle" fill="#7dd3fc" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🚩起点</text>`;
+          if (isEntry) svgK2 += `<text x="${n.x - 10}" y="${n.y + 36}" text-anchor="middle" fill="#fef08a" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🚪入环口[5]</text>`;
+          if (isMeet) svgK2 += `<text x="${n.x + 15}" y="${n.y - 26}" text-anchor="middle" fill="#fda4af" font-family="JetBrains Mono" font-size="10.5" font-weight="700">💥相遇点[6]</text>`;
+        });
+
+        const pTarget = nodes[ptrNode];
+        const sTarget = nodes[slowNode];
+        svgK2 += `
+          <g>
+            <rect x="${pTarget.x - 46}" y="${pTarget.y - 46}" width="92" height="20" rx="5" fill="#059669" stroke="#fff" stroke-width="1.2" />
+            <text x="${pTarget.x}" y="${pTarget.y - 32}" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🚶ptr (${cut6WalkStep}/5)</text>
+          </g>
+          <g>
+            <rect x="${sTarget.x - 46}" y="${sTarget.y - (pTarget === sTarget ? 68 : 46)}" width="92" height="20" rx="5" fill="#0284c7" stroke="#fff" stroke-width="1.2" />
+            <text x="${sTarget.x}" y="${sTarget.y - (pTarget === sTarget ? 54 : 32)}" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🐢slow (${cut6WalkStep}/5)</text>
+          </g>
+        `;
+
+        return `
+          <div class="w-full flex flex-col items-center space-y-4">
+            <div class="flex flex-wrap items-center justify-center gap-2 bg-slate-900/95 p-2 rounded-xl border border-slate-800">
+              <button onclick="setCut6Mode('k1')" class="px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800 text-slate-300 hover:bg-slate-700">
+                场景 A：单圈 (k=1) · 🟦a=3步, 🟩c=3步
+              </button>
+              <button onclick="setCut6Mode('k2')" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-purple-600 text-white shadow">
+                场景 B：长柄多圈 (k=2) · 🟦a=5步, 🟩c=2步 + 1整圈(3步)
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-2.5 bg-slate-900/90 px-4 py-2 rounded-xl border border-slate-800">
+              <button onclick="stepCut6Walk(0)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300">
+                ⏮ 重置 (0/5步)
+              </button>
+              <button onclick="stepCut6Walk(-1)" ${cut6WalkStep === 0 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-35 text-xs font-mono text-slate-200">
+                ◀ 退一步
+              </button>
+              <button onclick="stepCut6Walk(1)" ${arrived ? 'disabled' : ''} class="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-35 text-xs sm:text-sm font-mono font-bold text-white shadow-lg">
+                👣 两人同时迈 1 步 (${cut6WalkStep} / 5) ▶
+              </button>
+            </div>
+
+            <svg viewBox="0 0 760 280" class="w-full h-auto max-h-[265px] select-none">
+              ${svgK2}
+            </svg>
+
+            <div class="w-full max-w-2xl text-center px-4 py-2.5 rounded-xl font-mono text-xs sm:text-sm border ${
+              arrived
+                ? 'bg-amber-500/20 border-amber-400 text-amber-200 font-bold'
+                : cut6WalkStep === 2
+                ? 'bg-purple-950/60 border-purple-400 text-purple-200'
+                : 'bg-slate-900 border-slate-800 text-slate-200'
+            }">
+              ${
+                arrived
+                  ? '🎯 第 5 步：🚶ptr 走完 5 步到达【🚪入环口 5】；🐢slow 走完 c=2 步 + 1整圈(3步) 也刚好停在【🚪入环口 5】！'
+                  : cut6WalkStep === 2
+                  ? '👀 注意看第 2 步：🐢slow 已经走完绿段 c=2 步提前踩到了【🚪入环口 5】，但此时 🚶ptr 还在直道 [2] 上！继续点下一步，看 slow 在环里原地多转 1 整圈(3步)等它！'
+                  : `当前第 ${cut6WalkStep} / 5 步：🚶ptr 在 [${ptrNode}]，🐢slow 在 [${slowNode}]。`
+              }
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // CUT 7: Visual-Code Isomorphism Workstation (Left Code <-> Right Diagram)
+    // -------------------------------------------------------------------------
+    function selectCut7Block(b) {
+      cut7ActiveBlock = b;
+      if (b === 3 && cut7Block3Step > 3) cut7Block3Step = 0;
+      renderCurrentCut();
+    }
+
+    function stepCut7Block3(delta) {
+      cut7ActiveBlock = 3;
+      if (delta === 0) {
+        cut7Block3Step = 0;
+      } else {
+        cut7Block3Step = Math.max(0, Math.min(3, cut7Block3Step + delta));
+      }
+      renderCurrentCut();
+    }
+
+    function toggleCut7Compare(val) {
+      cut7Compare141 = val;
+      renderCurrentCut();
+    }
+
+    function buildCut7IsomorphicSVG(blockId, subStep) {
+      // Case 4: Acyclic degradation (straight chain ending in None)
+      if (blockId === 4) {
+        const y = 125;
+        const r = 18;
+        const nodes = [
+          { id: 0, x: 75, y },
+          { id: 1, x: 185, y },
+          { id: 2, x: 295, y },
+          { id: 3, x: 405, y }
+        ];
+        const noneBox = { x: 525, y };
+        let svg = `
+          <defs>
+            <marker id="c7-arr-gray" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+            </marker>
+          </defs>
+          <rect x="20" y="16" width="560" height="32" rx="8" fill="#1e1b4b" stroke="#a855f7" stroke-width="1.2" />
+          <text x="300" y="36" text-anchor="middle" fill="#e9d5ff" font-family="JetBrains Mono" font-size="11.5" font-weight="700">
+            🧱 态 ④ 拓扑退化画面：圆环解开成单向直道，⚡fast 触达 None 跳出循环
+          </text>
+        `;
+        for (let i = 0; i < nodes.length; i++) {
+          const n1 = nodes[i];
+          const n2 = (i + 1 < nodes.length) ? nodes[i + 1] : noneBox;
+          svg += `<line x1="${n1.x + r + 3}" y1="${y}" x2="${n2.x - (i + 1 < nodes.length ? r + 7 : 34)}" y2="${y}" stroke="#64748b" stroke-width="3" marker-end="url(#c7-arr-gray)" />`;
+        }
+        nodes.forEach((n) => {
+          svg += `
+            <circle cx="${n.x}" cy="${n.y}" r="${r}" fill="#0f172a" stroke="${n.id === 0 ? '#38bdf8' : '#475569'}" stroke-width="2.5" />
+            <text x="${n.x}" y="${n.y + 4}" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="12" font-weight="700">${n.id}</text>
+          `;
+        });
+        // Slow at node 2, Fast at None
+        svg += `
+          <g>
+            <rect x="${nodes[2].x - 32}" y="${nodes[2].y - 44}" width="64" height="20" rx="5" fill="#0284c7" stroke="#fff" stroke-width="1.2" />
+            <text x="${nodes[2].x}" y="${nodes[2].y - 30}" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🐢 slow</text>
+          </g>
+          <g>
+            <rect x="${noneBox.x - 30}" y="${noneBox.y - 16}" width="60" height="32" rx="8" fill="#4c0519" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4 2" />
+            <text x="${noneBox.x}" y="${noneBox.y + 4}" text-anchor="middle" fill="#fda4af" font-family="JetBrains Mono" font-size="12" font-weight="700">None</text>
+            <rect x="${noneBox.x - 36}" y="${noneBox.y - 44}" width="72" height="20" rx="5" fill="#e11d48" stroke="#fff" stroke-width="1.2" />
+            <text x="${noneBox.x}" y="${noneBox.y - 30}" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10.5" font-weight="700">⚡ fast=None</text>
+          </g>
+          <rect x="65" y="182" width="470" height="38" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1.2" />
+          <text x="300" y="205" text-anchor="middle" fill="#cbd5e1" font-family="JetBrains Mono" font-size="11.5">
+            while fast and fast.next 判定为 False ➔ 跳出循环执行第 18 行 <tspan fill="#f43f5e" font-weight="700">return None</tspan>
+          </text>
+        `;
+        return `<svg viewBox="0 0 600 235" class="w-full h-auto select-none">${svg}</svg>`;
+      }
+
+      // For Blocks 1, 2, 3, 0: Build compact Spoon Track on 600x265 canvas
+      const cx = 445, cy = 148, r = 78, nodeR = 16.5;
+      const nodes = [
+        { id: 0, x: 78, y: cy, label: '0' },
+        { id: 1, x: 175, y: cy, label: '1' },
+        { id: 2, x: 272, y: cy, label: '2' }
+      ];
+      for (let j = 0; j < 5; j++) {
+        const ang = Math.PI + (j * 2 * Math.PI) / 5;
+        nodes.push({
+          id: 3 + j,
+          x: cx + r * Math.cos(ang),
+          y: cy + r * Math.sin(ang),
+          label: String(3 + j)
+        });
+      }
+
+      const opA = (blockId === 1) ? 0.85 : 1;
+      const opB = (blockId === 3) ? 0.18 : (blockId === 1 ? 0.35 : 1);
+      const opC = (blockId === 2) ? 0.22 : (blockId === 1 ? 0.35 : 1);
+
+      let svg = `
+        <defs>
+          <marker id="c7-arr-a" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+          </marker>
+          <marker id="c7-arr-b" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#fb923c" />
+          </marker>
+          <marker id="c7-arr-c" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#4ade80" />
+          </marker>
+        </defs>
+      `;
+
+      // Top Context Banner inside SVG
+      if (blockId === 1) {
+        svg += `
+          <rect x="16" y="10" width="568" height="30" rx="7" fill="#082f49" stroke="#38bdf8" stroke-width="1.2" />
+          <text x="300" y="29" text-anchor="middle" fill="#e0f2fe" font-family="JetBrains Mono" font-size="11.5" font-weight="700">
+            🧱 态 ① 画面：同一起跑线 (slow=fast=head) + 🔭 前方两格防崩探照灯
+          </text>
+        `;
+      } else if (blockId === 2) {
+        svg += `
+          <rect x="16" y="10" width="568" height="30" rx="7" fill="#4c0519" stroke="#f43f5e" stroke-width="1.2" />
+          <text x="300" y="29" text-anchor="middle" fill="#ffe4e6" font-family="JetBrains Mono" font-size="11.5" font-weight="700">
+            🧱 态 ② 画面：慢走1、快走2（相对速度 Δv=1），在 💥相遇点[5] 触发 slow == fast
+          </text>
+        `;
+      } else if (blockId === 3) {
+        svg += `
+          <rect x="16" y="10" width="568" height="30" rx="7" fill="#052e16" stroke="#4ade80" stroke-width="1.2" />
+          <text x="300" y="29" text-anchor="middle" fill="#dcfce7" font-family="JetBrains Mono" font-size="11.5" font-weight="700">
+            🧱 态 ③ 画面：🟦蓝段 a(3步) === 🟩绿段 c(3步)，🚶ptr 与 🐢slow 同速迈向🚪入环口
+          </text>
+        `;
+      } else {
+        svg += `
+          <rect x="16" y="10" width="568" height="30" rx="7" fill="#0f172a" stroke="#64748b" stroke-width="1.2" />
+          <text x="300" y="29" text-anchor="middle" fill="#f1f5f9" font-family="JetBrains Mono" font-size="11.5" font-weight="700">
+            👁️ 全景图码映射：阶段一追击至💥[5] ➔ 阶段二派 🚶ptr 回🚩[0] 同速收敛至🚪[3]
+          </text>
+        `;
+      }
+
+      // Base Spoon Track Underlay
+      svg += `
+        <line x1="78" y1="${cy}" x2="${cx - r}" y2="${cy}" stroke="#1e293b" stroke-width="8" stroke-linecap="round" />
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1e293b" stroke-width="8" />
+      `;
+
+      // Block 1 Special Visual: 2-Step Lookahead Radar Box covering fast (node 0) and fast.next (node 1)
+      if (blockId === 1) {
+        svg += `
+          <rect x="52" y="${cy - 32}" width="152" height="64" rx="12" fill="rgba(250, 204, 21, 0.10)" stroke="#facc15" stroke-width="1.8" stroke-dasharray="5 3" />
+          <text x="128" y="${cy + 48}" text-anchor="middle" fill="#fde047" font-family="JetBrains Mono" font-size="10.5" font-weight="700">
+            🔭 while fast and fast.next 探照灯
+          </text>
+          <text x="128" y="${cy + 63}" text-anchor="middle" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">
+            确保脚下[0]与前一步[1]非空，连迈2步到[2]绝对安全
+          </text>
+        `;
+      }
+
+      // Draw Segment A (0->1->2->3)
+      svg += `<g opacity="${opA}">`;
+      for (let i = 0; i < 3; i++) {
+        const n1 = nodes[i], n2 = nodes[i + 1];
+        svg += `<line x1="${n1.x + nodeR + 2}" y1="${n1.y}" x2="${n2.x - nodeR - 6}" y2="${n2.y}" stroke="#38bdf8" stroke-width="3.2" marker-end="url(#c7-arr-a)" />`;
+      }
+      if (blockId !== 1) {
+        svg += `
+          <rect x="172" y="${cy - 44}" width="96" height="20" rx="5" fill="#082f49" stroke="#38bdf8" stroke-width="1" />
+          <text x="220" y="${cy - 30}" text-anchor="middle" fill="#bae6fd" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🟦 蓝段 a (3步)</text>
+        `;
+      }
+      svg += `</g>`;
+
+      // Helper for loop arcs
+      function c7Arc(fromIdx, toIdx, col, mk) {
+        const from = nodes[fromIdx], to = nodes[toIdx];
+        const dx = to.x - from.x, dy = to.y - from.y, dist = Math.hypot(dx, dy);
+        const x1 = from.x + (dx / dist) * (nodeR + 2), y1 = from.y + (dy / dist) * (nodeR + 2);
+        const x2 = to.x - (dx / dist) * (nodeR + 7), y2 = to.y - (dy / dist) * (nodeR + 7);
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+        const vx = mx - cx, vy = my - cy, vl = Math.hypot(vx, vy) || 1;
+        const ctrlX = mx + (vx / vl) * 15, ctrlY = my + (vy / vl) * 15;
+        return `<path d="M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}" fill="none" stroke="${col}" stroke-width="3.2" marker-end="url(#${mk})" />`;
+      }
+
+      // Draw Segment B (3->4->5)
+      svg += `<g opacity="${opB}">`;
+      svg += c7Arc(3, 4, '#fb923c', 'c7-arr-b');
+      svg += c7Arc(4, 5, '#fb923c', 'c7-arr-b');
+      if (blockId === 2 || blockId === 0) {
+        svg += `
+          <rect x="415" y="45" width="96" height="20" rx="5" fill="#431407" stroke="#fb923c" stroke-width="1" />
+          <text x="463" y="59" text-anchor="middle" fill="#fed7aa" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🟧 橙段 b (2步)</text>
+        `;
+      }
+      svg += `</g>`;
+
+      // Draw Segment C (5->6->7->3)
+      svg += `<g opacity="${opC}">`;
+      svg += c7Arc(5, 6, '#4ade80', 'c7-arr-c');
+      svg += c7Arc(6, 7, '#4ade80', 'c7-arr-c');
+      svg += c7Arc(7, 3, '#4ade80', 'c7-arr-c');
+      if (blockId === 3 || blockId === 0) {
+        svg += `
+          <rect x="405" y="236" width="96" height="20" rx="5" fill="#052e16" stroke="#4ade80" stroke-width="1" />
+          <text x="453" y="250" text-anchor="middle" fill="#bbf7d0" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🟩 绿段 c (3步)</text>
+        `;
+      }
+      svg += `</g>`;
+
+      // Center Loop Formula Badge
+      if (blockId === 2) {
+        svg += `
+          <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="#fda4af" font-family="JetBrains Mono" font-size="11" font-weight="700">slow = a+b</text>
+          <text x="${cx}" y="${cy + 13}" text-anchor="middle" fill="#fda4af" font-family="JetBrains Mono" font-size="11" font-weight="700">fast = 2(a+b)</text>
+        `;
+      } else if (blockId === 3 || blockId === 0) {
+        svg += `
+          <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="#fde047" font-family="JetBrains Mono" font-size="11.5" font-weight="700">🟦a === 🟩c</text>
+          <text x="${cx}" y="${cy + 13}" text-anchor="middle" fill="#cbd5e1" font-family="JetBrains Mono" font-size="10">(同为 3 步)</text>
+        `;
+      }
+
+      // Draw Nodes
+      nodes.forEach((n) => {
+        const isHead = n.id === 0;
+        const isEntry = n.id === 3;
+        const isMeet = n.id === 5;
+        let fill = '#0f172a', stroke = '#475569';
+        if (isHead) { stroke = '#38bdf8'; fill = '#0c4a6e'; }
+        if (isEntry) { stroke = '#facc15'; fill = '#422006'; }
+        if (isMeet) { stroke = '#f43f5e'; fill = '#4c0519'; }
+
+        if ((blockId === 2 && isMeet) || (blockId === 3 && subStep === 3 && isEntry)) {
+          svg += `<circle cx="${n.x}" cy="${n.y}" r="${nodeR + 6}" fill="none" stroke="#facc15" stroke-width="2" stroke-dasharray="4 2" class="landmark-pulse" />`;
+        }
+
+        svg += `
+          <circle cx="${n.x}" cy="${n.y}" r="${nodeR}" fill="${fill}" stroke="${stroke}" stroke-width="2.2" />
+          <text x="${n.x}" y="${n.y + 4}" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="11.5" font-weight="700">${n.label}</text>
+        `;
+
+        if (isHead) {
+          svg += `<text x="${n.x}" y="${n.y + 30}" text-anchor="middle" fill="#7dd3fc" font-family="JetBrains Mono" font-size="10" font-weight="700">🚩head</text>`;
+        }
+        if (isEntry) {
+          svg += `<text x="${n.x - 6}" y="${n.y + 31}" text-anchor="middle" fill="#fef08a" font-family="JetBrains Mono" font-size="10" font-weight="700">🚪entry</text>`;
+        }
+        if (isMeet) {
+          svg += `<text x="${n.x + 38}" y="${n.y + 4}" text-anchor="middle" fill="#fda4af" font-family="JetBrains Mono" font-size="10" font-weight="700">💥meet</text>`;
+        }
+      });
+
+      // Draw Active Pointers based on selected Code Block
+      const tokens = [];
+      if (blockId === 1) {
+        tokens.push({ nodeId: 0, text: '🐢 slow', bg: '#0284c7', dy: -26 });
+        tokens.push({ nodeId: 0, text: '⚡ fast', bg: '#e11d48', dy: -46 });
+      } else if (blockId === 2) {
+        tokens.push({ nodeId: 5, text: '🐢 slow', bg: '#0284c7', dy: -26 });
+        tokens.push({ nodeId: 5, text: '⚡ fast (撞!)', bg: '#e11d48', dy: -46 });
+      } else if (blockId === 3) {
+        const ptrNode = subStep; // 0, 1, 2, 3
+        const slowTrack = [5, 6, 7, 3];
+        const slowNode = slowTrack[subStep];
+        tokens.push({ nodeId: ptrNode, text: '🚶 ptr', bg: '#059669', dy: -26 });
+        tokens.push({ nodeId: slowNode, text: '🐢 slow', bg: '#0284c7', dy: ptrNode === slowNode ? -46 : -26 });
+      } else {
+        tokens.push({ nodeId: 0, text: '🚶 ptr=head', bg: '#059669', dy: -26 });
+        tokens.push({ nodeId: 5, text: '🐢/⚡ meet', bg: '#e11d48', dy: -26 });
+        tokens.push({ nodeId: 3, text: '🎯 return ptr', bg: '#d97706', dy: -26 });
+      }
+
+      tokens.forEach((t) => {
+        const target = nodes[t.nodeId];
+        if (!target) return;
+        const w = Math.max(62, t.text.length * 7.8);
+        const ty = target.y + t.dy;
+        svg += `
+          <g>
+            <rect x="${target.x - w / 2}" y="${ty - 13}" width="${w}" height="18.5" rx="5" fill="${t.bg}" stroke="#ffffff" stroke-width="1.1" />
+            <text x="${target.x}" y="${ty}" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="10" font-weight="700">${t.text}</text>
+          </g>
+        `;
+      });
+
+      return `<svg viewBox="0 0 600 265" class="w-full h-auto select-none">${svg}</svg>`;
+    }
+
+    function renderCut7HTML() {
+      const b1Active = cut7ActiveBlock === 0 || cut7ActiveBlock === 1;
+      const b2Active = cut7ActiveBlock === 0 || cut7ActiveBlock === 2;
+      const b3Active = cut7ActiveBlock === 0 || cut7ActiveBlock === 3;
+      const b4Active = cut7ActiveBlock === 0 || cut7ActiveBlock === 4;
+
+      // Helper to render a single Python code line with line number + strict white-space: pre + visual indent guide + click handler
+      function codeLine(lineNo, rawCodeHtml, blockId, isActive, activeStyle, badgeHtml = '', subHighlight = false) {
+        const baseCls = isActive ? activeStyle : 'opacity-30 hover:opacity-75';
+        const ringCls = subHighlight ? 'ring-1 ring-amber-400/80 bg-amber-500/20' : '';
+        return `
+          <div onclick="selectCut7Block(${blockId})" title="点击切换到此代码块的跑道图示" class="cursor-pointer flex items-center justify-between px-2 py-0.5 rounded transition ${baseCls} ${ringCls}">
+            <div class="flex items-center min-w-0">
+              <span class="w-6 shrink-0 select-none text-right pr-2.5 text-[10.5px] font-mono text-slate-500">${lineNo}</span>
+              <div class="code-line indent-guide text-xs sm:text-[12.5px] leading-relaxed text-slate-100">${rawCodeHtml}</div>
+            </div>
+            ${badgeHtml ? `<span class="ml-2 shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded ${badgeHtml}</span>` : ''}
+          </div>
+        `;
+      }
+
+      // Highlight specific sub-lines in Block 3 when stepping through the mini-stepper
+      const s3InitHit = cut7ActiveBlock === 3 && cut7Block3Step === 0;
+      const s3LoopHit = cut7ActiveBlock === 3 && (cut7Block3Step === 1 || cut7Block3Step === 2);
+      const s3RetHit  = cut7ActiveBlock === 3 && cut7Block3Step === 3;
+
+      return `
+        <div class="w-full max-w-5xl space-y-4">
+          <!-- Top View Switcher: Interactive Visual-Code Isomorphism vs 141->142 Side-by-Side Diff -->
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-900/90 px-3.5 py-2.5 rounded-xl border border-slate-800">
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="toggleCut7Compare(false)" class="px-3 py-1.5 rounded-lg text-xs font-mono transition ${!cut7Compare141 ? 'bg-sky-600 text-white font-bold shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}">
+                🧱 四态「图码同构」联动台（点代码 ⇄ 看右侧跑道）
+              </button>
+              <button onclick="toggleCut7Compare(true)" class="px-3 py-1.5 rounded-lg text-xs font-mono transition ${cut7Compare141 ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}">
+                🧬 141 题 ➔ 142 题「图 + 码」双维对比
+              </button>
+            </div>
+            <button onclick="copyFinalCode()" id="copy-code-btn" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-xs font-mono text-emerald-300 border border-emerald-500/40 font-semibold transition">
+              📋 复制标准 4 空格缩进代码
+            </button>
+          </div>
+
+          ${!cut7Compare141 ? `
+            <!-- 4-State Quick Selector Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <button onclick="selectCut7Block(1)" class="p-2 rounded-xl border text-left font-mono text-xs transition ${
+                cut7ActiveBlock === 1 ? 'bg-sky-950/90 border-sky-400 text-white shadow' : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:text-slate-200'
+              }">
+                <div class="font-bold text-sky-400">① 起跑与2步雷达</div>
+                <div class="text-[10px] opacity-80">第 4~5 行 · 防 None 崩溃</div>
+              </button>
+              <button onclick="selectCut7Block(2)" class="p-2 rounded-xl border text-left font-mono text-xs transition ${
+                cut7ActiveBlock === 2 ? 'bg-rose-950/90 border-rose-400 text-white shadow' : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:text-slate-200'
+              }">
+                <div class="font-bold text-rose-400">② 追击与💥碰撞</div>
+                <div class="text-[10px] opacity-80">第 6~10 行 · 定格相遇点</div>
+              </button>
+              <button onclick="selectCut7Block(3)" class="p-2 rounded-xl border text-left font-mono text-xs transition ${
+                cut7ActiveBlock === 3 ? 'bg-emerald-950/90 border-emerald-400 text-white shadow' : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:text-slate-200'
+              }">
+                <div class="font-bold text-emerald-400">③ 派ptr同速会合🚪</div>
+                <div class="text-[10px] opacity-80">第 11~16 行 · 🟦a === 🟩c</div>
+              </button>
+              <button onclick="selectCut7Block(4)" class="p-2 rounded-xl border text-left font-mono text-xs transition ${
+                cut7ActiveBlock === 4 ? 'bg-purple-950/90 border-purple-400 text-white shadow' : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:text-slate-200'
+              }">
+                <div class="font-bold text-purple-400">④ 无环触底出口</div>
+                <div class="text-[10px] opacity-80">第 18 行 · return None</div>
+              </button>
+              <button onclick="selectCut7Block(0)" class="col-span-2 sm:col-span-1 p-2 rounded-xl border text-center font-mono text-xs transition flex flex-col items-center justify-center ${
+                cut7ActiveBlock === 0 ? 'bg-amber-500/20 border-amber-400 text-amber-200 font-bold' : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:text-slate-200'
+              }">
+                <span>👁️ 全景总览</span>
+                <span class="text-[10px] opacity-80">点亮全部代码</span>
+              </button>
+            </div>
+
+            <!-- Main Left-Code & Right-Diagram Coupled Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+
+              <!-- Left 6 Cols: Strictly Indented Clickable Python Code -->
+              <div class="lg:col-span-6 bg-slate-950 rounded-2xl border border-slate-800 p-3.5 flex flex-col justify-between overflow-x-auto">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-1.5">
+                  <span class="text-xs font-mono text-slate-300 font-semibold">🐍 点击任意代码行 ➔ 右侧实时投影画面</span>
+                  <span class="text-[10.5px] font-mono text-amber-400">4空格缩进对齐线</span>
+                </div>
+
+                <div class="space-y-0.5">
+                  ${codeLine(1, `<span class="text-purple-400">class</span> <span class="text-amber-300">Solution</span>:`, 0, true, '')}
+                  ${codeLine(2, `    <span class="text-purple-400">def</span> <span class="text-sky-300">detectCycle</span>(self, head: Optional[ListNode]) -> Optional[ListNode]:`, 0, true, '')}
+                  ${codeLine(3, `        <span class="text-slate-500"># ① 起跑与2步安全雷达 (100% 复用 141 题)</span>`, 1, b1Active, 'bg-sky-500/10 border-l-2 border-sky-400')}
+                  ${codeLine(4, `        slow = fast = head`, 1, b1Active, 'bg-sky-500/15 border-l-2 border-sky-400', b1Active ? 'bg-sky-950 text-sky-300 border border-sky-700/50">🚩同起点' : '')}
+                  ${codeLine(5, `        <span class="text-purple-400">while</span> fast <span class="text-purple-400">and</span> fast.next:`, 1, b1Active, 'bg-sky-500/15 border-l-2 border-sky-400', b1Active ? 'bg-amber-950 text-amber-300 border border-amber-700/50">🔭防崩雷达' : '')}
+                  ${codeLine(6, `            slow = slow.next          <span class="text-slate-500"># 🐢 慢走 1 步</span>`, 2, b2Active, 'bg-rose-500/10 border-l-2 border-rose-400')}
+                  ${codeLine(7, `            fast = fast.next.next     <span class="text-slate-500"># ⚡ 快走 2 步</span>`, 2, b2Active, 'bg-rose-500/10 border-l-2 border-rose-400')}
+                  ${codeLine(8, ``, 2, b2Active, 'bg-rose-500/5 border-l-2 border-rose-400/40')}
+                  ${codeLine(9, `            <span class="text-slate-500"># ② 环内追击：在💥相遇点触发碰撞 (缩进12格)</span>`, 2, b2Active, 'bg-rose-500/15 border-l-2 border-rose-400')}
+                  ${codeLine(10, `            <span class="text-purple-400">if</span> slow == fast:`, 2, b2Active, 'bg-rose-500/20 border-l-2 border-rose-400', b2Active ? 'bg-rose-950 text-rose-300 border border-rose-700/50">💥定格相遇点' : '')}
+                  ${codeLine(11, `                ptr = head            <span class="text-slate-400"># ③ 派 ptr 回🚩起点</span>`, 3, b3Active, 'bg-emerald-500/15 border-l-2 border-emerald-400', b3Active ? 'bg-emerald-950 text-emerald-300 border border-emerald-700/50">🚶派回起点' : '', s3InitHit)}
+                  ${codeLine(12, `                <span class="text-slate-500"># 🟦a === 🟩c：双人同速每次 1 步迈向🚪</span>`, 3, b3Active, 'bg-emerald-500/15 border-l-2 border-emerald-400')}
+                  ${codeLine(13, `                <span class="text-purple-400">while</span> ptr != slow:`, 3, b3Active, 'bg-emerald-500/15 border-l-2 border-emerald-400', '', s3LoopHit)}
+                  ${codeLine(14, `                    ptr = ptr.next    <span class="text-slate-400"># 🚶 沿蓝段 a 走 1 步</span>`, 3, b3Active, 'bg-emerald-500/15 border-l-2 border-emerald-400', '', s3LoopHit)}
+                  ${codeLine(15, `                    slow = slow.next  <span class="text-slate-400"># 🐢 沿绿段 c 走 1 步</span>`, 3, b3Active, 'bg-emerald-500/15 border-l-2 border-emerald-400', '', s3LoopHit)}
+                  ${codeLine(16, `                <span class="text-purple-400">return</span> <span class="text-amber-300 font-bold">ptr</span>            <span class="text-slate-400"># 🚪 碰头处即入环口！</span>`, 3, b3Active, 'bg-emerald-500/25 border-l-2 border-amber-400', b3Active ? 'bg-amber-950 text-amber-300 border border-amber-600/50">🚪入环口' : '', s3RetHit)}
+                  ${codeLine(17, ``, 4, b4Active, '')}
+                  ${codeLine(18, `        <span class="text-purple-400">return</span> <span class="text-rose-400">None</span>                   <span class="text-slate-500"># ④ 无环出口 (缩进8格)</span>`, 4, b4Active, 'bg-purple-500/20 border-l-2 border-purple-400', b4Active ? 'bg-purple-950 text-purple-300 border border-purple-700/50">🛑无环返回' : '')}
+                </div>
+              </div>
+
+              <!-- Right 6 Cols: Live Synchronized Spoon Track Diagram + Interactive Stepper -->
+              <div class="lg:col-span-6 bg-slate-950 rounded-2xl border border-slate-800 p-3.5 flex flex-col justify-between space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span class="text-xs font-mono text-sky-400 font-bold">🗺️ 代码实时拓扑投影 (Visual State Projection)</span>
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-700">
+                    ${cut7ActiveBlock === 1 ? '态 ① · 第 4~5 行' : cut7ActiveBlock === 2 ? '态 ② · 第 6~10 行' : cut7ActiveBlock === 3 ? '态 ③ · 第 11~16 行' : cut7ActiveBlock === 4 ? '态 ④ · 第 18 行' : '全景模式'}
+                  </span>
+                </div>
+
+                <!-- Dynamic SVG Canvas -->
+                <div class="bg-slate-900/70 rounded-xl border border-slate-800/90 p-2 flex items-center justify-center">
+                  ${buildCut7IsomorphicSVG(cut7ActiveBlock, cut7Block3Step)}
+                </div>
+
+                <!-- Interactive Mini-Stepper / Explanation Box tailored to current block -->
+                ${cut7ActiveBlock === 3 ? `
+                  <div class="bg-emerald-950/35 border border-emerald-500/40 rounded-xl p-3 space-y-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <span class="text-xs font-mono font-bold text-emerald-300">
+                        🕹️ 态 ③ 内部单步验证器（观察左侧第 11~16 行高亮变化）：
+                      </span>
+                      <div class="flex items-center gap-1.5">
+                        <button onclick="stepCut7Block3(0)" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-mono">
+                          ⏮ ptr=head
+                        </button>
+                        <button onclick="stepCut7Block3(-1)" ${cut7Block3Step === 0 ? 'disabled' : ''} class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-35 text-slate-200 text-[11px] font-mono">
+                          ◀
+                        </button>
+                        <button onclick="stepCut7Block3(1)" ${cut7Block3Step === 3 ? 'disabled' : ''} class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-35 text-white font-bold text-[11px] font-mono shadow">
+                          👣 同步走 1 步 (${cut7Block3Step}/3) ▶
+                        </button>
+                      </div>
+                    </div>
+                    <div class="text-xs font-mono text-slate-200">
+                      ${cut7Block3Step === 0
+                        ? '▶ 当前对应 <code class="text-amber-300">第 11 行 ptr = head</code>：🚶ptr 部署在🚩[0]，🐢slow 在💥[5]，离🚪[3] 都剩 3 步。'
+                        : cut7Block3Step < 3
+                        ? `▶ 当前对应 <code class="text-amber-300">第 13~15 行 while ptr != slow</code>：第 ${cut7Block3Step} 步推进，🚶ptr 走蓝段到 [${cut7Block3Step}]，🐢slow 走绿段到 [${[5,6,7,3][cut7Block3Step]}]。`
+                        : '🎯 当前对应 <code class="text-amber-300">第 16 行 return ptr</code>：两人同时踏上【🚪入环口 3】，<code class="text-emerald-300">ptr != slow</code> 为 False，直接返回入环口！'}
+                    </div>
+                  </div>
+                ` : cut7ActiveBlock === 1 ? `
+                  <div class="bg-sky-950/35 border border-sky-500/40 rounded-xl p-3 text-xs font-mono text-slate-200 space-y-1">
+                    <div class="font-bold text-sky-300">🔍 为什么用 while fast and fast.next 而不是 while fast？（呼应 141 题）</div>
+                    <p class="leading-relaxed text-slate-300">
+                      因为第 7 行要执行 <code class="text-sky-300">fast.next.next</code>（连迈两步）。探照灯必须同时确认<strong>当前脚下 (<code class="text-amber-300">fast</code>)</strong> 和<strong>前方第一步垫脚石 (<code class="text-amber-300">fast.next</code>)</strong> 都不是 None，才能徹底杜绝 <code class="text-rose-300">AttributeError</code>！
+                    </p>
+                  </div>
+                ` : cut7ActiveBlock === 2 ? `
+                  <div class="bg-rose-950/35 border border-rose-500/40 rounded-xl p-3 text-xs font-mono text-slate-200 space-y-1">
+                    <div class="font-bold text-rose-300">🔍 为什么第 11~16 行要缩进在 if slow == fast 内部（16空格）？</div>
+                    <p class="leading-relaxed text-slate-300">
+                      因为只有当 <code class="text-rose-300">slow == fast</code> 成立时，慢指针才刚好停在切分出 <code class="text-sky-300">🟦a === 🟩c</code> 的那个<strong>💥相遇点</strong>上！此时立即在 <code class="text-rose-300">if</code> 块内开启第二阶段同速收敛，无需任何外部标志位变量。
+                    </p>
+                  </div>
+                ` : cut7ActiveBlock === 4 ? `
+                  <div class="bg-purple-950/35 border border-purple-500/40 rounded-xl p-3 text-xs font-mono text-slate-200 space-y-1">
+                    <div class="font-bold text-purple-300">🔍 为什么 return None 缩进在 8 空格（与 while 同级）？</div>
+                    <p class="leading-relaxed text-slate-300">
+                      当链表无环（或为空链表/单节点链表）时，外层 <code class="text-purple-300">while fast and fast.next:</code> 自然终止，直接落到第 18 行返回 <code class="text-rose-300">None</code>，连前置判空 <code class="text-slate-400">if not head:</code> 都不需要写！
+                    </p>
+                  </div>
+                ` : `
+                  <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-300 flex items-center justify-between">
+                    <span>👆 点击上方 <strong class="text-sky-300">① / ② / ③ / ④</strong> 或左侧代码行，可单独解剖每个状态的几何画面。</span>
+                    <button onclick="selectCut7Block(3)" class="px-2.5 py-1 rounded bg-emerald-600 text-white font-bold shrink-0 ml-2">体验态③步进 ▶</button>
+                  </div>
+                `}
+              </div>
+
+            </div>
+          ` : `
+            <!-- Side-by-Side 141 vs 142 Visual + Code Gene Comparison -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <!-- Left: 141 Card (Visual + Code) -->
+              <div class="bg-slate-950 rounded-2xl border border-slate-800 p-4 flex flex-col justify-between space-y-3 overflow-x-auto">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span class="text-xs font-mono font-bold text-slate-200">【141. 环形链表】终点在 💥相遇点</span>
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-700/50">撞上即 return True</span>
+                </div>
+
+                <!-- Mini Visual for 141 -->
+                <div class="bg-slate-900/80 rounded-xl border border-slate-800 p-2.5">
+                  <svg viewBox="0 0 460 115" class="w-full h-auto select-none">
+                    <line x1="45" y1="60" x2="265" y2="60" stroke="#38bdf8" stroke-width="4" />
+                    <circle cx="320" cy="60" r="42" fill="none" stroke="#64748b" stroke-width="4" />
+                    <circle cx="45" cy="60" r="11" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2" />
+                    <text x="45" y="86" text-anchor="middle" fill="#7dd3fc" font-family="JetBrains Mono" font-size="10">🚩head</text>
+                    <circle cx="278" cy="60" r="11" fill="#422006" stroke="#facc15" stroke-width="2" />
+                    <text x="242" y="88" text-anchor="middle" fill="#fef08a" font-family="JetBrains Mono" font-size="10">🚪入环口(未知)</text>
+                    <circle cx="354" cy="35" r="12" fill="#4c0519" stroke="#f43f5e" stroke-width="2.5" />
+                    <text x="395" y="25" text-anchor="middle" fill="#fda4af" font-family="JetBrains Mono" font-size="10.5" font-weight="700">💥slow==fast</text>
+                    <rect x="335" y="48" width="115" height="22" rx="5" fill="#881337" stroke="#f43f5e" />
+                    <text x="392.5" y="63" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10.5" font-weight="700">➔ return True</text>
+                  </svg>
+                </div>
+
+                <pre class="code-pre indent-guide text-xs sm:text-[12.5px] leading-relaxed text-slate-200"><span class="text-purple-400">class</span> <span class="text-amber-300">Solution</span>:
+    <span class="text-purple-400">def</span> <span class="text-sky-300">hasCycle</span>(self, head: Optional[ListNode]) -> bool:
+        slow = fast = head
+        <span class="text-purple-400">while</span> fast <span class="text-purple-400">and</span> fast.next:
+            slow = slow.next
+            fast = fast.next.next
+            <span class="text-purple-400">if</span> slow == fast:
+<span class="bg-rose-500/20 text-rose-300">                return True           # 停在💥相遇点，直接返回 True</span>
+
+
+
+
+        <span class="text-purple-400">return</span> <span class="text-rose-400">False</span></pre>
+              </div>
+
+              <!-- Right: 142 Card (Visual + Code) -->
+              <div class="bg-slate-950 rounded-2xl border-2 border-emerald-500/40 p-4 flex flex-col justify-between space-y-3 overflow-x-auto shadow-lg shadow-emerald-950/20">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span class="text-xs font-mono font-bold text-emerald-300">【142. 环形链表 II】把 💥 当发令枪接力走到 🚪</span>
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700/50">🟦a === 🟩c ➔ return ptr</span>
+                </div>
+
+                <!-- Mini Visual for 142 -->
+                <div class="bg-slate-900/80 rounded-xl border border-emerald-500/30 p-2.5">
+                  <svg viewBox="0 0 460 115" class="w-full h-auto select-none">
+                    <line x1="45" y1="60" x2="265" y2="60" stroke="#38bdf8" stroke-width="4" />
+                    <text x="155" y="45" text-anchor="middle" fill="#38bdf8" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🚶ptr 走 🟦a ➔</text>
+                    <circle cx="320" cy="60" r="42" fill="none" stroke="#4ade80" stroke-width="4" stroke-dasharray="140 80" />
+                    <text x="385" y="98" text-anchor="middle" fill="#4ade80" font-family="JetBrains Mono" font-size="10.5" font-weight="700">⬅ 🐢slow 走 🟩c</text>
+                    <circle cx="45" cy="60" r="11" fill="#065f46" stroke="#34d399" stroke-width="2" />
+                    <text x="45" y="86" text-anchor="middle" fill="#6ee7b7" font-family="JetBrains Mono" font-size="10">🚩ptr=head</text>
+                    <circle cx="278" cy="60" r="13" fill="#422006" stroke="#facc15" stroke-width="2.5" />
+                    <rect x="212" y="80" width="128" height="22" rx="5" fill="#713f12" stroke="#facc15" />
+                    <text x="276" y="95" text-anchor="middle" fill="#fef08a" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🚪碰头 return ptr!</text>
+                    <circle cx="354" cy="35" r="11" fill="#4c0519" stroke="#f43f5e" stroke-width="2" />
+                    <text x="392" y="25" text-anchor="middle" fill="#fda4af" font-family="JetBrains Mono" font-size="10">💥触发点</text>
+                  </svg>
+                </div>
+
+                <pre class="code-pre indent-guide text-xs sm:text-[12.5px] leading-relaxed text-slate-200"><span class="text-purple-400">class</span> <span class="text-amber-300">Solution</span>:
+    <span class="text-purple-400">def</span> <span class="text-sky-300">detectCycle</span>(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        slow = fast = head
+        <span class="text-purple-400">while</span> fast <span class="text-purple-400">and</span> fast.next:
+            slow = slow.next
+            fast = fast.next.next
+            <span class="text-purple-400">if</span> slow == fast:
+<span class="bg-emerald-500/20 text-emerald-200 font-semibold">                ptr = head            # ① 派新指针站回🚩起点</span>
+<span class="bg-emerald-500/20 text-emerald-200 font-semibold">                while ptr != slow:    # ② 只要还没在🚪碰头</span>
+<span class="bg-emerald-500/20 text-emerald-200 font-semibold">                    ptr = ptr.next    # ③ ptr 沿🟦蓝段 a 走 1 步</span>
+<span class="bg-emerald-500/20 text-emerald-200 font-semibold">                    slow = slow.next  # ④ slow 沿🟩绿段 c 走 1 步</span>
+<span class="bg-amber-500/25 text-amber-200 font-bold">                return ptr            # ⑤ 碰头处即🚪入环口！</span>
+        <span class="text-purple-400">return</span> <span class="text-rose-400">None</span></pre>
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function copyFinalCode() {
+      const code = `class Solution:
+    def detectCycle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        # 积木 1：100% 照搬 141 题快慢指针追击
+        slow = fast = head
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+            # 积木 2：一旦在相遇点撞上，派 ptr 站回起点
+            if slow == fast:
+                ptr = head
+                # 积木 3：蓝段 a == 绿段 c，同速每次走 1 步必在入环口碰头
+                while ptr != slow:
+                    ptr = ptr.next
+                    slow = slow.next
+                return ptr
+        return None`;
+
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+
+      const btn = document.getElementById('copy-code-btn');
+      btn.textContent = '✓ 已复制';
+      setTimeout(() => { btn.textContent = '复制代码'; }, 1800);
+    }
+
+    // =========================================================================
+    // SHARED SPOON TRACK SVG BUILDER FOR WORKSPACE A
+    // =========================================================================
+    function buildSpoonTrackSVG({ colorMode, showScissors, activeSeg, tokens }) {
+      const { nodes, cx, cy, r } = getCanonicalSpoonNodes();
+      const nodeR = 20;
+
+      // Determine colors and opacities for segments a, b, c
+      const isABC = colorMode === 'abc';
+      const colA = isABC ? '#38bdf8' : '#64748b'; // Sky blue
+      const colB = isABC ? '#fb923c' : '#64748b'; // Orange
+      const colC = isABC ? '#4ade80' : '#64748b'; // Emerald green
+
+      const opA = (activeSeg === 'all' || activeSeg === 'a' || activeSeg === 'ab' || activeSeg === 'ac') ? 1 : 0.16;
+      const opB = (activeSeg === 'all' || activeSeg === 'b' || activeSeg === 'ab') ? 1 : 0.16;
+      const opC = (activeSeg === 'all' || activeSeg === 'c' || activeSeg === 'ac') ? 1 : 0.16;
+
+      let svg = `
+        <defs>
+          <marker id="arr-a" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="${colA}" />
+          </marker>
+          <marker id="arr-b" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="${colB}" />
+          </marker>
+          <marker id="arr-c" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="${colC}" />
+          </marker>
+        </defs>
+      `;
+
+      // Subtle guide track
+      svg += `
+        <line x1="112" y1="155" x2="432" y2="155" stroke="#1e293b" stroke-width="10" stroke-linecap="round" />
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1e293b" stroke-width="10" />
+      `;
+
+      // 1. Draw Segment A Edges (0->1, 1->2, 2->3)
+      svg += `<g opacity="${opA}">`;
+      for (let i = 0; i < 3; i++) {
+        const n1 = nodes[i];
+        const n2 = nodes[i + 1];
+        svg += `<line x1="${n1.x + nodeR + 3}" y1="${n1.y}" x2="${n2.x - nodeR - 7}" y2="${n2.y}" stroke="${colA}" stroke-width="3.5" marker-end="url(#arr-a)" />`;
+      }
+      if (isABC) {
+        svg += `
+          <rect x="215" y="102" width="115" height="24" rx="6" fill="#082f49" stroke="#38bdf8" stroke-width="1.2" />
+          <text x="272.5" y="118" text-anchor="middle" fill="#e0f2fe" font-family="JetBrains Mono" font-size="12" font-weight="700">🟦 蓝段 a (3步)</text>
+        `;
+      }
+      svg += `</g>`;
+
+      // Helper for curved loop edges
+      function drawLoopArc(fromIdx, toIdx, strokeCol, markerId) {
+        const from = nodes[fromIdx];
+        const to = nodes[toIdx];
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const dist = Math.hypot(dx, dy);
+        const x1 = from.x + (dx / dist) * (nodeR + 3);
+        const y1 = from.y + (dy / dist) * (nodeR + 3);
+        const x2 = to.x - (dx / dist) * (nodeR + 8);
+        const y2 = to.y - (dy / dist) * (nodeR + 8);
+        const midX = (x1 + x2) / 2;
+        const midY = (y1 + y2) / 2;
+        const vx = midX - cx;
+        const vy = midY - cy;
+        const vlen = Math.hypot(vx, vy) || 1;
+        const ctrlX = midX + (vx / vlen) * 18;
+        const ctrlY = midY + (vy / vlen) * 18;
+        return `<path d="M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}" fill="none" stroke="${strokeCol}" stroke-width="3.5" marker-end="url(#${markerId})" />`;
+      }
+
+      // 2. Draw Segment B Edges (3->4, 4->5)
+      svg += `<g opacity="${opB}">`;
+      svg += drawLoopArc(3, 4, colB, 'arr-b');
+      svg += drawLoopArc(4, 5, colB, 'arr-b');
+      if (isABC) {
+        svg += `
+          <rect x="495" y="14" width="115" height="24" rx="6" fill="#431407" stroke="#fb923c" stroke-width="1.2" />
+          <text x="552.5" y="30" text-anchor="middle" fill="#ffedd5" font-family="JetBrains Mono" font-size="12" font-weight="700">🟧 橙段 b (2步)</text>
+        `;
+      }
+      svg += `</g>`;
+
+      // 3. Draw Segment C Edges (5->6, 6->7, 7->3)
+      svg += `<g opacity="${opC}">`;
+      svg += drawLoopArc(5, 6, colC, 'arr-c');
+      svg += drawLoopArc(6, 7, colC, 'arr-c');
+      svg += drawLoopArc(7, 3, colC, 'arr-c');
+      if (isABC) {
+        svg += `
+          <rect x="480" y="264" width="115" height="24" rx="6" fill="#052e16" stroke="#4ade80" stroke-width="1.2" />
+          <text x="537.5" y="280" text-anchor="middle" fill="#dcfce7" font-family="JetBrains Mono" font-size="12" font-weight="700">🟩 绿段 c (3步)</text>
+        `;
+      }
+      svg += `</g>`;
+
+      // Optional Scissors Icons at Entry (node 3) and Meet (node 5)
+      if (showScissors) {
+        const nEntry = nodes[3];
+        const nMeet = nodes[5];
+        svg += `
+          <g>
+            <text x="${nEntry.x - 26}" y="${nEntry.y - 26}" font-size="20">✂️</text>
+            <text x="${nMeet.x + 22}" y="${nMeet.y - 18}" font-size="20">✂️</text>
+          </g>
+        `;
+      }
+
+      // 4. Draw Nodes & The 3 Iconic Landmarks
+      nodes.forEach((n) => {
+        const isHead = n.id === 0;
+        const isEntry = n.id === 3;
+        const isMeet = n.id === 5;
+
+        let fill = '#0f172a';
+        let stroke = '#475569';
+        if (isHead) { stroke = '#38bdf8'; fill = '#0c4a6e'; }
+        if (isEntry) { stroke = '#facc15'; fill = '#422006'; }
+        if (isMeet) { stroke = '#f43f5e'; fill = '#4c0519'; }
+
+        if (isEntry || isMeet) {
+          svg += `<circle cx="${n.x}" cy="${n.y}" r="${nodeR + 6}" fill="none" stroke="${stroke}" stroke-width="1.8" stroke-dasharray="4 3" class="landmark-pulse" />`;
+        }
+
+        svg += `
+          <g>
+            <circle cx="${n.x}" cy="${n.y}" r="${nodeR}" fill="${fill}" stroke="${stroke}" stroke-width="2.5" />
+            <text x="${n.x}" y="${n.y + 4.5}" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="13" font-weight="700">${n.label}</text>
+          </g>
+        `;
+
+        // Landmark Badges
+        if (isHead) {
+          svg += `
+            <g>
+              <rect x="${n.x - 42}" y="${n.y + 26}" width="84" height="22" rx="6" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2" />
+              <text x="${n.x}" y="${n.y + 41}" text-anchor="middle" fill="#7dd3fc" font-family="JetBrains Mono" font-size="11" font-weight="700">🚩起点 head</text>
+            </g>
+          `;
+        }
+        if (isEntry) {
+          svg += `
+            <g>
+              <rect x="${n.x - 52}" y="${n.y + 26}" width="104" height="22" rx="6" fill="#422006" stroke="#facc15" stroke-width="1.5" />
+              <text x="${n.x}" y="${n.y + 41}" text-anchor="middle" fill="#fef08a" font-family="JetBrains Mono" font-size="11" font-weight="700">🚪入环口 entry</text>
+            </g>
+          `;
+        }
+        if (isMeet) {
+          svg += `
+            <g>
+              <rect x="${n.x + 26}" y="${n.y - 11}" width="102" height="22" rx="6" fill="#4c0519" stroke="#f43f5e" stroke-width="1.5" />
+              <text x="${n.x + 77}" y="${n.y + 4}" text-anchor="middle" fill="#fda4af" font-family="JetBrains Mono" font-size="11" font-weight="700">💥相遇点 meet</text>
+            </g>
+          `;
+        }
+      });
+
+      // 5. Draw Active Tokens (slow, fast, ptr)
+      tokens.forEach((t) => {
+        const target = nodes[t.nodeId];
+        if (!target) return;
+        const w = Math.max(66, t.text.length * 8.5);
+        const ty = target.y + (t.offsetY || -34);
+        svg += `
+          <g>
+            <rect x="${target.x - w / 2}" y="${ty - 14}" width="${w}" height="21" rx="6" fill="${t.bg}" stroke="#ffffff" stroke-width="1.2" />
+            <text x="${target.x}" y="${ty}" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="11" font-weight="700">${t.text}</text>
+          </g>
+        `;
+      });
+
+      return svg;
+    }
+
+    // =========================================================================
+    // WORKSPACE B: 🎮 三阶段解耦沙盒 ENGINE
+    // =========================================================================
+    const SANDBOX_PRESETS = {
+      1: { a: 1, L: 3, hasCycle: true },
+      2: { a: 3, L: 5, hasCycle: true },
+      3: { a: 5, L: 3, hasCycle: true },
+      4: { a: 0, L: 2, hasCycle: true },
+      5: { a: 4, L: 0, hasCycle: false }
+    };
+
+    let sbConfig = { presetId: 2, a: 3, L: 5, hasCycle: true };
+    let sbStage = 1; // 1: Chase, 2: Slice, 3: Converge
+    let sbStepIdx = 0;
+    let sbStage1Frames = [];
+    let sbStage3Frames = [];
+    let sbMeta = {};
+    let sbAutoTimer = null;
+
+    function stopSandboxAutoPlay() {
+      if (sbAutoTimer) {
+        clearInterval(sbAutoTimer);
+        sbAutoTimer = null;
+      }
+      const btn = document.getElementById('sb-auto-btn');
+      if (btn) btn.textContent = '▶ 自动播放';
+    }
+
+    function toggleSandboxAutoPlay() {
+      if (sbAutoTimer) {
+        stopSandboxAutoPlay();
+        return;
+      }
+      const btn = document.getElementById('sb-auto-btn');
+      if (btn) btn.textContent = '⏸ 暂停播放';
+      sbAutoTimer = setInterval(() => {
+        const maxIdx = sbStage === 1 ? (sbStage1Frames.length - 1) : (sbStage === 3 ? (sbStage3Frames.length - 1) : 0);
+        if (sbStepIdx < maxIdx) {
+          sandboxStep(1);
+        } else {
+          stopSandboxAutoPlay();
+        }
+      }, 850);
+    }
+
+    function sbNextNode(idx, a, L, hasCycle) {
+      const total = a + L;
+      if (!hasCycle) {
+        return (idx + 1 < a) ? (idx + 1) : null;
+      }
+      return (idx + 1 < total) ? (idx + 1) : a;
+    }
+
+    function buildSandboxData() {
+      const { a, L, hasCycle } = sbConfig;
+      const s1 = [];
+      let slow = 0, fast = 0, step = 0;
+      s1.push({
+        step: 0,
+        slow,
+        fast,
+        codeLines: [3],
+        title: '阶段一（起跑）：🐢slow 与 ⚡fast 站在【🚩起点 0】',
+        desc: '执行 slow = fast = head。点击「下一步」观察慢走 1 步、快走 2 步。'
+      });
+
+      if (!hasCycle) {
+        while (fast !== null && sbNextNode(fast, a, L, false) !== null) {
+          step++;
+          slow = sbNextNode(slow, a, L, false);
+          const fMid = sbNextNode(fast, a, L, false);
+          fast = sbNextNode(fMid, a, L, false);
+          s1.push({
+            step,
+            slow,
+            fast,
+            noCycleDone: (fast === null || sbNextNode(fast, a, L, false) === null),
+            codeLines: (fast === null || sbNextNode(fast, a, L, false) === null) ? [4, 14] : [4, 5, 6],
+            title: (fast === null || sbNextNode(fast, a, L, false) === null)
+              ? `🛑 第 ${step} 回合：⚡fast 抵达链表尽头 (None)，判定无环！`
+              : `第 ${step} 回合：🐢slow 走到 [${slow}]，⚡fast 走到 [${fast}]`,
+            desc: (fast === null || sbNextNode(fast, a, L, false) === null)
+              ? `while fast and fast.next 条件不再满足，直接跳出循环执行第 14 行 return None。`
+              : `单向无环链表推进中。`
+          });
+        }
+        sbStage1Frames = s1;
+        sbStage3Frames = [];
+        sbMeta = { a, L: 0, b: 0, c: 0, k: 0, meetNode: null, hasCycle: false };
+        return;
+      }
+
+      while (true) {
+        step++;
+        slow = sbNextNode(slow, a, L, true);
+        fast = sbNextNode(sbNextNode(fast, a, L, true), a, L, true);
+        const collided = (slow === fast);
+        s1.push({
+          step,
+          slow,
+          fast,
+          collided,
+          codeLines: collided ? [5, 6, 7] : [4, 5, 6],
+          title: collided
+            ? `💥 第 ${step} 回合：在节点 [${slow}] 触发 slow == fast 碰撞！`
+            : `第 ${step} 回合：🐢slow 走到节点 [${slow}]，⚡fast 走到节点 [${fast}]`,
+          desc: collided
+            ? `追击完成！慢指针走了 ${step} 步，快指针走了 ${step * 2} 步，成功定格【💥相遇点 ${slow}】。`
+            : `慢指针每次迈 1 步，快指针每次迈 2 步，环内相对距离每次缩小 1。`
+        });
+        if (collided) break;
+      }
+
+      const meetNode = slow;
+      const b = meetNode - a;
+      const c = L - b;
+      const k = Math.round((step - a - b) / L) + 1;
+
+      const s3 = [];
+      let ptr = 0;
+      let slow2 = meetNode;
+      let pStep = 0;
+      s3.push({
+        step: 0,
+        ptr,
+        slow: slow2,
+        rem: a,
+        done: (ptr === slow2),
+        codeLines: (ptr === slow2) ? [7, 8, 9, 12] : [7, 8, 9],
+        title: (ptr === slow2)
+          ? `🎯 头节点即入环口 (a=0)：🚶ptr 与 🐢slow 在起点 [0] 直接重合！`
+          : `阶段三（准备会合）：派 🚶ptr 站到【🚩起点 0】，🐢slow 留在【💥相遇点 ${meetNode}】`,
+        desc: (ptr === slow2)
+          ? `因为 a=0，ptr != slow 一开始就为 False，直接执行第 12 行 return ptr (节点 0)！`
+          : `已隐藏快指针 fast。现在距离【🚪入环口 ${a}】还剩 ${a} 步，点击「下一步」让两人每次同步迈 1 步！`
+      });
+
+      while (ptr !== slow2) {
+        pStep++;
+        ptr = sbNextNode(ptr, a, L, true);
+        slow2 = sbNextNode(slow2, a, L, true);
+        const rem = a - pStep;
+        const done = (ptr === slow2);
+        s3.push({
+          step: pStep,
+          ptr,
+          slow: slow2,
+          rem,
+          done,
+          codeLines: done ? [9, 10, 11, 12] : [9, 10, 11],
+          title: done
+            ? `🎯 会合成功！第 ${pStep} 步，🚶ptr 与 🐢slow 同时踏上【🚪入环口 ${ptr}】！`
+            : `同速推进第 ${pStep} 步：🚶ptr 走到 [${ptr}]，🐢slow 走到 [${slow2}]（还剩 ${rem} 步到入环口）`,
+          desc: done
+            ? `验证完毕：ptr 走完蓝段 a=${a} 步，slow 走完绿段 c=${c} 步${k > 1 ? ` + ${k - 1}圈(${(k - 1) * L}步)` : ''}，跳出循环执行 return ptr！`
+            : `两人速度都是 1 步/次，一步步逼近入环口。`
+        });
+      }
+
+      sbStage1Frames = s1;
+      sbStage3Frames = s3;
+      sbMeta = { a, L, b, c, k, meetNode, totalStepsS1: step, hasCycle: true };
+    }
+
+    function loadSandboxPreset(id) {
+      stopSandboxAutoPlay();
+      const p = SANDBOX_PRESETS[id];
+      sbConfig = { presetId: id, a: p.a, L: p.L, hasCycle: p.hasCycle };
+      buildSandboxData();
+      sbStage = 1;
+      sbStepIdx = 0;
+      renderSandbox();
+    }
+
+    function setSandboxStage(st) {
+      stopSandboxAutoPlay();
+      if (!sbMeta.hasCycle && st > 1) return;
+      sbStage = st;
+      sbStepIdx = 0;
+      renderSandbox();
+    }
+
+    function advanceToNextSandboxStage() {
+      stopSandboxAutoPlay();
+      if (sbStage < 3 && sbMeta.hasCycle) {
+        setSandboxStage(sbStage + 1);
+      }
+    }
+
+    function sandboxResetStage() {
+      stopSandboxAutoPlay();
+      sbStepIdx = 0;
+      renderSandbox();
+    }
+
+    function sandboxStep(delta) {
+      const maxIdx = sbStage === 1 ? (sbStage1Frames.length - 1) : (sbStage === 3 ? (sbStage3Frames.length - 1) : 0);
+      sbStepIdx = Math.max(0, Math.min(maxIdx, sbStepIdx + delta));
+      renderSandbox();
+    }
+
+    function renderSandboxCodeTrace(activeLines) {
+      const lines = [
+        { no: 1, text: 'class Solution:' },
+        { no: 2, text: '    def detectCycle(self, head):' },
+        { no: 3, text: '        slow = fast = head' },
+        { no: 4, text: '        while fast and fast.next:' },
+        { no: 5, text: '            slow = slow.next' },
+        { no: 6, text: '            fast = fast.next.next' },
+        { no: 7, text: '            if slow == fast:' },
+        { no: 8, text: '                ptr = head' },
+        { no: 9, text: '                while ptr != slow:' },
+        { no: 10, text: '                    ptr = ptr.next' },
+        { no: 11, text: '                    slow = slow.next' },
+        { no: 12, text: '                return ptr' },
+        { no: 13, text: '' },
+        { no: 14, text: '        return None' }
+      ];
+
+      const container = document.getElementById('sandbox-code-lines');
+      if (!container) return;
+      container.innerHTML = lines.map(l => {
+        const isHit = activeLines.includes(l.no);
+        return `
+          <div class="flex items-center px-2 py-0.5 rounded transition ${
+            isHit ? 'bg-sky-500/25 border-l-2 border-amber-400 text-white font-semibold' : 'text-slate-400'
+          }">
+            <span class="w-6 shrink-0 select-none text-right pr-2.5 text-[10px] font-mono ${isHit ? 'text-amber-300' : 'text-slate-600'}">${l.no}</span>
+            <div class="code-line indent-guide text-[11.5px] leading-snug">${l.text}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderSandbox() {
+      // Update Preset Buttons
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById(`sb-preset-${i}`);
+        if (!btn) continue;
+        btn.className = (i === sbConfig.presetId)
+          ? 'px-2.5 py-1.5 rounded-lg text-xs font-mono border bg-sky-600 text-white border-sky-400 font-bold'
+          : 'px-2.5 py-1.5 rounded-lg text-xs font-mono border bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800';
+      }
+
+      // Update Stage Tabs
+      for (let s = 1; s <= 3; s++) {
+        const sBtn = document.getElementById(`sb-stage-btn-${s}`);
+        const disabledStage = !sbMeta.hasCycle && s > 1;
+        if (disabledStage) {
+          sBtn.className = 'p-3 rounded-xl border text-left transition flex items-center justify-between bg-slate-950/40 border-slate-900 opacity-35 pointer-events-none';
+        } else if (s === sbStage) {
+          sBtn.className = 'p-3 rounded-xl border-2 text-left transition flex items-center justify-between bg-slate-800/95 border-sky-400 shadow-lg';
+        } else {
+          sBtn.className = 'p-3 rounded-xl border text-left transition flex items-center justify-between bg-slate-900/60 border-slate-800 opacity-70 hover:opacity-100';
+        }
+      }
+
+      const prevBtn = document.getElementById('sb-prev-btn');
+      const nextBtn = document.getElementById('sb-next-btn');
+      const badge = document.getElementById('sb-counter-badge');
+      const ctaBtn = document.getElementById('sb-next-stage-cta');
+      const stageTag = document.getElementById('sb-code-stage-tag');
+
+      if (sbStage === 1) {
+        const max = sbStage1Frames.length - 1;
+        prevBtn.disabled = sbStepIdx === 0;
+        nextBtn.disabled = sbStepIdx === max;
+        badge.textContent = `阶段一（追击）：回合 ${sbStepIdx} / ${max}`;
+        if (stageTag) stageTag.textContent = 'STAGE 1 · 快慢追击';
+        const f = sbStage1Frames[sbStepIdx];
+        document.getElementById('sb-status-icon').textContent = f.collided ? '💥' : (f.noCycleDone ? '🛑' : '⚡');
+        document.getElementById('sb-status-title').textContent = f.title;
+        document.getElementById('sb-status-desc').textContent = f.desc;
+        renderSandboxCodeTrace(f.codeLines || [3]);
+        if (f.collided) {
+          ctaBtn.classList.remove('hidden');
+          ctaBtn.textContent = '去阶段二：切分跑道 →';
+        } else {
+          ctaBtn.classList.add('hidden');
+        }
+      } else if (sbStage === 2) {
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        badge.textContent = `阶段二（定格切分）：🟦a=${sbMeta.a}, 🟧b=${sbMeta.b}, 🟩c=${sbMeta.c}`;
+        if (stageTag) stageTag.textContent = 'STAGE 2 · 几何切分';
+        document.getElementById('sb-status-icon').textContent = '🔪';
+        document.getElementById('sb-status-title').textContent = `定格切分完毕：直道 🟦a = ${sbMeta.a} 步，余弧 🟩c = ${sbMeta.c} 步${sbMeta.k > 1 ? ` + (${sbMeta.k - 1})圈×${sbMeta.L}步` : ''}`;
+        document.getElementById('sb-status-desc').textContent = `在碰撞点 [${sbMeta.meetNode}] 切开后，从🚩起点到🚪入环口的步数 (${sbMeta.a}步)，与从💥相遇点继续走到🚪入环口的同余步数严格相等！`;
+        renderSandboxCodeTrace([7, 8]);
+        ctaBtn.classList.remove('hidden');
+        ctaBtn.textContent = '去阶段三：双人同速会合 →';
+      } else if (sbStage === 3) {
+        const max = sbStage3Frames.length - 1;
+        prevBtn.disabled = sbStepIdx === 0;
+        nextBtn.disabled = sbStepIdx === max;
+        const f = sbStage3Frames[sbStepIdx];
+        badge.textContent = `距离🚪入环口会合还剩：${f.rem} 步`;
+        if (stageTag) stageTag.textContent = 'STAGE 3 · 同速收敛';
+        document.getElementById('sb-status-icon').textContent = f.done ? '🚪' : '👣';
+        document.getElementById('sb-status-title').textContent = f.title;
+        document.getElementById('sb-status-desc').textContent = f.desc;
+        renderSandboxCodeTrace(f.codeLines || [9, 10, 11]);
+        ctaBtn.classList.add('hidden');
+      }
+
+      renderSandboxSVG();
+    }
+
+    function renderSandboxSVG() {
+      const svg = document.getElementById('sandbox-svg');
+      const { a, L, b, c, meetNode, hasCycle } = sbMeta;
+
+      if (!hasCycle) {
+        // Render straight acyclic linked list with None at the end
+        const nodeR = 20;
+        const y = 160;
+        let html = `
+          <defs>
+            <marker id="sb-arr-gray" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+            </marker>
+          </defs>
+        `;
+        const nodes = [];
+        for (let i = 0; i < a; i++) {
+          nodes.push({ id: i, x: 110 + i * 130, y });
+        }
+        const nullPos = { x: 110 + a * 130, y };
+
+        for (let i = 0; i < a; i++) {
+          const n1 = nodes[i];
+          const n2 = (i + 1 < a) ? nodes[i + 1] : nullPos;
+          html += `<line x1="${n1.x + nodeR + 3}" y1="${y}" x2="${n2.x - nodeR - 8}" y2="${y}" stroke="#64748b" stroke-width="3" marker-end="url(#sb-arr-gray)" />`;
+        }
+
+        nodes.forEach(n => {
+          html += `
+            <g>
+              <circle cx="${n.x}" cy="${n.y}" r="${nodeR}" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5" />
+              <text x="${n.x}" y="${n.y + 4.5}" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="12" font-weight="700">${n.id}</text>
+            </g>
+          `;
+        });
+
+        html += `
+          <g>
+            <rect x="${nullPos.x - 28}" y="${nullPos.y - 16}" width="56" height="32" rx="8" fill="#1e1b4b" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4 2" />
+            <text x="${nullPos.x}" y="${nullPos.y + 4}" text-anchor="middle" fill="#fda4af" font-family="JetBrains Mono" font-size="12" font-weight="700">None</text>
+          </g>
+        `;
+
+        const f = sbStage1Frames[sbStepIdx];
+        if (f) {
+          const sTarget = nodes[f.slow] || nullPos;
+          const fTarget = (f.fast !== null && nodes[f.fast]) ? nodes[f.fast] : nullPos;
+          html += `
+            <g>
+              <rect x="${sTarget.x - 34}" y="${sTarget.y - 46}" width="68" height="20" rx="5" fill="#0284c7" stroke="#fff" stroke-width="1.2" />
+              <text x="${sTarget.x}" y="${sTarget.y - 32}" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🐢 slow</text>
+            </g>
+            <g>
+              <rect x="${fTarget.x - 34}" y="${fTarget.y - (sTarget === fTarget ? 68 : 46)}" width="68" height="20" rx="5" fill="#e11d48" stroke="#fff" stroke-width="1.2" />
+              <text x="${fTarget.x}" y="${fTarget.y - (sTarget === fTarget ? 54 : 32)}" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10.5" font-weight="700">⚡ fast</text>
+            </g>
+          `;
+        }
+        svg.innerHTML = html;
+        return;
+      }
+
+      const cx = 535, cy = 160, r = 95, nodeR = 20;
+      const entryX = cx - r;
+
+      const nodes = [];
+      // Stem nodes 0 .. a-1
+      const spacing = a > 0 ? Math.min(82, (entryX - 90) / a) : 0;
+      for (let i = 0; i < a; i++) {
+        nodes.push({ id: i, x: entryX - (a - i) * spacing, y: cy });
+      }
+      // Loop nodes a .. a+L-1
+      for (let j = 0; j < L; j++) {
+        const ang = Math.PI + (j * 2 * Math.PI) / L;
+        nodes.push({
+          id: a + j,
+          x: cx + r * Math.cos(ang),
+          y: cy + r * Math.sin(ang)
+        });
+      }
+
+      const showColored = (sbStage === 2 || sbStage === 3);
+      let html = `
+        <defs>
+          <marker id="sb-arr-gray" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+          </marker>
+          <marker id="sb-arr-a" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+          </marker>
+          <marker id="sb-arr-b" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#fb923c" />
+          </marker>
+          <marker id="sb-arr-c" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#4ade80" />
+          </marker>
+        </defs>
+      `;
+
+      // Stem edges
+      for (let i = 0; i < a; i++) {
+        const n1 = nodes[i], n2 = nodes[i + 1];
+        const col = showColored ? '#38bdf8' : '#64748b';
+        const mk = showColored ? 'sb-arr-a' : 'sb-arr-gray';
+        html += `<line x1="${n1.x + nodeR + 2}" y1="${n1.y}" x2="${n2.x - nodeR - 7}" y2="${n2.y}" stroke="${col}" stroke-width="3" marker-end="url(#${mk})" />`;
+      }
+
+      // Loop edges
+      for (let j = 0; j < L; j++) {
+        const fromId = a + j;
+        const toId = a + ((j + 1) % L);
+        const from = nodes[fromId], to = nodes[toId];
+        const isSegB = j < b;
+        const col = !showColored ? '#64748b' : (isSegB ? '#fb923c' : '#4ade80');
+        const mk = !showColored ? 'sb-arr-gray' : (isSegB ? 'sb-arr-b' : 'sb-arr-c');
+        const op = (sbStage === 3 && isSegB) ? 0.25 : 1;
+
+        const dx = to.x - from.x, dy = to.y - from.y, dist = Math.hypot(dx, dy);
+        const x1 = from.x + (dx / dist) * (nodeR + 2), y1 = from.y + (dy / dist) * (nodeR + 2);
+        const x2 = to.x - (dx / dist) * (nodeR + 8), y2 = to.y - (dy / dist) * (nodeR + 8);
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+        const vx = mx - cx, vy = my - cy, vl = Math.hypot(vx, vy) || 1;
+        const ctrlX = mx + (vx / vl) * 16, ctrlY = my + (vy / vl) * 16;
+
+        html += `<path opacity="${op}" d="M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}" fill="none" stroke="${col}" stroke-width="3" marker-end="url(#${mk})" />`;
+      }
+
+      // Center summary inside loop for Stage 2 & 3
+      if (showColored) {
+        html += `
+          <text x="${cx}" y="${cy - 6}" text-anchor="middle" fill="#38bdf8" font-family="JetBrains Mono" font-size="12" font-weight="700">🟦a = ${a}步</text>
+          <text x="${cx}" y="${cy + 14}" text-anchor="middle" fill="#4ade80" font-family="JetBrains Mono" font-size="12" font-weight="700">🟩c = ${c}步${sbMeta.k > 1 ? ` + ${sbMeta.k - 1}圈` : ''}</text>
+        `;
+      }
+
+      // Draw Nodes
+      nodes.forEach((n) => {
+        const isHead = n.id === 0;
+        const isEntry = n.id === a;
+        const isMeet = n.id === meetNode && (sbStage >= 2 || (sbStage === 1 && sbStepIdx === sbStage1Frames.length - 1));
+        let stroke = '#475569', fill = '#0f172a';
+        if (isHead) { stroke = '#38bdf8'; fill = '#0c4a6e'; }
+        if (isEntry) { stroke = '#facc15'; fill = '#422006'; }
+        if (isMeet) { stroke = '#f43f5e'; fill = '#4c0519'; }
+
+        html += `
+          <g>
+            <circle cx="${n.x}" cy="${n.y}" r="${nodeR}" fill="${fill}" stroke="${stroke}" stroke-width="2.5" />
+            <text x="${n.x}" y="${n.y + 4.5}" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="12" font-weight="700">${n.id}</text>
+          </g>
+        `;
+
+        if (isHead) {
+          html += `<text x="${n.x}" y="${n.y + 35}" text-anchor="middle" fill="#7dd3fc" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🚩起点</text>`;
+        }
+        if (isEntry) {
+          html += `<text x="${n.x}" y="${n.y + 35}" text-anchor="middle" fill="#fef08a" font-family="JetBrains Mono" font-size="10.5" font-weight="700">🚪入环口</text>`;
+        }
+        if (isMeet && !isEntry) {
+          html += `<text x="${n.x}" y="${n.y + 35}" text-anchor="middle" fill="#fda4af" font-family="JetBrains Mono" font-size="10.5" font-weight="700">💥相遇点</text>`;
+        }
+      });
+
+      // Tokens per stage
+      const tokens = [];
+      if (sbStage === 1) {
+        const f = sbStage1Frames[sbStepIdx];
+        tokens.push({ id: f.slow, text: '🐢 slow', bg: '#0284c7', dy: -32 });
+        tokens.push({ id: f.fast, text: '⚡ fast', bg: '#e11d48', dy: f.slow === f.fast ? -54 : -32 });
+      } else if (sbStage === 2) {
+        tokens.push({ id: meetNode, text: '💥 碰撞定格点', bg: '#e11d48', dy: -32 });
+      } else if (sbStage === 3) {
+        const f = sbStage3Frames[sbStepIdx];
+        tokens.push({ id: f.ptr, text: '🚶 ptr', bg: '#059669', dy: -32 });
+        tokens.push({ id: f.slow, text: '🐢 slow', bg: '#0284c7', dy: f.ptr === f.slow ? -54 : -32 });
+      }
+
+      tokens.forEach((t) => {
+        const target = nodes[t.id];
+        if (!target) return;
+        const w = 68;
+        const ty = target.y + t.dy;
+        html += `
+          <g>
+            <rect x="${target.x - w / 2}" y="${ty - 14}" width="${w}" height="20" rx="5" fill="${t.bg}" stroke="#ffffff" stroke-width="1.2" />
+            <text x="${target.x}" y="${ty}" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="10.5" font-weight="700">${t.text}</text>
+          </g>
+        `;
+      });
+
+      svg.innerHTML = html;
+    }
+
+    // Initialize on load
+    window.onload = function () {
+      renderCutStepperPills();
+      renderCurrentCut();
+      buildSandboxData();
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,1394 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="LeetCode 003 无重复字符的最长子串：具象母图、六刀原子解构、左码右图同构工作台与阶段解耦沙盒。">
+<title>003 无重复字符的最长子串 · 算法解剖工作台</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230b2637'/%3E%3Crect x='5' y='9' width='22' height='14' fill='none' stroke='%23f2b13c' stroke-width='2'/%3E%3Cpath d='M9 16h14' stroke='%236fd3c7' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --deep:#071b27;
+  --paper:#0b2637;
+  --panel:#0f3145;
+  --panel-2:#123a50;
+  --ink:#e6f0f3;
+  --ink-dim:#9fbcc7;
+  --ink-faint:#6d90a0;
+  --line:rgba(163,206,219,.22);
+  --line-soft:rgba(163,206,219,.12);
+  --amber:#f2b13c;
+  --amber-dim:rgba(242,177,60,.16);
+  --teal:#6fd3c7;
+  --teal-dim:rgba(111,211,199,.14);
+  --rose:#e2745e;
+  --rose-dim:rgba(226,116,94,.15);
+  --serif:"Noto Serif SC","Songti SC",Georgia,serif;
+  --sans:"Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --mono:"JetBrains Mono","SFMono-Regular",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:15.5px;
+  line-height:1.78;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(var(--line-soft) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line-soft) 1px,transparent 1px),
+    radial-gradient(120% 90% at 50% 0%,rgba(28,86,116,.30),transparent 60%);
+  background-size:64px 64px,64px 64px,100% 100%;
+  opacity:.7;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(130% 100% at 50% 50%,transparent 55%,rgba(4,16,24,.55) 100%);
+}
+a{color:var(--teal);text-decoration:none;border-bottom:1px solid rgba(111,211,199,.35)}
+a:hover{border-bottom-color:var(--teal)}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+
+/* ---------- 左侧制图导轨 ---------- */
+.rail{
+  position:fixed;top:0;left:0;bottom:0;width:238px;z-index:3;
+  padding:26px 18px 24px 22px;
+  background:linear-gradient(180deg,rgba(7,27,39,.92),rgba(7,27,39,.72));
+  border-right:1px solid var(--line);
+  overflow-y:auto;
+  backdrop-filter:blur(6px);
+}
+.rail .mark{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--ink-faint);text-transform:none}
+.rail .title{font-family:var(--serif);font-weight:700;font-size:15px;line-height:1.5;margin:8px 0 18px;color:var(--ink)}
+.rail nav{display:flex;flex-direction:column;gap:1px}
+.rail a{
+  display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:baseline;
+  padding:6px 8px 6px 4px;border:0;border-left:2px solid transparent;
+  font-size:12.5px;color:var(--ink-dim);transition:color .18s,border-color .18s,background .18s;
+}
+.rail a .n{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+.rail a:hover{color:var(--ink);background:rgba(163,206,219,.06)}
+.rail a.on{color:var(--amber);border-left-color:var(--amber);background:linear-gradient(90deg,rgba(242,177,60,.10),transparent)}
+.rail a.on .n{color:var(--amber)}
+.rail .foot{margin-top:26px;padding-top:14px;border-top:1px dashed var(--line);font-family:var(--mono);font-size:10.5px;line-height:1.9;color:var(--ink-faint)}
+
+/* ---------- 主栏 ---------- */
+main{position:relative;z-index:1;margin-left:238px;padding:0 44px 90px}
+.inner{max-width:1080px;margin:0 auto}
+
+.hero{padding:56px 0 40px;border-bottom:1px solid var(--line)}
+.kicker{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);display:flex;flex-wrap:wrap;gap:14px}
+.kicker i{font-style:normal;color:var(--teal)}
+h1{
+  font-family:var(--serif);font-weight:900;font-size:clamp(34px,4.2vw,52px);
+  line-height:1.14;letter-spacing:-.01em;margin:16px 0 0;
+}
+h1 .thin{display:block;font-weight:500;font-size:clamp(15px,1.5vw,19px);letter-spacing:.02em;color:var(--ink-dim);margin-top:12px}
+.lede{max-width:56ch;margin:22px 0 0;color:#cfe0e6;font-size:16px}
+.lede strong{color:var(--amber);font-weight:500}
+
+.specs{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:36px;background:var(--line-soft);border:1px solid var(--line)}
+.specs div{background:rgba(11,38,55,.6);padding:12px 14px}
+.specs b{display:block;font-family:var(--mono);font-size:17px;color:var(--teal);font-weight:500;letter-spacing:-.01em}
+.specs span{display:block;font-size:11.5px;color:var(--ink-faint);margin-top:2px}
+
+.figure{margin:34px 0 0;border:1px solid var(--line);background:
+  linear-gradient(180deg,rgba(18,58,80,.55),rgba(7,27,39,.85));position:relative}
+.figure .corner{position:absolute;width:12px;height:12px;border:1px solid var(--amber);opacity:.8}
+.figure .c1{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.figure .c2{top:-1px;right:-1px;border-left:0;border-bottom:0}
+.figure .c3{bottom:-1px;left:-1px;border-right:0;border-top:0}
+.figure .c4{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.figure svg{display:block;width:100%;height:auto}
+.caption{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline;padding:10px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-dim)}
+.caption .no{font-family:var(--mono);color:var(--amber);font-size:11px}
+.caption em{font-style:normal;color:var(--teal)}
+.caption .swipe-hint{display:none;color:var(--amber);font-family:var(--mono);font-size:10.5px}
+
+/* ---------- 章节 ---------- */
+.sec{padding:64px 0 8px;scroll-margin-top:24px}
+.sec-head{display:flex;align-items:flex-end;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:26px}
+.sec-head .no{font-family:var(--mono);font-size:11px;color:var(--amber);padding-bottom:4px;white-space:nowrap}
+.sec-head h2{font-family:var(--serif);font-weight:700;font-size:clamp(22px,2.4vw,30px);line-height:1.25;margin:0;flex:1}
+.sec-head .en{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);padding-bottom:5px;white-space:nowrap}
+.sub{color:var(--ink-dim);max-width:62ch;margin:0 0 26px;font-size:14.5px}
+
+/* 冲突对照 */
+.conflict{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+.side{border:1px solid var(--line);padding:18px 20px 16px;background:rgba(15,49,69,.5)}
+.side.old{border-color:rgba(226,116,94,.35);background:linear-gradient(180deg,var(--rose-dim),rgba(15,49,69,.5))}
+.side.new{border-color:rgba(111,211,199,.35);background:linear-gradient(180deg,var(--teal-dim),rgba(15,49,69,.5))}
+.side h3{margin:0 0 8px;font-size:13px;font-family:var(--mono);font-weight:500;letter-spacing:.02em}
+.side.old h3{color:var(--rose)}
+.side.new h3{color:var(--teal)}
+.side p{margin:0;font-size:14px;color:#cfe0e6}
+.side .eq{display:block;margin-top:10px;font-family:var(--mono);font-size:12.5px;color:var(--ink-faint)}
+
+.verdict{border-left:2px solid var(--amber);padding:12px 0 12px 18px;margin:22px 0 30px;background:linear-gradient(90deg,rgba(242,177,60,.07),transparent)}
+.verdict .lab{font-family:var(--mono);font-size:10.5px;color:var(--amber);display:block;margin-bottom:4px}
+.verdict p{margin:0;font-size:15px;color:#dfeaee}
+.verdict p b{color:var(--amber);font-weight:500}
+
+.landmarks{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.landmarks div{background:rgba(11,38,55,.72);padding:16px 18px}
+.landmarks .k{font-family:var(--mono);font-size:11px;color:var(--amber);display:block;margin-bottom:6px}
+.landmarks strong{display:block;font-family:var(--serif);font-size:16px;font-weight:700;margin-bottom:4px}
+.landmarks p{margin:0;font-size:12.5px;color:var(--ink-dim);line-height:1.7}
+
+.invariant{margin-top:18px;border:1px dashed rgba(111,211,199,.4);padding:14px 18px;font-size:14px;color:#cfe0e6;background:rgba(111,211,199,.05)}
+.invariant b{font-family:var(--mono);font-size:12px;color:var(--teal);margin-right:10px}
+
+/* ---------- 刀卡 ---------- */
+.cut{border:1px solid var(--line);background:rgba(15,49,69,.42);margin:0 0 16px;position:relative;scroll-margin-top:20px}
+.cut::before{content:"";position:absolute;left:0;top:0;width:3px;height:100%;background:linear-gradient(180deg,var(--amber),rgba(242,177,60,.12))}
+.cut-head{display:flex;align-items:baseline;gap:12px;padding:13px 20px 11px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.cut-head .no{font-family:var(--mono);font-size:11px;color:var(--amber);white-space:nowrap}
+.cut-head h3{margin:0;font-family:var(--serif);font-weight:700;font-size:19px;flex:1;min-width:140px}
+.cut-head .tag{font-family:var(--mono);font-size:10px;color:var(--ink-faint);border:1px solid var(--line);padding:1px 7px;white-space:nowrap}
+.cut-body{display:grid;grid-template-columns:1.02fr .96fr 1fr;gap:1px;background:var(--line-soft)}
+.cut-body > div{background:rgba(11,38,55,.5);padding:15px 17px;min-width:0}
+.cut-body .figbox svg{display:block;width:100%;height:auto}
+.cut-body .mini-cap{font-size:11.5px;color:var(--ink-faint);margin-top:7px;line-height:1.6}
+.lab{font-family:var(--mono);font-size:10px;color:var(--teal);display:block;margin-bottom:8px}
+.lab.amber{color:var(--amber)}
+.probe p{margin:0 0 9px;font-size:13.5px;color:#cfe0e6}
+.probe .answer{margin:0;font-family:var(--mono);font-size:12.5px;color:var(--amber);padding-left:12px;border-left:2px solid var(--amber);line-height:1.7}
+.mini-code{font-family:var(--mono);font-size:12px;line-height:1.85;background:var(--deep);border:1px solid var(--line-soft);padding:10px 12px;margin:0;overflow-x:auto;white-space:pre;color:#cfe0e6;tab-size:4}
+.mini-code .cm{color:#5c8293}
+.mini-code .kw{color:#f2b13c}
+.mini-code .fn{color:#6fd3c7}
+.mini-code .st{color:#9bd6a4}
+.atom{display:flex;flex-wrap:wrap;gap:6px 20px;padding:8px 20px;border-top:1px dashed var(--line-soft);font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+.atom b{color:var(--teal);font-weight:400}
+
+/* ---------- 收官刀工作台 ---------- */
+.bench{border:1px solid var(--line);background:rgba(7,27,39,.6);display:grid;grid-template-columns:minmax(0,1.03fr) minmax(0,1fr)}
+.bl{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.bh{display:flex;justify-content:space-between;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line-soft);font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);flex-wrap:wrap}
+.bh b{color:var(--teal);font-weight:400}
+.code{list-style:none;margin:0;padding:9px 0 11px;font-family:var(--mono);font-size:12.4px;line-height:1.68;background:linear-gradient(180deg,rgba(6,26,38,.92),rgba(6,26,38,.55));overflow-x:auto}
+.code li{display:grid;grid-template-columns:32px minmax(0,1fr);padding:0 10px 0 0;cursor:pointer;white-space:pre;border-left:2px solid transparent;transition:background .15s}
+.code li .ln{color:#3d5e6e;text-align:right;padding-right:11px;user-select:none}
+.code li .tx{color:#d6e6ea}
+.code li:hover{background:rgba(163,206,219,.05)}
+.code li.on{background:linear-gradient(90deg,rgba(242,177,60,.15),transparent);border-left-color:var(--amber)}
+.code li.on .tx{color:#fff}
+.code .cm{color:#5c8293}
+.code .kw{color:#f2b13c}
+.code .fn{color:#6fd3c7}
+.code .st{color:#9bd6a4}
+
+.br{padding:13px 15px 15px;display:flex;flex-direction:column;gap:11px;min-width:0}
+.hud{display:flex;flex-wrap:wrap;gap:4px 16px;font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+.hud span i{font-style:normal;color:var(--ink-dim)}
+.hud span b{color:var(--teal);font-weight:500;font-size:12.5px;margin-left:4px}
+.hud span.hot b{color:var(--amber)}
+.strip-wrap{position:relative;overflow-x:auto;overflow-y:hidden;padding:34px 6px 56px;border-top:1px dashed var(--line-soft);border-bottom:1px dashed var(--line-soft)}
+.strip{position:relative;display:flex;gap:6px;height:58px;padding:0 1px;min-height:58px}
+.cell{width:44px;flex:0 0 44px;height:56px;border:1px solid rgba(163,206,219,.26);background:rgba(163,206,219,.05);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;color:#7f9fae;position:relative;transition:background .2s,color .2s,border-color .2s}
+.cell .ix{position:absolute;bottom:-15px;left:0;width:100%;text-align:center;font-size:8.5px;color:#4f7181;font-family:var(--mono)}
+.cell.in{background:rgba(242,177,60,.12);border-color:rgba(242,177,60,.5);color:#f7d79a}
+.cell.ghost{border-style:dashed;border-color:rgba(163,206,219,.3);color:#6d90a0}
+.cell.conf{border-color:var(--rose);background:rgba(226,116,94,.16);color:#ffd2c9}
+.frame{position:absolute;top:-7px;height:70px;border:2px solid var(--amber);background:rgba(242,177,60,.045);transition:left .34s ease,width .34s ease;pointer-events:none;opacity:0}
+.frame.on{opacity:1}
+.ptr{position:absolute;font-family:var(--mono);font-size:9.5px;transition:transform .34s ease;white-space:nowrap}
+.ptr.right{top:-30px;color:var(--amber);left:0}
+.ptr.right::after{content:"";position:absolute;left:18px;top:14px;width:0;height:0;border:4px solid transparent;border-top-color:var(--amber)}
+.ptr.left{bottom:-46px;color:var(--teal);left:0}
+.ptr.left::after{content:"";position:absolute;left:14px;bottom:28px;width:0;height:0;border:4px solid transparent;border-bottom-color:var(--teal)}
+.roster{display:flex;flex-wrap:wrap;gap:5px;min-height:24px;align-items:center}
+.chip{font-family:var(--mono);font-size:11px;border:1px solid var(--line);padding:1px 7px;color:#cfe0e6;background:rgba(111,211,199,.07)}
+.chip.ghost{color:var(--ink-faint);border-style:dashed;background:transparent}
+.chip.cur{border-color:var(--amber);background:rgba(242,177,60,.16);color:#f7d79a}
+.note{border-left:2px solid var(--teal);padding:5px 0 5px 12px;font-size:12.5px;color:#cfe0e6;min-height:52px;line-height:1.7}
+.note b{font-family:var(--mono);color:var(--amber);font-weight:500}
+.ctrl{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.btn{font-family:var(--mono);font-size:11px;padding:5px 11px;border:1px solid var(--line);background:rgba(163,206,219,.05);color:#cfe0e6;cursor:pointer;transition:.16s}
+.btn:hover{border-color:var(--amber);color:var(--amber);background:rgba(242,177,60,.08)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.main{border-color:rgba(242,177,60,.55);color:var(--amber)}
+.inp{font-family:var(--mono);font-size:11.5px;padding:5px 9px;background:var(--deep);border:1px solid var(--line);color:var(--ink);width:132px;min-width:0}
+.stepbar{display:flex;flex-wrap:wrap;gap:3px}
+.tk{width:11px;height:7px;border:0;padding:0;background:rgba(163,206,219,.2);cursor:pointer}
+.tk.a{background:rgba(111,211,199,.75)}
+.tk.b{background:rgba(242,177,60,.8)}
+.tk.on{outline:1px solid #fff;outline-offset:1px}
+@keyframes flashPulse{0%{box-shadow:0 0 0 0 rgba(242,177,60,.75)}100%{box-shadow:0 0 0 12px rgba(242,177,60,0)}}
+.flash{animation:flashPulse .72s ease-out 2}
+.code li.sel{background:linear-gradient(90deg,rgba(111,211,199,.14),transparent);border-left-color:var(--teal)}
+.cell.ring-host{position:relative}
+
+/* ---------- 表格 ---------- */
+.tbl{border:1px solid var(--line);overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}
+thead th{font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:500;text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);background:rgba(111,211,199,.06)}
+tbody td{padding:9px 11px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:#cfe0e6}
+tbody tr:last-child td{border-bottom:0}
+tbody td.mono,td.mono{font-family:var(--mono);font-size:11.5px}
+td .dim{color:var(--ink-faint)}
+td.good{color:var(--teal)}
+td.bad{color:var(--rose)}
+
+/* ---------- 解法卡 ---------- */
+.sol{border:1px solid var(--line);margin-bottom:14px;background:rgba(15,49,69,.4)}
+.sol-head{display:flex;align-items:baseline;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.sol-head .id{font-family:var(--mono);font-size:10.5px;color:var(--amber)}
+.sol-head h3{margin:0;font-size:16px;font-family:var(--serif);font-weight:700;flex:1;min-width:150px}
+.sol-head .cx{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);white-space:nowrap}
+.sol-body{display:grid;grid-template-columns:1.15fr .85fr;gap:1px;background:var(--line-soft)}
+.sol-body > div{background:rgba(11,38,55,.5);padding:14px 16px;min-width:0}
+.sol-body .why{margin:0;font-size:13px;color:#cfe0e6}
+.sol-body .why p{margin:0 0 8px}
+.sol-body .why .kill{font-family:var(--mono);font-size:11.5px;color:var(--rose)}
+
+/* ---------- 避坑 / 复盘 ---------- */
+.traps{display:grid;gap:9px}
+.trap{border:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft)}
+.trap > div{padding:11px 14px;min-width:0}
+.trap .bad-line{background:rgba(226,116,94,.08)}
+.trap .good-line{background:rgba(111,211,199,.07)}
+.trap .tl{display:block;font-family:var(--mono);font-size:10px;margin-bottom:5px}
+.trap .bad-line .tl{color:var(--rose)}
+.trap .good-line .tl{color:var(--teal)}
+.trap code{font-family:var(--mono);font-size:11.5px;color:#dfeaee;word-break:break-word}
+.trap .why{font-size:12.5px;color:var(--ink-dim);margin-top:6px}
+
+.pms{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.pm{border:1px solid var(--line);padding:13px 15px;background:rgba(15,49,69,.4)}
+.pm .sym{font-family:var(--mono);font-size:10.5px;color:var(--rose);display:block;margin-bottom:6px}
+.pm h4{margin:0 0 6px;font-size:14px;font-family:var(--serif);font-weight:700}
+.pm dl{margin:0;font-size:12.5px;line-height:1.72}
+.pm dt{font-family:var(--mono);font-size:10.5px;color:var(--teal);margin-top:6px}
+.pm dd{margin:0;color:#cfe0e6}
+
+.genes{display:grid;gap:1px;background:var(--line);border:1px solid var(--line)}
+.gene{display:grid;grid-template-columns:150px 1fr;gap:0;background:rgba(11,38,55,.72)}
+.gene .gid{padding:11px 14px;font-family:var(--mono);font-size:11.5px;color:var(--amber);border-right:1px solid var(--line-soft)}
+.gene .gt{padding:11px 16px;font-size:13px;color:#cfe0e6}
+.gene .gt b{color:var(--teal);font-weight:500}
+
+.check{border:1px dashed rgba(242,177,60,.4);padding:16px 20px;background:rgba(242,177,60,.05);margin-top:22px}
+.check .lab{color:var(--amber)}
+.check ol{margin:0;padding-left:20px;font-size:13.5px;color:#cfe0e6}
+.check li{margin-bottom:6px}
+
+footer{margin-top:70px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+
+@media (max-width:1100px){
+  .rail{position:static;width:auto;bottom:auto;height:auto;padding:16px 18px;border-right:0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+  .rail .title{margin:0;font-size:14px}
+  .rail nav{flex-direction:row;overflow-x:auto;gap:2px;padding-bottom:4px}
+  .rail a{grid-template-columns:auto;border-left:0;border-bottom:2px solid transparent;white-space:nowrap;padding:5px 9px}
+  .rail a .n{display:none}
+  .rail a.on{border-left:0;border-bottom-color:var(--amber);background:transparent}
+  .rail .foot{display:none}
+  main{margin-left:0;padding:0 24px 70px}
+}
+@media (max-width:880px){
+  .figscroll{overflow-x:auto}
+  .caption .swipe-hint{display:inline}
+  .figscroll svg{min-width:720px}
+  .sec-head .en{display:none}
+  .sec-head{flex-wrap:wrap;gap:8px}
+  .cut-head h3{flex-basis:100%;order:3;min-width:0}
+  .cut-head .tag{margin-left:auto}
+  .cut-body{grid-template-columns:1fr}
+  .bench{grid-template-columns:1fr}
+  .bl{border-right:0;border-bottom:1px solid var(--line)}
+  .sol-body{grid-template-columns:1fr}
+  .specs{grid-template-columns:1fr 1fr}
+  .conflict,.landmarks{grid-template-columns:1fr}
+  .pms{grid-template-columns:1fr}
+  .trap{grid-template-columns:1fr}
+  .gene{grid-template-columns:1fr}
+  .gene .gid{border-right:0;border-bottom:1px solid var(--line-soft);padding-bottom:4px}
+  main{padding:0 16px 60px}
+  h1{font-size:32px}
+  .specs div{padding:10px 12px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 左侧导轨 ===== -->
+<aside class="rail" aria-label="目录">
+  <div class="mark">leetcode / 003 / medium</div>
+  <div class="title">无重复字符的最长子串<br>算法解剖工作台</div>
+  <nav id="toc">
+    <a href="#s0"><span class="n">00</span><span>具象母图</span></a>
+    <a href="#s1"><span class="n">01</span><span>空间定界刀</span></a>
+    <a href="#s2"><span class="n">02</span><span>参考系刀</span></a>
+    <a href="#s3"><span class="n">03</span><span>双视角刀</span></a>
+    <a href="#s4"><span class="n">04</span><span>边界探照灯刀</span></a>
+    <a href="#s5"><span class="n">05</span><span>守恒刀</span></a>
+    <a href="#s6"><span class="n">06</span><span>摊还刀</span></a>
+    <a href="#s7"><span class="n">07</span><span>收官刀 · 图码同构</span></a>
+    <a href="#s8"><span class="n">08</span><span>阶段解耦沙盒</span></a>
+    <a href="#s9"><span class="n">09</span><span>解法全集</span></a>
+    <a href="#s10"><span class="n">10</span><span>对比矩阵</span></a>
+    <a href="#s11"><span class="n">11</span><span>避坑清单</span></a>
+    <a href="#s12"><span class="n">12</span><span>报错复盘</span></a>
+    <a href="#s13"><span class="n">13</span><span>同构基因</span></a>
+  </nav>
+  <div class="foot">刀数由复杂度决定<br>6 刀切至最小原子<br>每刀 = 1 画面 / 1 疑问 / 1~3 行码</div>
+</aside>
+
+<main>
+<div class="inner">
+
+<!-- ===== 封面 ===== -->
+<header class="hero">
+  <div class="kicker"><span>003</span><i>/</i><span>哈希表 · 字符串 · 滑动窗口</span><i>/</i><span>中等</span><i>/</i><span>n ≤ 10⁵</span></div>
+  <h1>无重复字符的最长子串<span class="thin">给你一个字符串 s，找出其中不含重复字符的最长子串，返回它的长度。</span></h1>
+  <p class="lede">这道题真正难的不是哈希表，而是<strong>承认窗口不需要回头</strong>。一旦你接受"左把手永不左移"，题目就从"枚举全部子串"塌缩成"一次单向推进"。</p>
+
+  <div class="specs">
+    <div><b>O(n)</b><span>时间 · 每个字符进窗一次</span></div>
+    <div><b>O(min(n,σ))</b><span>空间 · σ 为字符集大小</span></div>
+    <div><b>6</b><span>刀切至最小原子</span></div>
+    <div><b>3</b><span>典型崩溃反例</span></div>
+  </div>
+
+  <figure class="figure">
+    <span class="corner c1"></span><span class="corner c2"></span><span class="corner c3"></span><span class="corner c4"></span>
+    <div class="figscroll">
+    <svg viewBox="0 0 980 236" role="img" aria-label="具象母图：字符跑道、取景框、点名册">
+      <defs>
+        <marker id="arrA" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#f2b13c"/>
+        </marker>
+      </defs>
+      <!-- 跑道底板 -->
+      <rect x="26" y="58" width="592" height="116" fill="rgba(6,26,38,.55)" stroke="rgba(163,206,219,.3)"/>
+      <!-- 齿孔 -->
+      <g fill="rgba(163,206,219,.45)">
+        <rect x="34" y="64" width="7" height="4"/><rect x="34" y="164" width="7" height="4"/>
+        <rect x="144" y="64" width="7" height="4"/><rect x="144" y="164" width="7" height="4"/>
+        <rect x="254" y="64" width="7" height="4"/><rect x="254" y="164" width="7" height="4"/>
+        <rect x="364" y="64" width="7" height="4"/><rect x="364" y="164" width="7" height="4"/>
+        <rect x="474" y="64" width="7" height="4"/><rect x="474" y="164" width="7" height="4"/>
+        <rect x="584" y="64" width="7" height="4"/><rect x="584" y="164" width="7" height="4"/>
+      </g>
+      <!-- 字符格 -->
+      <g font-family="JetBrains Mono, monospace" font-size="24" text-anchor="middle">
+        <rect x="46" y="76" width="64" height="76" fill="rgba(163,206,219,.07)" stroke="rgba(163,206,219,.25)"/><text x="78" y="122" fill="#7f9fae">a</text>
+        <rect x="116" y="76" width="64" height="76" fill="rgba(242,177,60,.13)" stroke="rgba(242,177,60,.55)"/><text x="148" y="122" fill="#f7d79a">b</text>
+        <rect x="186" y="76" width="64" height="76" fill="rgba(242,177,60,.13)" stroke="rgba(242,177,60,.55)"/><text x="218" y="122" fill="#f7d79a">c</text>
+        <rect x="256" y="76" width="64" height="76" fill="rgba(242,177,60,.13)" stroke="rgba(242,177,60,.55)"/><text x="288" y="122" fill="#f7d79a">a</text>
+        <rect x="326" y="76" width="64" height="76" fill="rgba(163,206,219,.07)" stroke="rgba(163,206,219,.25)"/><text x="358" y="122" fill="#7f9fae">b</text>
+        <rect x="396" y="76" width="64" height="76" fill="rgba(163,206,219,.07)" stroke="rgba(163,206,219,.25)"/><text x="428" y="122" fill="#7f9fae">c</text>
+        <rect x="466" y="76" width="64" height="76" fill="rgba(163,206,219,.07)" stroke="rgba(163,206,219,.25)"/><text x="498" y="122" fill="#7f9fae">b</text>
+        <rect x="536" y="76" width="64" height="76" fill="rgba(163,206,219,.07)" stroke="rgba(163,206,219,.25)"/><text x="568" y="122" fill="#7f9fae">b</text>
+      </g>
+      <!-- 下标 -->
+      <g font-family="JetBrains Mono, monospace" font-size="10" fill="#6d90a0" text-anchor="middle">
+        <text x="78" y="184">0</text><text x="148" y="184">1</text><text x="218" y="184">2</text><text x="288" y="184">3</text>
+        <text x="358" y="184">4</text><text x="428" y="184">5</text><text x="498" y="184">6</text><text x="568" y="184">7</text>
+      </g>
+      <!-- 取景框 -->
+      <rect x="110" y="66" width="216" height="96" fill="none" stroke="#f2b13c" stroke-width="2"/>
+      <g stroke="#f2b13c" stroke-width="1" opacity=".55">
+        <line x1="110" y1="70" x2="110" y2="158"/><line x1="326" y1="70" x2="326" y2="158"/>
+      </g>
+      <!-- 地标标签 -->
+      <text x="26" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#6fd3c7">① 字符跑道 s</text>
+      <text x="150" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#f2b13c">② 取景框 [left, right]</text>
+      <!-- 右把手 -->
+      <path d="M288 60 L296 46 L280 46 z" fill="#f2b13c"/>
+      <text x="300" y="42" font-family="JetBrains Mono, monospace" font-size="11" fill="#f2b13c">right = 3 · 只向前踩</text>
+      <!-- 左把手 -->
+      <path d="M148 176 L156 190 L140 190 z" fill="#6fd3c7"/>
+      <text x="148" y="212" font-family="JetBrains Mono, monospace" font-size="11" fill="#6fd3c7" text-anchor="middle">left = 1 · 只向右跳</text>
+      <!-- 点名册 -->
+      <rect x="648" y="52" width="306" height="132" fill="rgba(15,49,69,.75)" stroke="rgba(163,206,219,.3)"/>
+      <text x="664" y="76" font-family="JetBrains Mono, monospace" font-size="11" fill="#6fd3c7">③ 点名册 last：字符 → 上次落脚点</text>
+      <line x1="648" y1="86" x2="954" y2="86" stroke="rgba(163,206,219,.2)"/>
+      <g font-family="JetBrains Mono, monospace" font-size="13" fill="#cfe0e6">
+        <text x="664" y="110">'b'  →  1</text><text x="664" y="134">'c'  →  2</text>
+        <text x="664" y="158">'a'  →  3   ← 刚覆写</text>
+      </g>
+      <text x="648" y="206" font-family="JetBrains Mono, monospace" font-size="10.5" fill="#6d90a0">没有它，就不知道 c 是否"还赖在窗里"</text>
+      <!-- 语义连接 -->
+      <path d="M600 116 L642 116" stroke="#f2b13c" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#arrA)"/>
+    </svg>
+    </div>
+    <div class="caption"><span class="no">图 0</span><span>具象母图：一条<em>没回头的跑道</em>，一只<em>只会变宽变窄的取景框</em>，一本<em>记着上次落脚点的点名册</em></span><span style="color:var(--ink-faint)">状态取自 s = "abcabcbb" 的 right = 3 时刻</span><span class="swipe-hint">窄屏可横向滑动查看全图</span></div>
+  </figure>
+</header>
+
+<!-- ===== 00 母图 ===== -->
+<section class="sec" id="s0">
+  <div class="sec-head"><span class="no">刀 0</span><h2>立具象母图与核心二元冲突</h2><span class="en">root topology &amp; tension</span></div>
+  <p class="sub">先不碰代码。把题目摊成一张图：一条只朝右的跑道、一只只会伸缩的取景框、一本记着"上次落脚点"的点名册。三者就是全部状态，缺任何一角，后面某个分支就失去解释力。</p>
+
+  <div class="conflict">
+    <div class="side old">
+      <h3>朴素直觉 · 枚举候选</h3>
+      <p>所有子串共 C(n+1,2) ≈ n²/2 个，逐个切出来判重；每个候选再花 O(长度) 验证是否重复。</p>
+      <span class="eq">代价：O(n³) 最坏面 · n = 10⁵ 直接超时</span>
+    </div>
+    <div class="side new">
+      <h3>物理现实 · 窗口推进</h3>
+      <p>合法窗口的右端只有 n 种取值。只要"以 right 结尾的最长合法窗口"能从"以 right−1 结尾的"推出来，候选就不必再生。</p>
+      <span class="eq">代价：每字符进窗 1 次 · O(n)</span>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <span class="lab">冲突收敛为一句</span>
+    <p>不要问"哪个子串最长"，只问"<b>刚踩下的这个字符，逼我把左把手推到哪</b>"。前者是搜索，后者是推演。</p>
+  </div>
+
+  <div class="landmarks">
+    <div>
+      <span class="k">地标 ①</span><strong>字符跑道 s</strong>
+      <p>只读，永不改写。右把手在这个跑道上单向步行，从头走到尾，没有第二次机会。</p>
+    </div>
+    <div>
+      <span class="k">地标 ②</span><strong>取景框 [left, right]</strong>
+      <p>左把手可以向右"跳跃"，右把手只能 +1。框内所有字符互不相同——这是唯一需要维护的东西。</p>
+    </div>
+    <div>
+      <span class="k">地标 ③</span><strong>点名册 last</strong>
+      <p>记每个字符"上一次落脚"的下标。它回答的不是"在不在窗内"，而是"该跳到哪"。</p>
+    </div>
+  </div>
+
+  <div class="invariant">
+    <b>不变量 I</b>任意时刻，窗口 [left, right] 内所有字符互不相同。整道题的每一刀、每一行代码，都只服务于维持这一句。
+  </div>
+
+  <div class="check">
+    <span class="lab">刀数为什么是 6 而不是 10</span>
+    <ol>
+      <li>切分是 <code style="font-family:var(--mono)">while not is_atomic(概念): 二分切开</code> 的过程，刀数由题目固有复杂度决定，不预设。</li>
+      <li>本题的最小原子同时满足：1 幅画面只表达 1 个状态变化 / 只解决 1 个二元疑问 / 能直投影到 1~3 行代码。</li>
+      <li>第 6 刀切完，"为什么 O(n)" 已是自明的几何事实，再往下切即为注水；收官刀（图码同构）不属于"切"，它是把原子重新装配成机器。</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ===== 01 ===== -->
+<section class="sec" id="s1">
+  <div class="sec-head"><span class="no">刀 1</span><h2>空间定界刀</h2><span class="en">spatial cut</span></div>
+  <article class="cut">
+    <div class="cut-head"><span class="no">切分 #1</span><h3>把"整个字符串"切成"窗口内 / 窗口外"</h3><span class="tag">1 画面 · 1 疑问</span></div>
+    <div class="cut-body">
+      <div class="figbox">
+        <svg viewBox="0 0 320 128" role="img" aria-label="窗口内与窗口外">
+          <g font-family="JetBrains Mono, monospace" text-anchor="middle">
+            <rect x="14" y="50" width="38" height="34" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.2)"/><text x="33" y="73" font-size="15" fill="#5f8494">a</text>
+            <rect x="58" y="50" width="38" height="34" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.2)"/><text x="77" y="73" font-size="15" fill="#5f8494">b</text>
+            <rect x="102" y="50" width="38" height="34" fill="rgba(242,177,60,.13)" stroke="rgba(242,177,60,.5)"/><text x="121" y="73" font-size="15" fill="#f7d79a">c</text>
+            <rect x="146" y="50" width="38" height="34" fill="rgba(242,177,60,.13)" stroke="rgba(242,177,60,.5)"/><text x="165" y="73" font-size="15" fill="#f7d79a">a</text>
+            <rect x="190" y="50" width="38" height="34" fill="rgba(242,177,60,.13)" stroke="rgba(242,177,60,.5)"/><text x="209" y="73" font-size="15" fill="#f7d79a">b</text>
+            <rect x="234" y="50" width="38" height="34" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.2)"/><text x="253" y="73" font-size="15" fill="#5f8494">c</text>
+            <rect x="278" y="50" width="38" height="34" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.2)"/><text x="297" y="73" font-size="15" fill="#5f8494">b</text>
+          </g>
+          <rect x="99" y="44" width="132" height="46" fill="none" stroke="#f2b13c" stroke-width="2" stroke-dasharray="6 4"/>
+          <text x="165" y="32" font-family="JetBrains Mono, monospace" font-size="10.5" fill="#f2b13c" text-anchor="middle">窗口内 · 互不相同</text>
+          <text x="55" y="102" font-family="JetBrains Mono, monospace" font-size="10" fill="#6d90a0" text-anchor="middle">已淘汰</text>
+          <text x="275" y="102" font-family="JetBrains Mono, monospace" font-size="10" fill="#6d90a0" text-anchor="middle">未出生</text>
+          <line x1="90" y1="96" x2="10" y2="96" stroke="rgba(163,206,219,.3)"/>
+          <line x1="240" y1="96" x2="316" y2="96" stroke="rgba(163,206,219,.3)"/>
+        </svg>
+        <div class="mini-cap">图 1 · 七格跑道里只有中间三格"活着"；左边已判死刑，右边尚未出生。</div>
+      </div>
+      <div class="probe">
+        <span class="lab amber">唯一疑问</span>
+        <p>这一步要维护的范围，是整个 s，还是只有一段？</p>
+        <p class="answer">→ 只有 [left, right]。范围一旦定界，"判重"的工作量就从 n² 个候选压成 1 个窗口。</p>
+      </div>
+      <div>
+        <span class="lab">代码投影</span>
+        <pre class="mini-code">left = 0                        <span class="cm"># 左把手</span>
+<span class="kw">for</span> right, c <span class="kw">in</span> <span class="fn">enumerate</span>(s):   <span class="cm"># 右把手</span></pre>
+        <div class="mini-cap">这一刀不含任何判断，它只决定"谁归我管"。</div>
+      </div>
+    </div>
+    <div class="atom"><span><b>视觉零跳步</b> 一条跑道两种颜色</span><span><b>逻辑单分支</b> 框内 / 框外</span><span><b>代码直投影</b> 2 行</span></div>
+  </article>
+</section>
+
+<!-- ===== 02 ===== -->
+<section class="sec" id="s2">
+  <div class="sec-head"><span class="no">刀 2</span><h2>参考系刀</h2><span class="en">perspective cut</span></div>
+  <article class="cut">
+    <div class="cut-head"><span class="no">切分 #2</span><h3>从"看整条串"切到"只看右脚刚踩下的那一个字符"</h3><span class="tag">2 画面 · 1 疑问</span></div>
+    <div class="cut-body">
+      <div class="figbox">
+        <svg viewBox="0 0 320 120" role="img" aria-label="探照灯只照一个字符">
+          <g font-family="JetBrains Mono, monospace" text-anchor="middle">
+            <rect x="14" y="66" width="38" height="32" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.18)"/><text x="33" y="88" font-size="14" fill="#547a8b">a</text>
+            <rect x="58" y="66" width="38" height="32" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.18)"/><text x="77" y="88" font-size="14" fill="#547a8b">b</text>
+            <rect x="102" y="66" width="38" height="32" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.18)"/><text x="121" y="88" font-size="14" fill="#547a8b">c</text>
+            <rect x="146" y="66" width="38" height="32" fill="rgba(242,177,60,.2)" stroke="#f2b13c" stroke-width="1.5"/><text x="165" y="88" font-size="14" fill="#fff3d6">a</text>
+            <rect x="190" y="66" width="38" height="32" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.18)"/><text x="209" y="88" font-size="14" fill="#547a8b">b</text>
+            <rect x="234" y="66" width="38" height="32" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.18)"/><text x="253" y="88" font-size="14" fill="#547a8b">c</text>
+          </g>
+          <polygon points="151,16 179,16 208,64 122,64" fill="rgba(242,177,60,.16)" stroke="rgba(242,177,60,.55)"/>
+          <circle cx="165" cy="18" r="5" fill="#f2b13c"/>
+          <text x="165" y="10" font-family="JetBrains Mono, monospace" font-size="10" fill="#f2b13c" text-anchor="middle">c = s[right]</text>
+          <text x="24" y="114" font-family="JetBrains Mono, monospace" font-size="9.5" fill="#6d90a0">其余字符此刻不参与任何决策</text>
+        </svg>
+        <div class="mini-cap">图 2 · 探照灯只照刚落下的那格，光斑之外全暗。</div>
+      </div>
+      <div class="probe">
+        <span class="lab amber">唯一疑问</span>
+        <p>右把手落地的瞬间，全局哪些信息必须进视野？</p>
+        <p class="answer">→ 只有 c 本身 + 它上次落脚的位置。其余字符既不参与判断，也不改变结论。</p>
+      </div>
+      <div>
+        <span class="lab">代码投影</span>
+        <pre class="mini-code">c = s[right]              <span class="cm"># 落点字符</span>
+prev = last.<span class="fn">get</span>(c, -1)   <span class="cm"># 上次落脚点</span></pre>
+        <div class="mini-cap">参考系一换，候选从 n² 塌成 n：每步只回答"这一个字符怎么办"。</div>
+      </div>
+    </div>
+    <div class="atom"><span><b>视觉零跳步</b> 光斑落在一格</span><span><b>逻辑单分支</b> 只有这一个 c</span><span><b>代码直投影</b> 2 行</span></div>
+  </article>
+</section>
+
+<!-- ===== 03 ===== -->
+<section class="sec" id="s3">
+  <div class="sec-head"><span class="no">刀 3</span><h2>双视角刀</h2><span class="en">two-perspective cut</span></div>
+  <article class="cut">
+    <div class="cut-head"><span class="no">切分 #3</span><h3>同一个字符的两个投影：它"是什么" vs 它"上次在哪"</h3><span class="tag">2 画面 · 1 疑问</span></div>
+    <div class="cut-body">
+      <div class="figbox">
+        <svg viewBox="0 0 320 124" role="img" aria-label="集合与位置表">
+          <g font-family="JetBrains Mono, monospace">
+            <rect x="12" y="30" width="122" height="66" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.25)"/>
+            <text x="24" y="22" font-size="10" fill="#6d90a0">set：只答"在不在"</text>
+            <text x="24" y="52" font-size="12.5" fill="#cfe0e6">'c' → true</text>
+            <text x="24" y="74" font-size="12.5" fill="#cfe0e6">'b' → true</text>
+            <text x="24" y="92" font-size="10" fill="#7f9fae">（能判重，不能定位）</text>
+            <rect x="184" y="30" width="124" height="66" fill="rgba(111,211,199,.08)" stroke="rgba(111,211,199,.45)"/>
+            <text x="196" y="22" font-size="10" fill="#6fd3c7">dict：答"在哪"</text>
+            <text x="196" y="52" font-size="12.5" fill="#cfe0e6">'c' → 2</text>
+            <text x="196" y="74" font-size="12.5" fill="#cfe0e6">'b' → 1</text>
+            <text x="196" y="92" font-size="10" fill="#9fbcc7">（一步算出跳跃距离）</text>
+          </g>
+          <path d="M140 62 L176 62" stroke="#f2b13c" stroke-width="1.2" marker-end="url(#arrA)"/>
+          <text x="158" y="54" font-family="JetBrains Mono, monospace" font-size="9" fill="#f2b13c" text-anchor="middle">升级</text>
+        </svg>
+        <div class="mini-cap">图 3 · 同一个 'c' 的两张脸：左边只能回答"在"，右边能回答"在第 2 格"。</div>
+      </div>
+      <div class="probe">
+        <span class="lab amber">唯一疑问</span>
+        <p>记"这个字符在窗内存在"，还是记"它上一次落脚的位置"？</p>
+        <p class="answer">→ 必须记位置。set 只能让你一格一格挪左把手；last[c] 才能一步跳到 c 之后。</p>
+      </div>
+      <div>
+        <span class="lab">代码投影</span>
+        <pre class="mini-code">last = {}          <span class="cm"># 点名册</span>
+last[c] = right    <span class="cm"># 覆写落脚点</span></pre>
+        <div class="mini-cap">这是本题的基因突变点：O(2n) 的逐格收缩 → O(n) 的定点跳跃。</div>
+      </div>
+    </div>
+    <div class="atom"><span><b>视觉零跳步</b> 两表并置</span><span><b>逻辑单分支</b> 存在性 / 位置</span><span><b>代码直投影</b> 2 行</span></div>
+  </article>
+</section>
+
+<!-- ===== 04 ===== -->
+<section class="sec" id="s4">
+  <div class="sec-head"><span class="no">刀 4</span><h2>边界探照灯刀</h2><span class="en">boundary radar cut</span></div>
+  <article class="cut">
+    <div class="cut-head"><span class="no">切分 #4</span><h3>三种态：没有 / 在窗外（幽灵）/ 在窗内（真冲突）</h3><span class="tag">2 画面 · 1 疑问</span></div>
+    <div class="cut-body">
+      <div class="figbox">
+        <svg viewBox="0 0 320 172" role="img" aria-label="abba 反例">
+          <text x="12" y="16" font-family="JetBrains Mono, monospace" font-size="10" fill="#9fbcc7">s = "abba"，right = 3，left_before = 2</text>
+          <g font-family="JetBrains Mono, monospace" text-anchor="middle">
+            <rect x="40" y="52" width="40" height="36" fill="rgba(163,206,219,.05)" stroke="rgba(163,206,219,.2)" stroke-dasharray="3 3"/><text x="60" y="77" font-size="15" fill="#688e9d">a</text>
+            <rect x="86" y="52" width="40" height="36" fill="rgba(163,206,219,.08)" stroke="rgba(163,206,219,.3)"/><text x="106" y="77" font-size="15" fill="#93b3c0">b</text>
+            <rect x="132" y="52" width="40" height="36" fill="rgba(242,177,60,.13)" stroke="rgba(242,177,60,.55)"/><text x="152" y="77" font-size="15" fill="#f7d79a">b</text>
+            <rect x="178" y="52" width="40" height="36" fill="rgba(242,177,60,.22)" stroke="#f2b13c" stroke-width="2"/><text x="198" y="77" font-size="15" fill="#fff3d6">a</text>
+            <text x="60" y="106" font-size="9" fill="#7f9fae">幽灵 prev=0</text>
+          </g>
+          <ellipse cx="60" cy="70" rx="15" ry="17" fill="none" stroke="#6d90a0" stroke-dasharray="4 4"/>
+          <rect x="128" y="48" width="96" height="44" fill="none" stroke="#f2b13c" stroke-width="2"/>
+          <rect x="82" y="44" width="140" height="54" fill="rgba(226,116,94,.06)" stroke="#e2745e" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <g font-family="JetBrains Mono, monospace" font-size="10.5">
+            <rect x="14" y="122" width="18" height="8" fill="none" stroke="#f2b13c" stroke-width="2"/>
+            <text x="42" y="131" fill="#cfe0e6">实线框：正解，left = 2，窗口「ba」</text>
+            <rect x="14" y="145" width="18" height="8" fill="none" stroke="#e2745e" stroke-width="1.5" stroke-dasharray="5 3"/>
+            <text x="42" y="154" fill="#e2745e">虚线框：误写 left = 1，窗口「bba」含两个 b</text>
+          </g>
+        </svg>
+        <div class="mini-cap">图 4 · 两框重叠：实线是正确窗口，虚线是把手回退后的错误窗口，里面藏着两个 b。</div>
+      </div>
+      <div class="probe">
+        <span class="lab amber">唯一疑问</span>
+        <p>当 prev 落在窗口外时，左把手到底动、还是不动？</p>
+        <p class="answer">→ 不动。只有 prev ≥ left 才是真冲突；prev &lt; left 是幽灵，必须无视。</p>
+      </div>
+      <div>
+        <span class="lab">代码投影</span>
+        <pre class="mini-code"><span class="kw">if</span> prev &gt;= left:          <span class="cm"># 还赖在窗内？</span>
+    left = prev + 1        <span class="cm"># 越过它</span>
+<span class="cm"># 等价一行：left = max(left, prev + 1)</span></pre>
+        <div class="mini-cap">这条守卫同时干两件事：判冲突 + 掐死左把手的回退。</div>
+      </div>
+    </div>
+    <div class="atom"><span><b>视觉零跳步</b> 两框重叠即错因</span><span><b>逻辑单分支</b> prev 与 left 的大小</span><span><b>代码直投影</b> 2 行</span></div>
+  </article>
+</section>
+
+<!-- ===== 05 ===== -->
+<section class="sec" id="s5">
+  <div class="sec-head"><span class="no">刀 5</span><h2>守恒刀</h2><span class="en">invariant / elimination cut</span></div>
+  <article class="cut">
+    <div class="cut-head"><span class="no">切分 #5</span><h3>窗口长度不必"数"，它是两个端点的函数</h3><span class="tag">2 画面 · 1 疑问</span></div>
+    <div class="cut-body">
+      <div class="figbox">
+        <svg viewBox="0 0 320 120" role="img" aria-label="端点差即长度">
+          <g font-family="JetBrains Mono, monospace" text-anchor="middle">
+            <rect x="62" y="48" width="40" height="34" fill="rgba(242,177,60,.13)" stroke="rgba(242,177,60,.5)"/><text x="82" y="71" font-size="14" fill="#f7d79a">c</text>
+            <rect x="108" y="48" width="40" height="34" fill="rgba(242,177,60,.13)" stroke="rgba(242,177,60,.5)"/><text x="128" y="71" font-size="14" fill="#f7d79a">a</text>
+            <rect x="154" y="48" width="40" height="34" fill="rgba(242,177,60,.13)" stroke="rgba(242,177,60,.5)"/><text x="174" y="71" font-size="14" fill="#f7d79a">b</text>
+            <rect x="200" y="48" width="40" height="34" fill="rgba(242,177,60,.2)" stroke="#f2b13c" stroke-width="1.5"/><text x="220" y="71" font-size="14" fill="#fff3d6">c</text>
+            <text x="82" y="102" font-size="9.5" fill="#6fd3c7">left=2</text>
+            <text x="220" y="102" font-size="9.5" fill="#f2b13c">right=5</text>
+          </g>
+          <line x1="82" y1="40" x2="220" y2="40" stroke="#9fbcc7" stroke-width="1"/>
+          <path d="M82 40 L90 36 L90 44 z" fill="#9fbcc7"/><path d="M220 40 L212 36 L212 44 z" fill="#9fbcc7"/>
+          <text x="151" y="30" font-family="JetBrains Mono, monospace" font-size="10" fill="#e6f0f3" text-anchor="middle">5 − 2 + 1 = 4 格</text>
+        </svg>
+        <div class="mini-cap">图 5 · 尺子量的是两个把手之间的距离，不是数格子数出来的。</div>
+      </div>
+      <div class="probe">
+        <span class="lab amber">唯一疑问</span>
+        <p>当前窗口有多长，还要不要再遍历数一遍？</p>
+        <p class="answer">→ 不要。长度 = right − left + 1。计数换成做差，顺手消掉"删字符漏删 / 多删"的一整类 bug。</p>
+      </div>
+      <div>
+        <span class="lab">代码投影</span>
+        <pre class="mini-code">ans = <span class="fn">max</span>(ans, right - left + 1)
+<span class="cm"># 端点一减，长度自现</span></pre>
+        <div class="mini-cap">凡是"数一数"能换成"算一算"的地方，都换成算。</div>
+      </div>
+    </div>
+    <div class="atom"><span><b>视觉零跳步</b> 一条尺子线</span><span><b>逻辑单分支</b> 取大 / 不取</span><span><b>代码直投影</b> 1 行</span></div>
+  </article>
+</section>
+
+<!-- ===== 06 ===== -->
+<section class="sec" id="s6">
+  <div class="sec-head"><span class="no">刀 6</span><h2>摊还刀</h2><span class="en">amortized cut</span></div>
+  <article class="cut">
+    <div class="cut-head"><span class="no">切分 #6</span><h3>为什么它不会退化成 O(n²)：左把手的里程表只朝右</h3><span class="tag">2 画面 · 1 疑问</span></div>
+    <div class="cut-body">
+      <div class="figbox">
+        <svg viewBox="0 0 320 124" role="img" aria-label="左把手总位移不超过 n">
+          <defs></defs>
+          <line x1="30" y1="70" x2="296" y2="70" stroke="rgba(163,206,219,.35)"/>
+          <g font-family="JetBrains Mono, monospace" text-anchor="middle" font-size="9" fill="#6d90a0">
+            <text x="30" y="88">0</text><text x="74" y="88">1</text><text x="118" y="88">2</text><text x="162" y="88">3</text><text x="206" y="88">4</text><text x="250" y="88">5</text><text x="294" y="88">6</text>
+          </g>
+          <g stroke="rgba(163,206,219,.35)">
+            <line x1="30" y1="64" x2="30" y2="76"/><line x1="74" y1="64" x2="74" y2="76"/><line x1="118" y1="64" x2="118" y2="76"/>
+            <line x1="162" y1="64" x2="162" y2="76"/><line x1="206" y1="64" x2="206" y2="76"/><line x1="250" y1="64" x2="250" y2="76"/><line x1="294" y1="64" x2="294" y2="76"/>
+          </g>
+          <g fill="#6fd3c7" font-family="JetBrains Mono, monospace" font-size="9">
+            <path d="M30 58 L38 54 L38 62 z"/><text x="34" y="46" text-anchor="middle">0</text>
+            <path d="M118 58 L126 54 L126 62 z"/><text x="122" y="46" text-anchor="middle">2</text>
+            <path d="M206 58 L214 54 L214 62 z"/><text x="210" y="46" text-anchor="middle">4</text>
+          </g>
+          <path d="M30 96 Q80 110 118 96 Q160 84 206 96" fill="none" stroke="rgba(111,211,199,.45)" stroke-dasharray="5 4"/>
+          <text x="163" y="116" font-family="JetBrains Mono, monospace" font-size="9.5" fill="#6fd3c7" text-anchor="middle">left 单调不减：0 → 2 → 4，永不回头</text>
+          <text x="163" y="28" font-family="JetBrains Mono, monospace" font-size="9.5" fill="#9fbcc7" text-anchor="middle">总位移 ≤ n，因为每个刻度最多被跨过一次</text>
+        </svg>
+        <div class="mini-cap">图 6 · 把手从左往右的里程是有限的：所有跳跃加起来也走不完一整条跑道。</div>
+      </div>
+      <div class="probe">
+        <span class="lab amber">唯一疑问</span>
+        <p>左把手会不会在跳跃里走回头路，把总代价顶成 O(n²)？</p>
+        <p class="answer">→ 不会。left 单调不减 ⇒ Σ 跳跃位移 ≤ n ⇒ 整体 O(n)。复杂度看指针总位移，不看每步耗时。</p>
+      </div>
+      <div>
+        <span class="lab">代码投影</span>
+        <pre class="mini-code"><span class="kw">for</span> right <span class="kw">in</span> <span class="fn">range</span>(n):     <span class="cm"># 只有一层</span>
+    <span class="cm"># 没有 while 回退，没有 left -= 1</span></pre>
+        <div class="mini-cap">"两层 for 才是 O(n²)"是错觉；判据是：指针是否共享单调性。</div>
+      </div>
+    </div>
+    <div class="atom"><span><b>视觉零跳步</b> 单向里程表</span><span><b>逻辑单分支</b> 回退 / 不回退</span><span><b>代码直投影</b> 循环结构</span></div>
+  </article>
+</section>
+
+<!-- ===== 07 收官刀 ===== -->
+<section class="sec" id="s7">
+  <div class="sec-head"><span class="no">刀 7</span><h2>收官刀 · 左码右图同构</h2><span class="en">visual-code isomorphism</span></div>
+  <p class="sub">六个原子装配成一台机器。右侧单步执行时，左侧对应代码行同步高亮；点击左侧任意一行，右侧与之对应的画面元件会闪一下——这就是"这行代码在物理世界上干了什么"。</p>
+
+  <div class="bench">
+    <div class="bl">
+      <div class="bh"><span>解法 C · 跳跃式滑动窗口</span><b>Python 3</b></div>
+      <ol class="code" id="codeList">
+        <li data-l="1"><span class="ln">1</span><span class="tx"><span class="kw">def</span> <span class="fn">lengthOfLongestSubstring</span>(s: <span class="kw">str</span>) -&gt; <span class="kw">int</span>:</span></li>
+        <li data-l="2"><span class="ln">2</span><span class="tx">    last = {}                             <span class="cm"># 点名册</span></span></li>
+        <li data-l="3"><span class="ln">3</span><span class="tx">    left = 0                              <span class="cm"># 左把手</span></span></li>
+        <li data-l="4"><span class="ln">4</span><span class="tx">    ans = 0                               <span class="cm"># 历史最长</span></span></li>
+        <li data-l="5"><span class="ln">5</span><span class="tx">    <span class="kw">for</span> right, c <span class="kw">in</span> <span class="fn">enumerate</span>(s):      <span class="cm"># 右把手单向推进</span></span></li>
+        <li data-l="6"><span class="ln">6</span><span class="tx">        prev = last.<span class="fn">get</span>(c, -1)          <span class="cm"># 只看这一个字符</span></span></li>
+        <li data-l="7"><span class="ln">7</span><span class="tx">        <span class="kw">if</span> prev &gt;= left:                  <span class="cm"># 它还赖在窗内？</span></span></li>
+        <li data-l="8"><span class="ln">8</span><span class="tx">            left = prev + 1               <span class="cm"># 越过它（防回退）</span></span></li>
+        <li data-l="9"><span class="ln">9</span><span class="tx">        last[c] = right                   <span class="cm"># 覆写新落脚点</span></span></li>
+        <li data-l="10"><span class="ln">10</span><span class="tx">        ans = <span class="fn">max</span>(ans, right - left + 1)  <span class="cm"># 端点差即长度</span></span></li>
+        <li data-l="11"><span class="ln">11</span><span class="tx">    <span class="kw">return</span> ans</span></li>
+      </ol>
+      <div class="bh" style="border-top:1px solid var(--line-soft);border-bottom:0">
+        <span>点代码行 → 右侧元件闪烁</span><span>缩进 = 4 空格</span>
+      </div>
+    </div>
+    <div class="br">
+      <div class="hud" id="hud"></div>
+      <div class="strip-wrap" id="stripWrap">
+        <div class="strip" id="strip">
+          <div class="frame" id="frame"></div>
+          <div class="ptr right" id="ptrR">right</div>
+          <div class="ptr left" id="ptrL">left</div>
+        </div>
+      </div>
+      <div>
+        <span class="lab" style="margin-bottom:3px">点名册 last（虚线 = 位置已在窗外，已成幽灵）</span>
+        <div class="roster" id="roster"></div>
+      </div>
+      <div class="note" id="note"></div>
+      <div class="ctrl">
+        <button class="btn" id="btnPrev" type="button">◀ 上一步</button>
+        <button class="btn main" id="btnNext" type="button">下一步 ▶</button>
+        <button class="btn" id="btnPlay" type="button">自动播放</button>
+        <button class="btn" id="btnReset" type="button">重置</button>
+        <input class="inp" id="sInp" value="abcabcbb" maxlength="26" aria-label="自定义字符串" spellcheck="false">
+        <button class="btn" id="btnApply" type="button">载入</button>
+      </div>
+      <div class="stepbar" id="stepbar" aria-label="步骤进度"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 08 阶段沙盒 ===== -->
+<section class="sec" id="s8">
+  <div class="sec-head"><span class="no">08</span><h2>阶段解耦沙盒</h2><span class="en">stage decoupling</span></div>
+  <p class="sub">把同一台机器拆成三个互不重叠的阶段。任何一次循环只命中 A 与 C，B 是条件分支；三者正交，才谈得上"逐步可调试"。</p>
+
+  <div class="conflict" style="grid-template-columns:repeat(3,1fr)">
+    <div class="side new">
+      <h3>阶段 A · 扩张</h3>
+      <p>条件：prev == −1 或 prev &lt; left。<br>动作：左把手不动，右把手已 +1 进窗。<br>窗内字符集扩大一格。</p>
+      <span class="eq">本步命中 <b id="cntA" style="color:var(--teal);font-family:var(--mono)">0</b> 次</span>
+    </div>
+    <div class="side" style="border-color:rgba(242,177,60,.4);background:linear-gradient(180deg,var(--amber-dim),rgba(15,49,69,.5))">
+      <h3 style="color:var(--amber)">阶段 B · 跳跃</h3>
+      <p>条件：prev ≥ left（真冲突）。<br>动作：left = prev + 1，一次指针赋值完成收缩，不逐格删。<br>窗内可能一次丢掉多个字符。</p>
+      <span class="eq">本步命中 <b id="cntB" style="color:var(--amber);font-family:var(--mono)">0</b> 次</span>
+    </div>
+    <div class="side" style="border-color:rgba(163,206,219,.35)">
+      <h3 style="color:#cfe0e6">阶段 C · 记账</h3>
+      <p>条件：每步必执行。<br>动作：last[c] = right；ans = max(ans, right−left+1)。<br>状态与最优值在同一个原子内一起落地。</p>
+      <span class="eq">本步命中 <b id="cntC" style="color:#cfe0e6;font-family:var(--mono)">0</b> 次</span>
+    </div>
+  </div>
+
+  <div class="tbl" style="margin-top:22px">
+    <table>
+      <colgroup><col style="width:19%"><col style="width:9%"><col style="width:11%"><col style="width:13%"><col style="width:13%"><col style="width:35%"></colgroup>
+      <thead><tr><th>预设用例</th><th>n</th><th>答案</th><th>A 扩张</th><th>B 跳跃</th><th>这道用例在考什么</th></tr></thead>
+      <tbody id="presetRows"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:22px">
+    <span class="lab" style="margin-bottom:6px">阶段时间轴（点击任一格跳到工作台对应步骤）</span>
+    <div id="stageTl" style="display:flex;flex-direction:column;gap:2px"></div>
+  </div>
+</section>
+
+<!-- ===== 09 解法全集 ===== -->
+<section class="sec" id="s9">
+  <div class="sec-head"><span class="no">09</span><h2>解法全集：从候选全集到状态机</h2><span class="en">all solutions</span></div>
+  <p class="sub">五种写法不是五个答案，而是同一条思路上的五个演化站位。每一种都保留它的位置——面试里知道"为什么不用 A"，比只会写 C 更有说服力。</p>
+
+  <div class="sol">
+    <div class="sol-head"><span class="id">解法 A</span><h3>暴力枚举全部子串 + 集合判重</h3><span class="cx">时间 O(n³) · 空间 O(n)</span></div>
+    <div class="sol-body">
+      <div>
+        <pre class="mini-code"><span class="kw">def</span> <span class="fn">lengthOfLongestSubstring</span>(s):
+    n, ans = <span class="fn">len</span>(s), 0
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(n):
+        <span class="kw">for</span> j <span class="kw">in</span> <span class="fn">range</span>(i, n):
+            <span class="kw">if</span> <span class="fn">len</span>(<span class="fn">set</span>(s[i:j+1])) == j - i + 1:
+                ans = <span class="fn">max</span>(ans, j - i + 1)
+    <span class="kw">return</span> ans</pre>
+      </div>
+      <div class="why">
+        <p>把"候选全集"穷尽：C(n+1,2) 个窗口，每个切片 + 建集合。n = 10⁵ 必然超时，但它是问题的定义面。</p>
+        <p class="kill">致命点：切片 O(n) + 建集合 O(n)，三层叠成 O(n³)。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sol">
+    <div class="sol-head"><span class="id">解法 B</span><h3>滑动窗口 + 集合（左把手逐格右移）</h3><span class="cx">时间 O(2n) = O(n) · 空间 O(min(n, σ))</span></div>
+    <div class="sol-body">
+      <div>
+        <pre class="mini-code"><span class="kw">def</span> <span class="fn">lengthOfLongestSubstring</span>(s):
+    seen, left, ans = <span class="fn">set</span>(), 0, 0
+    <span class="kw">for</span> right, c <span class="kw">in</span> <span class="fn">enumerate</span>(s):
+        <span class="kw">while</span> c <span class="kw">in</span> seen:        <span class="cm"># 撞了，逐格吐</span>
+            seen.<span class="fn">remove</span>(s[left])
+            left += 1
+        seen.<span class="fn">add</span>(c)
+        ans = <span class="fn">max</span>(ans, right - left + 1)
+    <span class="kw">return</span> ans</pre>
+      </div>
+      <div class="why">
+        <p>窗口只维护"在不在"。每个字符最多进集合一次、出集合一次，所以 while 的总轮数 ≤ n，整体 O(2n)。</p>
+        <p class="kill">它答不出"该跳到哪"，所以收缩只能一格一格走；最坏情况（如 "aaaa…" 之外的构造）多一层循环开销。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sol" style="border-color:rgba(242,177,60,.45)">
+    <div class="sol-head"><span class="id" style="color:var(--amber)">解法 C · 本页主解</span><h3>滑动窗口 + 位置字典（跳跃）</h3><span class="cx">时间 O(n) 严格 · 空间 O(min(n, σ))</span></div>
+    <div class="sol-body">
+      <div>
+        <pre class="mini-code"><span class="kw">def</span> <span class="fn">lengthOfLongestSubstring</span>(s):
+    last, left, ans = {}, 0, 0
+    <span class="kw">for</span> right, c <span class="kw">in</span> <span class="fn">enumerate</span>(s):
+        prev = last.<span class="fn">get</span>(c, -1)
+        <span class="kw">if</span> prev <span class="st">&gt;=</span> left:        <span class="cm"># 还赖在窗内</span>
+            left = prev + 1      <span class="cm"># 一步越过</span>
+        last[c] = right
+        ans = <span class="fn">max</span>(ans, right - left + 1)
+    <span class="kw">return</span> ans</pre>
+      </div>
+      <div class="why">
+        <p>把 B 的 while 换成一次赋值：收缩从 O(k) 降到 O(1)。循环体无内层循环，时间严格线性。</p>
+        <p class="kill">唯一风险：守卫 prev &gt;= left 漏写或写成 &gt;，左把手会回退（见"报错复盘"）。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sol">
+    <div class="sol-head"><span class="id">解法 D</span><h3>DP 滚动：以 i 结尾的最长无重复长度</h3><span class="cx">时间 O(n) · 空间 O(min(n, σ))</span></div>
+    <div class="sol-body">
+      <div>
+        <pre class="mini-code"><span class="kw">def</span> <span class="fn">lengthOfLongestSubstring</span>(s):
+    last, dp, ans = {}, 0, 0
+    <span class="kw">for</span> i, c <span class="kw">in</span> <span class="fn">enumerate</span>(s):
+        prev = last.<span class="fn">get</span>(c, -1)
+        dp = dp + 1 <span class="kw">if</span> prev &lt; i - dp <span class="kw">else</span> i - prev
+        last[c] = i
+        ans = <span class="fn">max</span>(ans, dp)
+    <span class="kw">return</span> ans</pre>
+      </div>
+      <div class="why">
+        <p>定义 f(i) = 以 i 结尾的最长无重复子串长度，转移 f(i) = min(f(i−1)+1, i−prev)。与解法 C 完全同构：<b>i − dp 就是 left</b>。</p>
+        <p class="kill">少维护一个 left，常数更小；代价是状态定义要讲清楚，否则面试官会追问"dp 是什么"。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sol">
+    <div class="sol-head"><span class="id">解法 E</span><h3>常数优化：128 长度数组替代字典</h3><span class="cx">时间 O(n) · 空间 O(128)</span></div>
+    <div class="sol-body">
+      <div>
+        <pre class="mini-code">last = [-1] * 128                  <span class="cm"># ord(c) 直接寻址</span>
+<span class="cm"># 适合题目给定的"字母 / 数字 / 符号 / 空格"</span>
+<span class="cm"># 出现非 ASCII 字符必须退回 dict</span></pre>
+      </div>
+      <div class="why">
+        <p>把哈希查找换成数组寻址，常数再降一档；空间固定 128，不受 n 影响。</p>
+        <p class="kill">前提是字符集已知且封闭。字符集开放时数组方案会索引越界或静默截断。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 10 对比矩阵 ===== -->
+<section class="sec" id="s10">
+  <div class="sec-head"><span class="no">10</span><h2>对比矩阵</h2><span class="en">comparison matrix</span></div>
+  <p class="sub">从"能不能过 10⁵"这一栏开始看：三条 O(n) 解法都能过，区别只在常数、可读性与讲清状态的难度。</p>
+  <div class="tbl">
+    <table>
+      <colgroup><col style="width:15%"><col style="width:13%"><col style="width:15%"><col style="width:11%"><col style="width:20%"><col style="width:26%"></colgroup>
+      <thead><tr><th>解法</th><th>时间</th><th>空间</th><th>过 10⁵</th><th>关键动作</th><th>面试定位</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">A 暴力</td><td class="mono">O(n³)</td><td class="mono">O(n)</td><td class="bad">否</td><td>枚举候选 + 建集合</td><td class="dim">只用于说清"候选全集有多大"</td></tr>
+        <tr><td class="mono">B 窗口+set</td><td class="mono">O(2n)</td><td class="mono">O(σ)</td><td class="good">是</td><td>逐格删字符</td><td>稳，但需解释 while 为何仍是线性</td></tr>
+        <tr><td class="mono">C 窗口+dict</td><td class="mono">O(n)</td><td class="mono">O(σ)</td><td class="good">是</td><td>一次指针跳跃</td><td class="good">首选，必须写熟</td></tr>
+        <tr><td class="mono">D DP 滚动</td><td class="mono">O(n)</td><td class="mono">O(σ)</td><td class="good">是</td><td>f(i) = min(f(i−1)+1, i−prev)</td><td>进阶：能讲清状态定义即加分</td></tr>
+        <tr><td class="mono">E 数组表</td><td class="mono">O(n)</td><td class="mono">O(128)</td><td class="good">是</td><td>ord 寻址</td><td class="dim">常数优化细节，答辩级</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="verdict" style="margin-top:20px">
+    <span class="lab">一句话取舍</span>
+    <p>C 与 D 同构：<b>C 维护 left，D 维护 dp</b>，二者互为 i − dp = left。面试写 C，被追问"能否少维护变量"再上 D。</p>
+  </div>
+</section>
+
+<!-- ===== 11 避坑清单 ===== -->
+<section class="sec" id="s11">
+  <div class="sec-head"><span class="no">11</span><h2>避坑清单</h2><span class="en">trap checklist</span></div>
+  <p class="sub">七条里，前四条是真正会让代码给出错误答案的，后三条属于工程洁癖；先修前四条。</p>
+
+  <div class="traps">
+    <div class="trap">
+      <div class="bad-line"><span class="tl">错</span><code>left = prev + 1</code><div class="why">没有 prev ≥ left 守卫，左把手会回退。</div></div>
+      <div class="good-line"><span class="tl">对</span><code>if prev &gt;= left: left = prev + 1</code><div class="why">无守卫时 "abba" 得 3，正确答案 2。</div></div>
+    </div>
+    <div class="trap">
+      <div class="bad-line"><span class="tl">错</span><code>if prev &gt; left:</code><div class="why">prev == left 也是真冲突（s[left] == c），漏判。</div></div>
+      <div class="good-line"><span class="tl">对</span><code>if prev &gt;= left:</code><div class="why">"aa" 用 &gt; 得 2，正确答案 1。</div></div>
+    </div>
+    <div class="trap">
+      <div class="bad-line"><span class="tl">错</span><code>right - left</code><div class="why">闭区间少算一格，单字符窗口得 0。</div></div>
+      <div class="good-line"><span class="tl">对</span><code>right - left + 1</code><div class="why">"b" 应得 1，不是 0。</div></div>
+    </div>
+    <div class="trap">
+      <div class="bad-line"><span class="tl">错</span><code>last[c] = right; prev = last.get(c, -1)</code><div class="why">先记账后比较，prev 恒等于 right，每步都判"自己撞自己"，窗口长度恒为 0。</div></div>
+      <div class="good-line"><span class="tl">对</span><code>prev = last.get(c, -1); ...; last[c] = right</code><div class="why">顺序颠倒会让 ans 恒为 0。</div></div>
+    </div>
+    <div class="trap">
+      <div class="bad-line"><span class="tl">错</span><code>seen.remove(c)</code><div class="why">c 是刚落下的字符，本来就不在集合里，remove 会崩。</div></div>
+      <div class="good-line"><span class="tl">对</span><code>seen.remove(s[left])</code><div class="why">要删的是窗口左端那个字符，不是新来的。</div></div>
+    </div>
+    <div class="trap">
+      <div class="bad-line"><span class="tl">错</span><code>return s[best_l:best_r+1]</code><div class="why">题目要长度，不要求返回子串。</div></div>
+      <div class="good-line"><span class="tl">对</span><code>return ans</code><div class="why">顺带记：子序列（如 "pwke"）不算子串。</div></div>
+    </div>
+    <div class="trap">
+      <div class="bad-line"><span class="tl">错</span><code>if not s: return 1</code><div class="why">空串答案是 0，不是 1。</div></div>
+      <div class="good-line"><span class="tl">对</span><code>ans = 0</code><div class="why">循环体一次不进，自然返回 0。</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 12 报错复盘 ===== -->
+<section class="sec" id="s12">
+  <div class="sec-head"><span class="no">12</span><h2>报错复盘</h2><span class="en">postmortem</span></div>
+  <p class="sub">按"看到什么 → 为什么 → 改哪一行"的顺序排查，不要凭感觉调参。</p>
+
+  <div class="pms">
+    <div class="pm">
+      <span class="sym">WA · 输出 2，期望 1</span>
+      <h4>用例 "aa"：守卫写成了 &gt;</h4>
+      <dl>
+        <dt>症状</dt><dd>单字符重复的用例答案翻倍。</dd>
+        <dt>根因</dt><dd>prev == left 时 s[left] 就是 c，窗口内已存在两个 c，必须跳过。</dd>
+        <dt>修法</dt><dd>&gt; 改 &gt;=；或直接写 left = max(left, prev + 1)。</dd>
+      </dl>
+    </div>
+    <div class="pm">
+      <span class="sym">WA · 输出 3，期望 2</span>
+      <h4>用例 "abba"：左把手回退了</h4>
+      <dl>
+        <dt>症状</dt><dd>窗口变宽，但内部含重复，答案偏大。</dd>
+        <dt>根因</dt><dd>prev = 0 已在窗外（幽灵），仍执行 left = prev + 1 把把手拉回 1。</dd>
+        <dt>修法</dt><dd>加守卫 prev &gt;= left；把"跳跃"限定为"只许向右"。</dd>
+      </dl>
+    </div>
+    <div class="pm">
+      <span class="sym">TLE · 只过 987 / 1041</span>
+      <h4>n = 10⁵ 时超时</h4>
+      <dl>
+        <dt>症状</dt><dd>用例越长越慢，时间随 n 二次增长。</dd>
+        <dt>根因</dt><dd>用 s[i:j+1] 切片判重，或把窗口长度每次重新 sum/len。</dd>
+        <dt>修法</dt><dd>换解法 C（端点做差），删掉一切 O(长度) 的重复统计。</dd>
+      </dl>
+    </div>
+    <div class="pm">
+      <span class="sym">RE · KeyError</span>
+      <h4>集合版删错字符</h4>
+      <dl>
+        <dt>症状</dt><dd>部分用例直接抛 KeyError: 'x'。</dd>
+        <dt>根因</dt><dd>seen.remove(c) 删的是新字符，而它此刻并不在集合里。</dd>
+        <dt>修法</dt><dd>删 s[left]，且删完立刻 left += 1，顺序不可倒。</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 13 同构基因 ===== -->
+<section class="sec" id="s13">
+  <div class="sec-head"><span class="no">13</span><h2>同构基因：改一刀就能迁移</h2><span class="en">isomorphic genes</span></div>
+  <p class="sub">这一族题共用"右把手推进 + 左把手只进不退"的骨架，换的是不变量与记账方式。下表每行只写"动了哪一刀"。</p>
+
+  <div class="genes">
+    <div class="gene"><div class="gid">76 · 最小覆盖子串</div><div class="gt">不变量从"无重复"换成"<b>覆盖 target 所需字符数</b>"；点名册换成缺口计数器，满足后左把手主动收缩。</div></div>
+    <div class="gene"><div class="gid">159 / 340 · 至多 K 种字符</div><div class="gt">把"0 个重复"放宽成"<b>窗口内种类数 ≤ K</b>"；守卫从 prev ≥ left 变成 种类数 &gt; K。</div></div>
+    <div class="gene"><div class="gid">424 · 替换后最长重复子串</div><div class="gt">不变量换成"<b>长度 − 窗口内最多频次 ≤ k</b>"；点名册升级成频次表。</div></div>
+    <div class="gene"><div class="gid">1004 · 最大连续 1 的个数 III</div><div class="gt">424 的退化版：把"最多频次"固定成"<b>窗口内 0 的个数</b>"，只需一个计数器。</div></div>
+    <div class="gene"><div class="gid">209 · 长度最小的子数组</div><div class="gt">目标反转：窗口求"<b>最短</b>满足和 ≥ target"，左把手在满足后继续收缩——同一骨架，反向收敛。</div></div>
+  </div>
+
+  <div class="check">
+    <span class="lab">自检：合上页面，能否只用嘴说清</span>
+    <ol>
+      <li>为什么"以 right 结尾的最长合法窗口"能从上一步推出来？（单调性 + 只增不减的 left）</li>
+      <li>"abba" 的 left 为什么不回到 1？（prev 已在窗外 → 幽灵）</li>
+      <li>为什么循环体里没有 while，复杂度仍是 O(n)？（左把手指针总位移 ≤ n）</li>
+      <li>解法 B 的 while 为什么也不破坏线性？（每个字符最多被删一次）</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <span>题目来源：LeetCode 003 · 无重复字符的最长子串（中等）</span>
+  <span>结构：具象母图 → 6 刀原子 → 图码同构 → 阶段沙盒 → 解法全集</span>
+  <span>工作台数据全部由页面内 JS 按真实执行轨迹生成</span>
+</footer>
+
+</div>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  var CELL_W = 44, GAP = 6, STEP = CELL_W + GAP;
+
+  /* ---------- 轨迹生成（与页面代码严格一致） ---------- */
+  function buildTrace(s){
+    var steps = [], last = {}, left = 0, ans = 0, r, c, prev, jump, len, ab, lb;
+    steps.push({kind:'init', r:-1, c:'', prev:null, leftB:0, leftA:0, ansB:0, ansA:0,
+                last:{}, lines:[2,3,4], stage:'init'});
+    for (r = 0; r < s.length; r++){
+      c = s[r];
+      lb = left;
+      prev = Object.prototype.hasOwnProperty.call(last, c) ? last[c] : -1;
+      jump = prev >= left;
+      if (jump) left = prev + 1;
+      last[c] = r;
+      len = r - left + 1;
+      ab = ans;
+      if (len > ans) ans = len;
+      steps.push({kind:'read', r:r, c:c, prev:prev, leftB:lb, leftA:left,
+                  ansB:ab, ansA:ans, last:snap(last), jump:jump,
+                  lines: jump ? [5,6,7,8,9,10] : [5,6,7,9,10],
+                  stage: jump ? 'B' : 'A'});
+    }
+    steps.push({kind:'ret', r:s.length-1, c:'', prev:null, leftB:left, leftA:left,
+                ansB:ans, ansA:ans, last:snap(last), lines:[11], stage:'ret'});
+    return steps;
+  }
+  function snap(o){ var k, out = {}; for (k in o) if (Object.prototype.hasOwnProperty.call(o,k)) out[k] = o[k]; return out; }
+
+  /* ---------- DOM ---------- */
+  var elCells = null, elStrip = document.getElementById('strip'),
+      elFrame = document.getElementById('frame'),
+      elR = document.getElementById('ptrR'), elL = document.getElementById('ptrL'),
+      elRing = null, elHud = document.getElementById('hud'),
+      elRoster = document.getElementById('roster'), elNote = document.getElementById('note'),
+      elBar = document.getElementById('stepbar'), elWrap = document.getElementById('stripWrap'),
+      codeLis = [].slice.call(document.querySelectorAll('#codeList li'));
+
+  var S = 'abcabcbb', trace = buildTrace(S), idx = 0, rendered = null, timer = null;
+
+  function ensureCells(s){
+    var i, html = '';
+    for (i = 0; i < s.length; i++){
+      html += '<div class="cell" data-i="' + i + '">' + esc(s[i]) + '<span class="ix">' + i + '</span></div>';
+    }
+    elStrip.querySelectorAll('.cell, .ring').forEach(function(n){ n.remove(); });
+    elStrip.insertAdjacentHTML('afterbegin', html);
+    elRing = document.createElement('div');
+    elRing.className = 'ring';
+    elRing.style.position = 'absolute';
+    elRing.style.top = '0px';
+    elRing.style.width = (CELL_W + 2) + 'px';
+    elRing.style.height = '56px';
+    elRing.style.border = '2px dashed rgba(163,206,219,.6)';
+    elRing.style.display = 'none';
+    elRing.style.pointerEvents = 'none';
+    elRing.style.transition = 'left .3s ease';
+    elStrip.appendChild(elRing);
+    elCells = [].slice.call(elStrip.querySelectorAll('.cell'));
+  }
+  function esc(t){
+    return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function len(b){ elBar.innerHTML = ''; }
+
+  function renderBar(){
+    var i, h = '';
+    for (i = 0; i < trace.length; i++){
+      var st = trace[i].stage;
+      var cls = st === 'B' ? 'tk b' : (st === 'A' ? 'tk a' : 'tk');
+      h += '<button class="' + cls + (i === idx ? ' on' : '') + '" data-i="' + i + '" title="step ' + i + '"></button>';
+    }
+    elBar.innerHTML = h;
+  }
+
+  function setGeom(winLeft, winRight){
+    if (winRight == null || winRight < 0){
+      elFrame.classList.remove('on');
+      elR.style.opacity = 0; elL.style.opacity = 0;
+      return;
+    }
+    elFrame.classList.add('on');
+    elFrame.style.left = (winLeft * STEP + 1) + 'px';
+    elFrame.style.width = ((winRight - winLeft + 1) * CELL_W + (winRight - winLeft) * GAP + 2) + 'px';
+    elR.style.opacity = 1; elL.style.opacity = 1;
+    elR.style.transform = 'translateX(' + (winRight * STEP + 20) + 'px)';
+    elL.style.transform = 'translateX(' + (winLeft * STEP + 12) + 'px)';
+    elR.textContent = 'right = ' + winRight;
+    elL.textContent = 'left = ' + winLeft;
+  }
+
+  function setRing(step){
+    if (!elRing) return;
+    if (step.prev == null || step.r < 0){ elRing.style.display = 'none'; return; }
+    elRing.style.display = 'block';
+    elRing.style.left = (step.prev * STEP) + 'px';
+    if (step.kind === 'read' && step.jump){
+      elRing.style.borderColor = '#e2745e';
+      elRing.style.borderStyle = 'solid';
+      elRing.style.background = 'rgba(226,116,94,.10)';
+    } else {
+      elRing.style.borderColor = 'rgba(163,206,219,.55)';
+      elRing.style.borderStyle = 'dashed';
+      elRing.style.background = 'transparent';
+    }
+  }
+
+  function render(){
+    var step = trace[idx];
+    if (rendered !== S){ ensureCells(S); rendered = S; }
+
+    var right = step.kind === 'init' ? -1 : step.r,
+        left = step.leftA, i;
+
+    /* 单元格状态 */
+    for (i = 0; i < elCells.length; i++){
+      var inWin = step.kind === 'init' ? false : (i >= left && i <= right);
+      elCells[i].className = 'cell' + (inWin ? ' in' : '');
+    }
+    setGeom(step.kind === 'init' ? 0 : left, step.kind === 'init' ? -1 : right);
+    setRing(step);
+
+    /* HUD */
+    var lenVal = (right < 0) ? '—' : (right - left + 1);
+    elHud.innerHTML =
+      '<span>right <b>' + (right < 0 ? '—' : right) + '</b></span>' +
+      '<span>c <b>' + (step.c === '' ? '—' : "'" + esc(step.c) + "'") + '</b></span>' +
+      '<span class="hot">prev <b>' + (step.prev == null ? '—' : step.prev) + '</b></span>' +
+      '<span>left <b>' + left + '</b></span>' +
+      '<span>窗口长 <b>' + lenVal + '</b></span>' +
+      '<span class="hot">ans <b>' + step.ansA + '</b></span>';
+
+    /* 点名册 */
+    var keys = Object.keys(step.last).sort(function(a,b){ return step.last[a] - step.last[b]; });
+    var rh = '';
+    if (!keys.length) rh = '<span class="chip ghost">空</span>';
+    keys.forEach(function(k){
+      var p = step.last[k],
+          cls = 'chip' + (p < left ? ' ghost' : '') + (k === step.c && step.kind === 'read' ? ' cur' : '');
+      rh += '<span class="' + cls + '">\'' + esc(k) + '\' → ' + p + '</span>';
+    });
+    elRoster.innerHTML = rh;
+
+    /* 旁白 */
+    var txt;
+    if (step.kind === 'init'){
+      txt = '初始化：<b>last = {}</b>、<b>left = 0</b>、<b>ans = 0</b>。取景框还没张开，点名册空白——这一步没有任何判断。';
+    } else if (step.kind === 'ret'){
+      txt = '循环结束（右把手已走到跑道尽头）。返回 <b>ans = ' + step.ansA + '</b>。整趟只做了一次单向扫描。';
+    } else if (step.jump){
+      txt = '阶段 <b>B · 跳跃</b>：right = ' + step.r + ' 读入 \'' + esc(step.c) + '\'，prev = ' + step.prev +
+            ' ≥ left = ' + step.leftB + ' → 真冲突，左把手一次性 ' + step.leftB + ' → ' + step.leftA +
+            '，跳过 ' + (step.leftA - step.leftB) + ' 格；新窗口长 ' + (step.r - step.leftA + 1) +
+            '，ans = ' + step.ansA + '。';
+    } else {
+      txt = '阶段 <b>A · 扩张</b>：right = ' + step.r + ' 读入 \'' + esc(step.c) + '\'，prev = ' +
+            (step.prev === -1 ? '−1（点名册无记录）' : step.prev + ' &lt; left = ' + step.leftB + '（幽灵，已在窗外）') +
+            ' → 无冲突，左把手不动；窗口 [ ' + step.leftA + ', ' + step.r + ' ] 长 ' + (step.r - step.leftA + 1) +
+            '，ans = ' + step.ansA + '。';
+    }
+    elNote.innerHTML = txt;
+
+    /* 代码行高亮 */
+    codeLis.forEach(function(li){
+      var l = +li.getAttribute('data-l');
+      li.classList.toggle('on', step.lines.indexOf(l) !== -1);
+    });
+
+    renderBar();
+
+    /* 自动跟随滚动 */
+    var target = step.kind === 'init' ? 0 : right * STEP;
+    if (target - elWrap.scrollLeft > elWrap.clientWidth - 90 || target < elWrap.scrollLeft){
+      elWrap.scrollLeft = Math.max(0, target - elWrap.clientWidth + 110);
+    }
+  }
+
+  function setStep(i){
+    idx = Math.max(0, Math.min(trace.length - 1, i));
+    render();
+  }
+
+  /* ---------- 控件 ---------- */
+  document.getElementById('btnPrev').addEventListener('click', function(){ stop(); setStep(idx - 1); });
+  document.getElementById('btnNext').addEventListener('click', function(){ stop(); setStep(idx + 1); });
+  document.getElementById('btnReset').addEventListener('click', function(){ stop(); setStep(0); });
+  document.getElementById('btnApply').addEventListener('click', function(){
+    stop();
+    S = document.getElementById('sInp').value;
+    if (S.length > 26) S = S.slice(0, 26);
+    trace = buildTrace(S); rendered = null; setStep(0);
+    buildSandbox();
+  });
+  document.getElementById('sInp').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') document.getElementById('btnApply').click();
+  });
+  document.getElementById('btnPlay').addEventListener('click', function(){
+    if (timer){ stop(); return; }
+    this.textContent = '暂停 ▮';
+    var self = this;
+    timer = setInterval(function(){
+      if (idx >= trace.length - 1){ stop(); return; }
+      setStep(idx + 1);
+    }, 950);
+  });
+  function stop(){
+    if (timer){ clearInterval(timer); timer = null; }
+    document.getElementById('btnPlay').textContent = '自动播放';
+  }
+  elBar.addEventListener('click', function(e){
+    var t = e.target.closest('.tk');
+    if (t){ stop(); setStep(+t.getAttribute('data-i')); }
+  });
+
+  /* 代码行 → 画面元件联动 */
+  var MAP = {1:'frame', 2:'roster', 3:'ptrL', 4:'hud', 5:'ptrR', 6:'roster', 7:'ring', 8:'ptrL', 9:'roster', 10:'lenbadge', 11:'frame'};
+  var TIP = {
+    1:'建立函数：整台机器的入口', 2:'创建点名册（空的 last）', 3:'左把手归零',
+    4:'ans 归零：还没有任何窗口被结算', 5:'右把手开始单向步行', 6:'查这个字符上一次落脚在哪',
+    7:'对照 left：它还赖在窗内吗', 8:'左把手越过它，且只许向右', 9:'覆写新落脚点，旧位置作废',
+    10:'端点做差结算长度，取历史最大', 11:'返回最终答案'
+  };
+  codeLis.forEach(function(li){
+    li.addEventListener('click', function(){
+      var l = +li.getAttribute('data-l'), target = MAP[l];
+      codeLis.forEach(function(x){ x.classList.remove('sel'); });
+      li.classList.add('sel');
+      var node = null;
+      if (target === 'roster') node = elRoster;
+      else if (target === 'ptrL') node = elL;
+      else if (target === 'ptrR') node = elR;
+      else if (target === 'frame') node = elFrame;
+      else if (target === 'hud') node = elHud;
+      else if (target === 'ring') node = elRing;
+      else if (target === 'lenbadge') node = elHud;
+      if (node){
+        node.classList.remove('flash');
+        void node.offsetWidth;
+        node.classList.add('flash');
+      }
+      elNote.innerHTML = '<span style="color:var(--amber)">第 ' + l + ' 行</span> —— ' + TIP[l] + '。';
+    });
+  });
+
+  /* ---------- 阶段沙盒 ---------- */
+  var PRESETS = [
+    {s:'abcabcbb', note:'标准态：冲突零散分布，A 与 B 交替出现'},
+    {s:'bbbbb',    note:'退化态：每一步都是同一字符，全走 B'},
+    {s:'pwwkew',   note:'陷阱态：最长窗口在中段，前后都不含重复'},
+    {s:'abba',     note:'边界态：prev 落在窗外，守卫必须挡住回退'},
+    {s:'dvdf',     note:'边界态：一次跳跃跨过 2 格'},
+    {s:' ',        note:'单空格：空格也是合法字符，n = 1'},
+    {s:'',         note:'空态：循环一次不进，返回 0'}
+  ];
+
+  function buildSandbox(){
+    var rows = '', i;
+    PRESETS.forEach(function(p, k){
+      var t = buildTrace(p.s), a = 0, b = 0, ans = 0;
+      t.forEach(function(st){
+        if (st.kind === 'read'){ if (st.stage === 'A') a++; else b++; ans = Math.max(ans, st.ansA); }
+      });
+      var label = p.s === '' ? '""（空串）' : (p.s === ' ' ? '"　"（单个空格）' : '"' + p.s + '"');
+      rows += '<tr data-k="' + k + '">' +
+        '<td class="mono">' + esc(label) + '</td>' +
+        '<td class="mono">' + p.s.length + '</td>' +
+        '<td class="mono good">' + ans + '</td>' +
+        '<td class="mono">' + a + '</td>' +
+        '<td class="mono">' + b + '</td>' +
+        '<td class="dim">' + p.note + '</td></tr>';
+    });
+    document.getElementById('presetRows').innerHTML = rows;
+
+    /* 时间轴 */
+    var tl = '', show = Math.min(trace.length, 40);
+    for (i = 0; i < show; i++){
+      var st = trace[i];
+      var tag = st.kind === 'init' ? '初始化' : st.kind === 'ret' ? '返回' :
+                (st.stage === 'B' ? 'B · 跳跃' : 'A · 扩张');
+      var col = st.stage === 'B' ? 'var(--amber)' : (st.stage === 'A' ? 'var(--teal)' : 'var(--ink-faint)');
+      var body = st.kind === 'init' ? 'left=0，ans=0，last 为空' :
+                 st.kind === 'ret' ? 'return ans = ' + st.ansA :
+                 'right=' + st.r + ' \'' + esc(st.c) + '\' · prev=' + st.prev +
+                 ' · left ' + st.leftB + '→' + st.leftA + ' · len=' + (st.r - st.leftA + 1);
+      tl += '<button class="tlrow" data-i="' + i + '" style="display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center;' +
+            'background:rgba(11,38,55,.5);border:0;border-left:2px solid ' + col + ';padding:5px 10px;text-align:left;cursor:pointer;color:#cfe0e6;font-family:var(--mono);font-size:11.5px">' +
+            '<span style="color:' + col + '">' + tag + '</span><span>' + body + '</span></button>';
+    }
+    if (trace.length > show) tl += '<div style="padding:6px 10px;font-family:var(--mono);font-size:11px;color:var(--ink-faint)">仅显示前 40 步（共 ' + trace.length + ' 步）</div>';
+    var elTl = document.getElementById('stageTl');
+    elTl.innerHTML = tl;
+    elTl.querySelectorAll('.tlrow').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        stop();
+        setStep(+btn.getAttribute('data-i'));
+        document.getElementById('s7').scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+
+    var ca = 0, cb = 0;
+    trace.forEach(function(st){
+      if (st.kind !== 'read') return;
+      if (st.stage === 'B') cb++; else ca++;
+    });
+    document.getElementById('cntA').textContent = ca;
+    document.getElementById('cntB').textContent = cb;
+    document.getElementById('cntC').textContent = trace.length;
+  }
+
+  /* ---------- 目录高亮 ---------- */
+  var links = [].slice.call(document.querySelectorAll('#toc a'));
+  var secs = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function spy(){
+    var y = window.scrollY + 120, best = 0;
+    secs.forEach(function(s, i){ if (s && s.offsetTop <= y) best = i; });
+    links.forEach(function(a, i){ a.classList.toggle('on', i === best); });
+  }
+  window.addEventListener('scroll', spy, {passive:true});
+
+  /* ---------- 启动 ---------- */
+  ensureCells(S);
+  render();
+  buildSandbox();
+  spy();
+})();
+</script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->
+

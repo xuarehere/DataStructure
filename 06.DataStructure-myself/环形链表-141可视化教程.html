@@ -1,0 +1,1576 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>141 环形链表 · 区间状态机可视化</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0f14'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23f43f5e' stroke-width='2'/%3E%3Ccircle cx='16' cy='7' r='3' fill='%23f59e0b'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --ink:#0a0f14; --panel:#0f1720; --panel2:#121c26;
+  --line:#1c2b38; --line2:#16222d;
+  --text:#d8e1e9; --dim:#7d92a3; --faint:#4b6274;
+  --slow:#38bdf8; --fast:#f59e0b; --delta:#f43f5e; --meet:#22c55e;
+  --serif:'Noto Serif SC','Songti SC',serif;
+  --sans:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+  --mono:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink); color:var(--text);
+  font-family:var(--sans); font-size:15px; line-height:1.75; font-weight:400;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(1100px 600px at 70% -10%, rgba(56,189,248,.07), transparent 60%),
+    radial-gradient(700px 500px at 5% 100%, rgba(244,63,94,.05), transparent 65%),
+    linear-gradient(transparent 0 calc(100% - 1px), rgba(255,255,255,.012) 0) 0 0/100% 4px;
+}
+main{position:relative; z-index:1}
+.shell{
+  display:grid; grid-template-columns:206px minmax(0,1fr); gap:56px;
+  max-width:1240px; margin:0 auto; padding:44px 34px 110px;
+}
+/* ---------- 左栏 ---------- */
+.rail{position:sticky; top:32px; align-self:start}
+.rail-title{font-family:var(--mono); font-size:10.5px; letter-spacing:.2em; color:var(--faint); margin:0 0 16px}
+.rail nav{display:flex; flex-direction:column}
+.rail a{display:grid; grid-template-columns:22px 1fr; gap:8px; align-items:baseline;
+  color:var(--dim); text-decoration:none; font-size:13px; padding:5px 0; line-height:1.45;
+  border-left:2px solid transparent; padding-left:10px; margin-left:-12px; transition:color .16s}
+.rail a:hover,.rail a.on{color:var(--text)}
+.rail a.on{border-left-color:var(--slow)}
+.rail a .n{font-family:var(--mono); font-size:10.5px; color:var(--faint)}
+.legend{margin-top:26px; padding-top:18px; border-top:1px solid var(--line)}
+.legend-row{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--dim); padding:3px 0}
+.dot{width:7px; height:7px; border-radius:50%}
+/* ---------- 抬头 ---------- */
+.hero{border-bottom:1px solid var(--line); padding-bottom:34px; margin-bottom:8px}
+.crumb{font-family:var(--mono); font-size:11px; color:var(--faint); letter-spacing:.08em}
+h1{font-family:var(--serif); font-weight:600; font-size:clamp(30px,4vw,44px); line-height:1.2;
+  margin:14px 0 14px; letter-spacing:.005em}
+h1 em{font-style:normal; color:var(--delta)}
+.lede{font-size:15px; color:#a9bcca; max-width:64ch; margin:0}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin-top:22px}
+.chip{font-family:var(--mono); font-size:11px; color:var(--dim);
+  border:1px solid var(--line); padding:3px 9px; letter-spacing:.02em}
+.chip b{color:var(--text); font-weight:500}
+/* ---------- 章节 ---------- */
+.sec{padding:46px 0 6px; border-top:1px solid var(--line)}
+.sec:first-of-type{border-top:none; padding-top:34px}
+.eyebrow{font-family:var(--mono); font-size:10.5px; color:var(--faint); letter-spacing:.12em}
+h2{font-family:var(--serif); font-weight:600; font-size:26px; margin:8px 0 6px; line-height:1.35}
+.sub{color:var(--dim); font-size:13.5px; margin:0 0 24px; max-width:68ch}
+h3{font-family:var(--sans); font-weight:500; font-size:15px; margin:30px 0 12px; color:#c6d5e1}
+p{margin:0 0 14px; max-width:70ch}
+p.tight{margin-bottom:8px}
+ul,ol{margin:0 0 16px; padding-left:0; list-style:none; max-width:70ch}
+li{position:relative; padding-left:20px; margin-bottom:9px}
+li::before{content:''; position:absolute; left:2px; top:.72em; width:6px; height:1px; background:var(--faint)}
+/* 卡片 / 表格 */
+.card{background:var(--panel); border:1px solid var(--line); padding:22px 24px; margin:18px 0}
+.card-t{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; color:var(--faint); margin-bottom:12px}
+table{width:100%; border-collapse:collapse; table-layout:fixed; margin:16px 0 8px; font-size:13.5px}
+th{font-weight:500; color:var(--dim); text-align:left; padding:9px 12px 9px 0;
+  border-bottom:1px solid var(--line); font-size:12.5px}
+td{padding:11px 12px 11px 0; border-bottom:1px solid var(--line2); vertical-align:top; line-height:1.65}
+td.k{color:#bccbd7}
+.mono{font-family:var(--mono); font-size:12.5px}
+.sc-s{color:var(--slow)} .sc-f{color:var(--fast)} .sc-d{color:var(--delta)} .sc-m{color:var(--meet)}
+.sc-dim{color:var(--dim)}
+.strong{color:#eaf2f8; font-weight:500}
+/* 代码 */
+pre.code{margin:16px 0; background:#0c141c; border:1px solid var(--line); overflow-x:auto;
+  font-family:var(--mono); font-size:13px; line-height:2.05; padding:14px 16px; color:#c3d3df}
+pre.code .cm{color:#5d7488}
+pre.code .kw{color:#7dd3fc}
+pre.code .fn{color:#e3c08d}
+/* 三条不变量 */
+.inv{display:grid; gap:1px; background:var(--line); border:1px solid var(--line); margin:18px 0}
+.inv > div{background:var(--panel); padding:15px 18px}
+.inv .h{font-family:var(--mono); font-size:10.5px; color:var(--faint); letter-spacing:.1em; margin-bottom:6px}
+.formula{font-family:var(--mono); font-size:14px; color:#e6f0f7; background:var(--panel2);
+  border-left:2px solid var(--delta); padding:12px 16px; margin:16px 0; overflow-x:auto}
+/* ---------- 演示区 ---------- */
+.demo{background:var(--panel); border:1px solid var(--line); margin:22px 0 10px}
+.demo-head{display:flex; flex-wrap:wrap; gap:10px 18px; align-items:baseline;
+  padding:14px 20px; border-bottom:1px solid var(--line)}
+.demo-head .t{font-family:var(--mono); font-size:11.5px; color:#a7bcca; letter-spacing:.03em}
+.demo-head .t b{color:var(--text); font-weight:500}
+.demo-head .r{margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--faint)}
+.stage{width:100%; background:#080d12; border-bottom:1px solid var(--line); padding:8px 4px 0}
+.stage svg{display:block; width:100%; height:auto}
+.ctrl{display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 18px; border-bottom:1px solid var(--line)}
+.btn{font-family:var(--mono); font-size:12px; color:#b8cad8; background:#101b25;
+  border:1px solid #253746; padding:6px 13px; cursor:pointer; transition:.15s}
+.btn:hover{color:#fff; border-color:#3d5a70; background:#152331}
+.btn:disabled{opacity:.36; cursor:not-allowed}
+.btn.pri{border-color:#2c4b60; color:#d6ecfa}
+.count{font-family:var(--mono); font-size:12px; color:var(--dim); margin-left:auto}
+.phases{display:flex; gap:6px; align-items:center}
+.ph{font-family:var(--mono); font-size:10.5px; color:#41586a; border:1px solid #1a2833; padding:2px 8px}
+.ph.on{color:#0a0f14; background:var(--slow); border-color:var(--slow)}
+.ph.on.c{background:var(--meet); border-color:var(--meet)}
+.ph.on.a{background:#8ba3b8; border-color:#8ba3b8}
+.bar{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line)}
+.panel{background:var(--panel2); padding:16px 18px 18px}
+.panel-t{font-family:var(--mono); font-size:10px; letter-spacing:.14em; color:var(--faint); margin-bottom:12px}
+/* 代码行联动 */
+.cl{display:grid; grid-template-columns:24px 1fr; gap:10px; font-family:var(--mono);
+  font-size:12.5px; line-height:1.95; color:#9db1c2; padding:1px 6px; transition:.18s}
+.cl .no{color:#3f5464; text-align:right}
+.cl.on{background:rgba(56,189,248,.1); color:#e6f4fd; box-shadow:inset 2px 0 0 var(--slow)}
+.cl.done{color:#c3d3df}
+.cl.grp{background:rgba(56,189,248,.05);color:#c8d8e4;box-shadow:inset 2px 0 0 #24424f}
+/* 账本 */
+.led{display:grid; gap:8px}
+.led-row{display:grid; grid-template-columns:22px 1fr auto; gap:10px; align-items:baseline;
+  font-size:12.5px; color:var(--dim); border-bottom:1px solid #16232e; padding-bottom:7px}
+.led-row .v{font-family:var(--mono); font-size:14px; color:#dfeaf3}
+.led-row .q{grid-column:2 / -1; font-size:11.5px; color:#5f7587; line-height:1.5}
+.sw{display:inline-block; width:8px; height:8px; margin-right:6px; transform:translateY(-1px)}
+/* 执行前/后 */
+.ba{display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--line); margin-top:14px}
+.ba > div{background:#0b141c; padding:10px 12px}
+.ba .k{font-family:var(--mono); font-size:10px; color:var(--faint); letter-spacing:.1em; margin-bottom:5px}
+.ba .v{font-family:var(--mono); font-size:12px; color:#cbdeea; line-height:1.6}
+/* 纠偏 */
+.myths{display:grid; gap:1px; background:var(--line); border:1px solid var(--line); margin:20px 0}
+.myth{background:var(--panel); padding:16px 20px; display:grid; grid-template-columns:1fr 1fr; gap:22px}
+.myth .m{font-size:13px; color:#c98f9c}
+.myth .f{font-size:13px; color:#9fd8bd}
+.myth .lbl{font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; color:var(--faint); display:block; margin-bottom:5px}
+/* 矩阵 */
+.matrix td,.matrix th{padding-right:10px}
+.matrix td:first-child{color:#e2edf5}
+.w{color:#5f7587; font-family:var(--mono); font-size:12px}
+.foot{margin-top:64px; padding-top:22px; border-top:1px solid var(--line);
+  font-size:12px; color:#4e6474; max-width:72ch}
+
+/* ---------- 全景地图 ---------- */
+.map-wrap{background:#080d12;border:1px solid var(--line);padding:6px 4px 2px}
+.map-wrap svg{display:block;width:100%;height:auto}
+.map-cap{display:flex;flex-wrap:wrap;gap:6px 20px;padding:10px 6px 4px;font-size:12px;color:var(--dim);border-top:1px solid var(--line);margin-top:2px}
+.chain{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:16px 0 0}
+.chain>div{background:var(--panel);padding:11px 12px 13px}
+.chain .b{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--faint)}
+.chain .t{font-size:12px;color:#cfe0ec;margin-top:5px;line-height:1.5}
+.deduce{display:flex;flex-wrap:wrap;align-items:stretch;gap:1px;background:var(--line);border:1px solid var(--line);margin:10px 0 0}
+.deduce>div{background:var(--panel2);padding:10px 14px;flex:1 1 150px;min-width:0}
+.deduce .k{font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.1em}
+.deduce .v{font-family:var(--mono);font-size:13px;color:#e2edf5;margin-top:4px}
+.deduce .v.hot{color:#ff7089}
+@media (max-width:980px){
+  .shell{grid-template-columns:1fr; gap:28px; padding:28px 20px 80px}
+  .rail{position:static}
+  .rail nav{flex-direction:row; flex-wrap:wrap; gap:2px 14px}
+  .rail a{border-left:none; padding-left:0; margin-left:0; grid-template-columns:auto}
+  .legend{display:none}
+  .bar,.myth,.ba{grid-template-columns:1fr}
+  .chain{grid-template-columns:1fr 1fr}
+  .demo-head .r{margin-left:0}
+  h1{font-size:30px}
+}
+
+
+/* ---------- 反例实验器 ---------- */
+.exlbl{font-family:var(--mono); font-size:10.5px; color:var(--faint); letter-spacing:.06em}
+.exsep{width:1px; height:18px; background:var(--line); margin:0 2px}
+.exgrp{display:flex; gap:6px}
+.sbtn.on{background:var(--slow); color:#06131b; border-color:var(--slow)}
+.exgrid{display:flex; flex-wrap:wrap; gap:6px; padding:16px 20px 4px}
+.excell{font-family:var(--mono); font-size:11px; border:1px solid var(--line); padding:6px 8px;
+  min-width:52px; text-align:center; color:var(--dim); line-height:1.5}
+.excell .t{opacity:.5}
+.excell.zero{border-color:#4ade80; color:#4ade80; background:rgba(74,222,128,.09)}
+.excell.t0{border-style:dashed}
+.exsay{padding:8px 20px 20px; font-size:13.5px; color:#a2b6c4; line-height:1.8}
+.exsay b{color:#e8f1f8}
+
+/* ---------- 画面建立 ---------- */
+.bdots{margin-left:auto; display:flex; gap:6px}
+.bdot{width:22px; height:22px; display:grid; place-items:center; font-family:var(--mono);
+  font-size:10.5px; color:var(--faint); background:none; border:1px solid var(--line); cursor:pointer}
+.bdot:hover{color:var(--text); border-color:#3c5568}
+.bdot.on{color:#080d12; background:var(--slow); border-color:var(--slow)}
+.bsay{padding:18px 20px 22px}
+.bsay .bt{font-family:var(--sans); font-size:15.5px; color:#e8f1f8; margin-bottom:9px}
+.bsay .bd{font-size:13.5px; color:#a2b6c4; line-height:1.85; max-width:76ch; margin:0}
+.bsay .bd b{color:#e2edf6; font-weight:500}
+.bsay .bd .hi{color:#ff7089}
+</style>
+</head>
+<body>
+<main class="shell">
+
+<aside class="rail">
+  <p class="rail-title">CONTENTS</p>
+  <nav id="nav">
+        <a href="#build" class="on"><span class="n">◉</span><span>画面建立（先点这个）</span></a>
+    <a href="#map"><span class="n">◉</span><span>全景地图（画完再看）</span></a>
+    <a href="#why"><span class="n">◉</span><span>为什么能成立（证明）</span></a>
+    <a href="#s0"><span class="n">00</span><span>定位卡与元模型</span></a>
+    <a href="#s1"><span class="n">01</span><span>三区间模型</span></a>
+    <a href="#s2"><span class="n">02</span><span>原子算子与逐行落地</span></a>
+    <a href="#s3"><span class="n">03</span><span>仿真推演（可交互）</span></a>
+    <a href="#s4"><span class="n">04</span><span>盲点纠偏（断层定位）</span></a>
+    <a href="#s5"><span class="n">05</span><span>全部解法与决策矩阵</span></a>
+    <a href="#s6"><span class="n">06</span><span>边界 Case 验证</span></a>
+    <a href="#s7"><span class="n">07</span><span>避坑清单与报错复盘</span></a>
+    <a href="#s8"><span class="n">08</span><span>面试表达层</span></a>
+    <a href="#s9"><span class="n">09</span><span>变体训练与自检</span></a>
+  </nav>
+  <div class="legend">
+    <div class="legend-row"><span class="dot" style="background:var(--slow)"></span>slow 游标</div>
+    <div class="legend-row"><span class="dot" style="background:var(--fast)"></span>fast 游标</div>
+    <div class="legend-row"><span class="dot" style="background:var(--delta)"></span>δ 待追弧</div>
+    <div class="legend-row"><span class="dot" style="background:var(--meet)"></span>相遇判定</div>
+  </div>
+</aside>
+
+<div>
+
+<header class="hero">
+  <div class="crumb">LeetCode 141 · EASY · PHASE 1 线性结构 · M-L1 链表游标状态机</div>
+  <h1>环形链表：把"轨迹重复"降维成<br>一条<em>不断缩短的弧</em></h1>
+  <p class="lede">先六刀把画面画出来（含"为什么能想到快慢指针"的完整推导），再把这张图逐层剖开：区间 → 指令 → 时间轴 → 边界。核心不是"快慢指针会相遇"，而是<b>环上那条待追弧每轮恰好缩短 1 格</b>——它是全部代码动作的唯一驱动量。</p>
+  <div class="meta">
+    <span class="chip">时间 <b>O(n)</b></span>
+    <span class="chip">空间 <b>O(1)</b></span>
+    <span class="chip">新增状态量 <b>δ</b></span>
+    <span class="chip">同族 <b>206 / 142 / 876</b></span>
+    <span class="chip">实测环境 <b>云主机</b></span>
+  </div>
+</header>
+<!-- ===== BUILD：画面建立 ===== -->
+<section class="sec" id="build" style="border-top:none;padding-top:34px">
+  <div class="eyebrow">BUILD / 画面建立 · 六刀</div>
+  <h2>先把画面一笔一笔画出来</h2>
+  <p class="sub">别急着看代码。下面六刀，一刀只加一层，前面画过的留在画面上变暗——你点一次，画面长一次。第四刀是整道题的关键：它回答"为什么能想到快慢指针"。六刀点完，这张图是你自己推出来的。</p>
+
+  <div class="demo">
+    <div class="demo-head">
+      <span class="t">画面建立 · 第 <b id="bnum">1</b> 刀 / 共 6 刀</span>
+      <span class="r" id="btag">结构</span>
+    </div>
+    <div class="stage" id="bstage">
+    <svg viewBox="0 0 1000 480" role="img" aria-label="快慢指针画面的六步建立过程">
+      <g data-lv="1">
+      <rect x="90" y="214" width="248" height="72" fill="none" stroke="#24404f" stroke-dasharray="6 6"/>
+
+      <text class="sv sv-zone" x="90" y="200">直道 a = 2 · 走到底就是 null（有出口）</text>
+
+      <circle cx="700" cy="250" r="190" fill="none" stroke="#1f3040" stroke-dasharray="7 7"/>
+
+      <text class="sv sv-zone" x="700" y="44" text-anchor="middle">环 L = 5 · 没有出口，只能绕着转</text>
+
+      <text class="sv sv-zone" x="44" y="256">head</text>
+
+      <line x1="68.0" y1="250.0" x2="87.0" y2="250.0" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="97.0,250.0 87.0,255.2 87.0,244.8" fill="#3b5668"/>
+
+      <rect x="105.0" y="228.0" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+      <line x1="163.0" y1="228.0" x2="163.0" y2="272.0" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+      <text class="sv sv-val" x="132.0" y="257.0" text-anchor="middle">1</text>
+      <text class="sv sv-ptr" x="180.0" y="256.0" text-anchor="middle">2</text>
+
+      <line x1="199.0" y1="250.0" x2="208.0" y2="250.0" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="218.0,250.0 208.0,255.2 208.0,244.8" fill="#3b5668"/>
+
+      <rect x="225.0" y="228.0" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+      <line x1="283.0" y1="228.0" x2="283.0" y2="272.0" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+      <text class="sv sv-val" x="252.0" y="257.0" text-anchor="middle">2</text>
+      <text class="sv sv-ptr" x="300.0" y="256.0" text-anchor="middle">3</text>
+
+      <line x1="318.0" y1="250.0" x2="517.0" y2="250.0" stroke="#6f8a52" stroke-width="1.6"/>
+      <polygon points="527.0,250.0 517.0,255.2 517.0,244.8" fill="#6f8a52"/>
+
+      <text class="sv sv-lbl" x="422" y="238" text-anchor="middle" fill="#6f8a52" font-size="10">入环</text>
+
+      <rect x="535.0" y="228.0" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+      <line x1="593.0" y1="228.0" x2="593.0" y2="272.0" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+      <text class="sv sv-val" x="562.0" y="257.0" text-anchor="middle">3</text>
+      <text class="sv sv-ptr" x="610.0" y="256.0" text-anchor="middle">4</text>
+
+      <rect x="617.9" y="113.9" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+      <line x1="675.9" y1="113.9" x2="675.9" y2="157.9" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+      <text class="sv sv-val" x="644.9" y="142.9" text-anchor="middle">4</text>
+      <text class="sv sv-ptr" x="692.9" y="141.9" text-anchor="middle">5</text>
+
+      <rect x="752.1" y="157.5" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+      <line x1="810.1" y1="157.5" x2="810.1" y2="201.5" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+      <text class="sv sv-val" x="779.1" y="186.5" text-anchor="middle">5</text>
+      <text class="sv sv-ptr" x="827.1" y="185.5" text-anchor="middle">6</text>
+
+      <rect x="752.1" y="298.5" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+      <line x1="810.1" y1="298.5" x2="810.1" y2="342.5" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+      <text class="sv sv-val" x="779.1" y="327.5" text-anchor="middle">6</text>
+      <text class="sv sv-ptr" x="827.1" y="326.5" text-anchor="middle">7</text>
+
+      <rect x="617.9" y="342.1" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+      <line x1="675.9" y1="342.1" x2="675.9" y2="386.1" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+      <text class="sv sv-val" x="644.9" y="371.1" text-anchor="middle">7</text>
+      <text class="sv sv-ptr" x="692.9" y="370.1" text-anchor="middle">3</text>
+
+      <line x1="613.2" y1="204.3" x2="626.0" y2="186.7" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="631.9,178.6 630.2,189.7 621.8,183.6" fill="#3b5668"/>
+
+      <line x1="716.6" y1="153.3" x2="737.4" y2="160.1" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="746.9,163.2 735.8,165.0 739.0,155.1" fill="#3b5668"/>
+
+      <line x1="797.1" y1="235.9" x2="797.1" y2="257.8" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="797.1,267.8 791.9,257.8 802.3,257.8" fill="#3b5668"/>
+
+      <line x1="743.4" y1="338.0" x2="722.6" y2="344.7" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="713.1,347.8 721.0,339.8 724.2,349.7" fill="#3b5668"/>
+
+      <line x1="629.8" y1="318.5" x2="616.9" y2="300.8" stroke="#8d4451" stroke-width="2" stroke-dasharray="4 3"/>
+      <polygon points="611.0,292.7 621.1,297.7 612.7,303.8" fill="#8d4451"/>
+
+      <text class="sv sv-lbl" x="592" y="316" fill="#8d4451" font-size="10">回边</text>
+
+      </g>
+      <g data-lv="2">
+      <rect x="90" y="344" width="392" height="86" rx="2" fill="#131c25" stroke="#8d4451" stroke-width="1" opacity=".9"/>
+
+      <text class="sv sv-lbl" x="106" y="366" fill="#c8d6e2" font-size="11">第一反应：把走过的节点地址记下来</text>
+
+      <text class="sv sv-mono" x="106" y="388" fill="#8b9dad" font-size="11">Set&lt;ListNode&gt;  ·  需要 n 个格子 → O(n) 空间</text>
+
+      <line x1="104" y1="384" x2="462" y2="384" stroke="#8d4451" stroke-width="1.2" opacity=".55"/>
+
+      <text class="sv sv-lbl" x="106" y="414" fill="#ff7089" font-size="11">题目要求 O(1)：这条路被堵死，必须换一个判据</text>
+
+      </g>
+      <g data-lv="3">
+      <rect x="103" y="226" width="94" height="48" rx="3" fill="none" stroke="#38bdf8" stroke-width="2"/>
+
+      <rect x="104" y="290" width="24" height="18" rx="2" fill="#38bdf8"/>
+      <text class="sv sv-chip" x="116.0" y="303" text-anchor="middle">s</text>
+
+      <text class="sv sv-lbl" x="134" y="303" fill="#38bdf8" font-size="10.5">起点在 head · 每轮 +1</text>
+
+      </g>
+      <g data-lv="4">
+      <rect x="107" y="230" width="86" height="40" rx="3" fill="none" stroke="#f59e0b" stroke-width="1.6" opacity=".9"/>
+
+      <rect x="104" y="314" width="24" height="18" rx="2" fill="#f59e0b"/>
+      <text class="sv sv-chip" x="116.0" y="327" text-anchor="middle">f</text>
+
+      <text class="sv sv-lbl" x="134" y="327" fill="#f59e0b" font-size="10.5">同一张图 · 每轮 +2</text>
+
+      </g>
+      <g data-lv="5">
+      <path d="M 646.8 413.6 A 172 172 0 0 1 646.8 86.4" fill="none" stroke="#ff7089" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+
+      <rect x="615.9" y="111.9" width="94" height="48" rx="3" fill="none" stroke="#38bdf8" stroke-width="2"/>
+
+      <rect x="622" y="88" width="24" height="18" rx="2" fill="#38bdf8"/>
+      <text class="sv sv-chip" x="634.0" y="101" text-anchor="middle">s</text>
+
+      <rect x="615.9" y="340.1" width="94" height="48" rx="3" fill="none" stroke="#f59e0b" stroke-width="2"/>
+
+      <rect x="622" y="392" width="24" height="18" rx="2" fill="#f59e0b"/>
+      <text class="sv sv-chip" x="634.0" y="405" text-anchor="middle">f</text>
+
+      <text class="sv sv-zone" x="752" y="90" fill="#ff7089">S_δ = 2 格</text>
+
+      <text class="sv sv-lbl" x="752" y="106" fill="#ff7089">每轮严格 −1，最多 L 轮归零</text>
+
+      </g>
+      <g data-lv="6">
+      <rect x="748.1" y="294.5" width="98" height="52" rx="4" fill="none" stroke="#4ade80" stroke-width="2.4"/>
+
+      <rect x="741.1" y="287.5" width="112" height="66" rx="5" fill="none" stroke="#4ade80" stroke-width="1" opacity=".3"/>
+
+      <rect x="676" y="312" width="44" height="18" rx="2" fill="#4ade80"/>
+      <text class="sv sv-chip" x="698.0" y="325" text-anchor="middle">s = f</text>
+
+      <text class="sv sv-lbl" x="797" y="362" text-anchor="middle" fill="#4ade80" font-size="10.5">同一地址 ⇒ true</text>
+
+      <text class="sv sv-lbl" x="90" y="454" fill="#7d92a3" font-size="10.5">若无环：fast 先撞到 null → 循环退出 → false</text>
+
+      </g>
+    </svg>
+    </div>
+    <div class="ctrl">
+      <button class="btn" id="bprev" type="button">← 上一刀</button>
+      <button class="btn pri" id="bnext" type="button">下一刀 →</button>
+      <div class="bdots" id="bdots"></div>
+    </div>
+    <div class="bsay">
+      <div class="bt" id="bt"></div>
+      <div class="bd" id="bd"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== MAP ===== -->
+<section class="sec" id="map" style="border-top:none;padding-top:34px">
+  <div class="eyebrow">MAP / 全景</div>
+  <h2>一张图看完这道题</h2>
+  <p class="sub">先别读代码。把这张图在脑子里立住：<b>左边一条直道，右边一个环，两个游标，一条红弧</b>。后面每一节都只是这张图上某一块的放大，不是新知识。</p>
+
+  <div class="map-wrap">
+    <svg viewBox="0 0 1000 424" role="img" aria-label="环形链表解题全景地图">
+      <!-- 直道区间 Sₐ -->
+      <rect x="148" y="214" width="415" height="72" fill="none" stroke="#24404f" stroke-dasharray="6 6"/>
+      <text class="sv sv-zone" x="148" y="198">Sₐ · 直道 a = 3 · 每轮缩 1，有出口</text>
+
+      <!-- head -->
+      <text class="sv sv-zone" x="52" y="256">head</text>
+      <line x1="74" y1="250" x2="196" y2="250" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="205,250 196,245.5 196,254.5" fill="#3b5668"/>
+
+      <!-- 直道节点 1 2 3 -->
+      <g>
+        <rect x="205" y="228" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+        <line x1="263" y1="228" x2="263" y2="272" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+        <text class="sv sv-val" x="234" y="255" text-anchor="middle">1</text>
+        <text class="sv sv-ptr" x="279" y="254" text-anchor="middle">2</text>
+      </g>
+      <line x1="286" y1="250" x2="323" y2="250" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="333,250 324,245.5 324,254.5" fill="#3b5668"/>
+      <g>
+        <rect x="333" y="228" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+        <line x1="391" y1="228" x2="391" y2="272" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+        <text class="sv sv-val" x="362" y="255" text-anchor="middle">2</text>
+        <text class="sv sv-ptr" x="407" y="254" text-anchor="middle">3</text>
+      </g>
+      <line x1="414" y1="250" x2="451" y2="250" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="461,250 452,245.5 452,254.5" fill="#3b5668"/>
+      <g>
+        <rect x="461" y="228" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+        <line x1="519" y1="228" x2="519" y2="272" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+        <text class="sv sv-val" x="490" y="255" text-anchor="middle">3</text>
+        <text class="sv sv-ptr" x="535" y="254" text-anchor="middle">4</text>
+      </g>
+
+      <!-- 环区间 S_c -->
+      <circle cx="790" cy="250" r="190" fill="none" stroke="#1f3040" stroke-dasharray="7 7"/>
+      <text class="sv sv-zone" x="790" y="44" text-anchor="middle">S_c · 环 L = 6 · 闭合，无出口</text>
+
+      <!-- 入环箭头 3 → 4 -->
+      <line x1="551" y1="250" x2="617" y2="250" stroke="#6f8a52" stroke-width="1.6"/>
+      <polygon points="627,250 618,245.5 618,254.5" fill="#6f8a52"/>
+      <text class="sv sv-lbl" x="589" y="236" text-anchor="middle" fill="#6f8a52" font-size="9.5">入环</text>
+
+      <!-- 环上普通箭头 -->
+      <line x1="700" y1="232" x2="704" y2="174" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="708,165 700.5,171 707.5,176" fill="#3b5668"/>
+      <line x1="781" y1="148" x2="810" y2="148" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="820,148 811,143.5 811,152.5" fill="#3b5668"/>
+      <line x1="878" y1="167" x2="886" y2="216" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="892,226 885,220 892,215" fill="#3b5668"/>
+      <line x1="890" y1="268" x2="880" y2="316" stroke="#3b5668" stroke-width="1.6"/>
+      <polygon points="874,326 881,320 874,315" fill="#3b5668"/>
+
+      <!-- 回边 9 → 4 -->
+      <line x1="718" y1="330" x2="690" y2="276" stroke="#8d4451" stroke-width="1.4" stroke-dasharray="5 5" opacity=".8"/>
+      <polygon points="686,266 694,272 686,278" fill="#8d4451" opacity=".8"/>
+      <text class="sv sv-lbl" x="744" y="310" fill="#8d4451" font-size="9.5">回边</text>
+
+      <!-- 环节点 -->
+      <g>
+        <rect x="627" y="228" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+        <line x1="685" y1="228" x2="685" y2="272" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+        <text class="sv sv-val" x="656" y="255" text-anchor="middle">4</text>
+        <text class="sv sv-ptr" x="701" y="254" text-anchor="middle">5</text>
+      </g>
+      <g>
+        <rect x="686" y="126" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+        <line x1="744" y1="126" x2="744" y2="170" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+        <text class="sv sv-val" x="715" y="153" text-anchor="middle">5</text>
+        <text class="sv sv-ptr" x="760" y="152" text-anchor="middle">6</text>
+      </g>
+      <g>
+        <rect x="804" y="126" width="90" height="44" rx="3" fill="#15222e" stroke="#38bdf8" stroke-width="2"/>
+        <line x1="862" y1="126" x2="862" y2="170" stroke="#38bdf8" stroke-width="1" opacity=".55"/>
+        <text class="sv sv-val" x="833" y="153" text-anchor="middle">6</text>
+        <text class="sv sv-ptr" x="878" y="152" text-anchor="middle">7</text>
+      </g>
+      <g>
+        <rect x="863" y="228" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+        <line x1="921" y1="228" x2="921" y2="272" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+        <text class="sv sv-val" x="892" y="255" text-anchor="middle">7</text>
+        <text class="sv sv-ptr" x="937" y="254" text-anchor="middle">8</text>
+      </g>
+      <g>
+        <rect x="804" y="330" width="90" height="44" rx="3" fill="#15222e" stroke="#f59e0b" stroke-width="2"/>
+        <line x1="862" y1="330" x2="862" y2="374" stroke="#f59e0b" stroke-width="1" opacity=".55"/>
+        <text class="sv sv-val" x="833" y="357" text-anchor="middle">8</text>
+        <text class="sv sv-ptr" x="878" y="356" text-anchor="middle">9</text>
+      </g>
+      <g>
+        <rect x="686" y="330" width="90" height="44" rx="3" fill="#15222e" stroke="#2c4152" stroke-width="1.5"/>
+        <line x1="744" y1="330" x2="744" y2="374" stroke="#2c4152" stroke-width="1" opacity=".55"/>
+        <text class="sv sv-val" x="715" y="357" text-anchor="middle">9</text>
+        <text class="sv sv-ptr" x="760" y="356" text-anchor="middle">4</text>
+      </g>
+
+      <!-- S_δ 待追弧：fast(6) 顺时针 2 格到 slow(8)，走在环外侧 -->
+      <path d="M 878 98 A 176 176 0 0 1 966 250 A 176 176 0 0 1 878 402"
+            fill="none" stroke="#ff7089" stroke-width="3" stroke-linecap="round"/>
+      <text class="sv sv-delta" x="790" y="246" text-anchor="middle">S_δ = 2</text>
+      <text class="sv sv-lbl" x="790" y="266" text-anchor="middle" fill="#ff7089" font-size="10">每轮 −1，归零即相遇</text>
+
+      <!-- 游标标签 -->
+      <rect x="815" y="100" width="52" height="16" rx="2" fill="#38bdf8"/>
+      <text class="sv sv-chip" x="841" y="112" text-anchor="middle">s +1</text>
+      <rect x="815" y="304" width="52" height="16" rx="2" fill="#f59e0b"/>
+      <text class="sv sv-chip" x="841" y="316" text-anchor="middle">f +2</text>
+
+      <!-- 说明 -->
+      <text class="sv sv-lbl" x="148" y="320">直道：slow 每步吃掉一格，走完就不再回来</text>
+      <text class="sv sv-lbl" x="148" y="338" fill="#7d92a3">环：一旦进来就没有出口，只能绕着转</text>
+      <text class="sv sv-lbl" x="148" y="356" fill="#ff7089">红弧：待追弧，每轮严格减 1，减到 0 即相遇</text>
+    </svg>
+    <div class="map-cap">
+      <span>节点左格 = 数据域 val，右格 = 指针域（写着它指向谁）</span><span>①–⑥ 对应下方的执行链</span>
+      <span>环的闭合来自「尾节点指回入口」那条回边</span>
+      <span style="color:#7d92a3">若尾节点没有指回入口，fast 走两步就掉出链表——那就是无环</span>
+    </div>
+  </div>
+
+  <h3>这张图只有三层，从上往下读</h3>
+  <table>
+    <colgroup><col style="width:16%"><col style="width:44%"><col style="width:40%"></colgroup>
+    <tr><th>层</th><th>图上是什么</th><th>它回答什么</th></tr>
+    <tr><td class="k">判据层</td><td>「轨迹会重复吗」改写为「两个游标会重合吗」</td><td>题目到底在问什么</td></tr>
+    <tr><td class="k">模型层</td><td>直道 Sₐ、环 S_c、待追弧 S_δ，两只速度不同的游标</td><td>用什么结构承载这个问题</td></tr>
+    <tr><td class="k">执行层</td><td>六行代码，每行只做一件事：判界 / 位移 / 判等 / 退出</td><td>怎么把它跑成机器动作</td></tr>
+  </table>
+
+  <h3>执行链：一轮循环在图上到底做了什么</h3>
+  <div class="chain">
+    <div><div class="b">①</div><div class="t">起手<br>两只游标同起点</div></div>
+    <div><div class="b">②</div><div class="t">判界<br>fast 与 fast.next 非空</div></div>
+    <div><div class="b">③</div><div class="t">slow +1<br>Sₐ 缩 1 格</div></div>
+    <div><div class="b">④</div><div class="t">fast +2<br>环内前移 2 格</div></div>
+    <div><div class="b">⑤</div><div class="t">判等<br>地址相同即 δ = 0</div></div>
+    <div><div class="b">⑥</div><div class="t">出口<br>true / false</div></div>
+  </div>
+
+  <h3>账本：为什么那条红弧只会变短</h3>
+  <div class="deduce">
+    <div><div class="k">Δ SLOW</div><div class="v">+1</div></div>
+    <div><div class="k">Δ FAST</div><div class="v">+2</div></div>
+    <div><div class="k">⇒ Δδ</div><div class="v hot">−1</div></div>
+    <div><div class="k">⇒ 收敛</div><div class="v">δ ≤ L 轮归零</div></div>
+    <div><div class="k">⇒ 结论</div><div class="v">重合 = 有环</div></div>
+  </div>
+  <p class="sub" style="margin-top:12px">这一条推导就是整道题的全部数学。环多大、从哪个节点进环，都不改变它。</p>
+
+  <h3>读图四步（30 秒建立蓝图）</h3>
+  <ul>
+    <li><b>看结构</b>：左边直道有出口，右边环没有出口。题目问的「会重复吗」＝「会不会掉进右边这个圈」。</li>
+    <li><b>看色块</b>：Sₐ 只减不增，S_c 恒定，S_δ 每轮 −1。三个数就是全部状态。</li>
+    <li><b>看游标</b>：慢的 +1、快的 +2，相对速度恒为 1，所以红弧只能一格一格地缩。</li>
+    <li><b>看出口</b>：有环时红弧缩到 0（true）；无环时 fast 先掉出链表（false）。两条路径都在这张图上。</li>
+  </ul>
+
+  <h3>解构导航：这张图的每一块，后面在哪一节放大</h3>
+  <table>
+    <colgroup><col style="width:9%"><col style="width:34%"><col style="width:13%"><col style="width:44%"></colgroup>
+    <tr><th>层</th><th>放大的是地图哪一块</th><th>章节</th><th>解决什么问题</th></tr>
+    <tr><td class="k mono">L1</td><td>三个色块如何划分</td><td class="mono">01</td><td>为什么把链表切成「直道 + 环」</td></tr>
+    <tr><td class="k mono">L2</td><td>两条指令如何制造相对位移</td><td class="mono">02</td><td>代码顺序为什么不能换</td></tr>
+    <tr><td class="k mono">L3</td><td>红弧一轮缩一格的时间轴</td><td class="mono">03</td><td>用动画校验单调性，而不是校验代码</td></tr>
+    <tr><td class="k mono">L4</td><td>红弧为什么不会跳过 slow</td><td class="mono">04 · 05</td><td>补齐认知断层，给出 gcd 收敛条件</td></tr>
+    <tr><td class="k mono">L5</td><td>除了这条路还有哪些走法</td><td class="mono">05</td><td>哈希 / 标记 / 计数的取舍</td></tr>
+    <tr><td class="k mono">L6</td><td>两个出口与边界在哪里</td><td class="mono">06 · 07</td><td>无环怎么退出、坑在哪</td></tr>
+  </table>
+</section>
+
+<!-- ===== WHY：证明链 ===== -->
+<section class="sec" id="why">
+  <div class="eyebrow">PROOF / 证明链 · 为什么这套动作成立</div>
+  <h2>这个"为什么"，其实是四个独立命题</h2>
+  <p class="sub">你卡住的不是"会不会相遇"，而是"凭什么"。拆开看它是四件事，各有各的证明工具；少证任何一条，这个解法就降级成"多数情况能行"。四条都成立，它才叫解法。</p>
+
+  <table>
+    <colgroup><col style="width:8%"><col style="width:24%"><col style="width:38%"><col style="width:30%"></colgroup>
+    <tr><th>#</th><th>要证的命题</th><th>用什么证</th><th>结论强度</th></tr>
+    <tr><td class="k mono">P1</td><td>O(1) 空间下存在判定方法</td><td>直接构造：两个游标 + 速度差</td><td>构造性存在</td></tr>
+    <tr><td class="k mono">P2</td><td>有环 ⇒ 必然相遇</td><td>δ 的模 L 递推 <span class="mono">δ ← (δ − 1) mod L</span></td><td><span class="strong">确定性</span>，不是概率</td></tr>
+    <tr><td class="k mono">P3</td><td>无环 ⇒ 必然退出</td><td>fast 的越界 + 循环条件兜底</td><td>确定性</td></tr>
+    <tr><td class="k mono">P4</td><td>差 1 为什么不可替换</td><td><span class="mono">gcd(k−1, L)</span> 整除性</td><td>充要条件，不是经验</td></tr>
+  </table>
+
+  <h3>P2 的全部内容：把"绝对位置"换成"相对位置"</h3>
+  <p>在直道上谈位置没有意义——两人都在直道时，距离每轮<b>拉大 1 格</b>，不是常数。所以第一步不是"跑"，而是<b>换坐标系</b>：只保留"两人都在环上"的阶段，用环序号 <span class="mono">0…L−1</span> 表示位置，并定义</p>
+  <div class="formula">δ = (s − f) mod L&nbsp;&nbsp;<span class="sc-dim">= fast 沿运动方向还要走几格才到 slow</span></div>
+  <p>每轮做两件事：<span class="sc-s">s ← s + 1</span>、<span class="sc-f">f ← f + 2</span>。代进 δ 的定义，得到一个<b>不再依赖具体节点</b>的递推：</p>
+  <div class="formula">δ<sub>t+1</sub> = (δ<sub>t</sub> − 1) mod L&nbsp;&nbsp;⟹&nbsp;&nbsp; δ<sub>t</sub> = (δ<sub>0</sub> − t) mod L</div>
+  <p>取 <span class="mono">t = δ<sub>0</sub></span>，右边必为 0；而 δ<sub>0</sub> 最大是 L−1，所以<b>至多 L−1 轮必定归零</b>。"必然相遇"的完整证明就是这两行——零点由算术给出，不由概率给出，也不由"跑得久总会碰上"给出。</p>
+  <div class="card" style="border-color:#2a3f52">
+    <div class="card-t">这条证明最容易被忽略的推论</div>
+    <p style="margin:0">δ <b>从头到尾没有被计算过，也没有被存储过</b>：代码里没有 δ 这个变量，它只是"步长差 = 1"的数学推论。<br><span class="strong">O(1) 空间不是省出来的，而是"判据换了"白送的——被推断出来的量，不需要被记住。</span></p>
+  </div>
+
+  <h3>还得先证一件事：两人"同时在环上"凭什么一定发生</h3>
+  <p>上面的推导全部建立在"δ 有定义"上。如果 fast 一直不进入环、或进去又出来，δ 就是空谈。补这一步：</p>
+  <ul>
+    <li>有环时环挂在直道<b>末端</b>，fast 每轮 2 格，<b>一定先撞进环</b>（比 slow 早 a/2 轮上下）。</li>
+    <li>进去之后<b>出不来</b>：环里每个节点的唯一出边都指向环内节点，不存在通向 null 的边。</li>
+    <li>slow 每轮 1 格，走 a 轮后也进入环。</li>
+    <li>于是存在时刻 t₀ = a，从此<b>恒在环上</b>，δ 有定义，且之后每轮严格 −1。</li>
+  </ul>
+  <p class="tight">顺带消除一个常见疑虑：fast 在 slow 还没进环时可能已经在环里绕了 m 圈。<b>这不影响证明</b>——δ 只在"两人都在环上"之后才开始计数，之前绕的圈数被 <span class="mono">mod L</span> 全部吸收，取模这个动作本身就在替你擦掉历史。</p>
+
+  <h3>P4：为什么是 1 对 2，不是 1 对 3</h3>
+  <p>设 fast 每轮走 k 格，同样推导得到</p>
+  <div class="formula">δ<sub>t</sub> = (δ<sub>0</sub> − (k−1)·t) mod L</div>
+  <p>这串数<b>永远落在同一个集合里</b>：<span class="mono">δ<sub>0</sub> + m(k−1) mod L</span>，即模 L 下由 (k−1) 生成的子群，大小是 <span class="mono">L / gcd(k−1, L)</span>。于是：</p>
+  <div class="formula">δ 能取到 0&nbsp;&nbsp;⟺&nbsp;&nbsp;gcd(k−1, L) | δ<sub>0</sub></div>
+  <table>
+    <colgroup><col style="width:16%"><col style="width:14%"><col style="width:16%"><col style="width:54%"></colgroup>
+    <tr><th>k−1</th><th>L</th><th>gcd</th><th>结果</th></tr>
+    <tr><td class="mono">1</td><td class="mono">任意</td><td class="mono">1</td><td><span class="sc-m">对任意 δ₀ 都整除 ⇒ 必然归零</span></td></tr>
+    <tr><td class="mono">2</td><td class="mono">4</td><td class="mono">2</td><td>δ₀ 为奇数时永不归零（1,3,1,3… 打转）</td></tr>
+    <tr><td class="mono">2</td><td class="mono">5</td><td class="mono">1</td><td>恰好能归零——但这是 L 的巧合，不构成保证</td></tr>
+    <tr><td class="mono">3</td><td class="mono">6</td><td class="mono">3</td><td>δ₀ ∈ {1,2,4,5} 时永不归零</td></tr>
+  </table>
+  <p>"快的会从慢的头上跳过去"的严格版本就在这里：<b>不是速度太快，而是步长差与环长不互质</b>，导致 δ 被困在一个够不到 0 的子群里。<span class="mono">k−1 = 1</span> 与任何 L 都互质，是唯一"对任意环长都保证"的差——<span class="strong">所以 1 对 2 不是习惯，是最小充分保证。</span></p>
+
+  <div class="demo">
+    <div class="demo-head">
+      <span class="t">反例实验器 · <b>把"差 1"换成"差 2"，看它怎么失效</b></span>
+      <span class="r">δ 序列 t = 0…12</span>
+    </div>
+    <div class="ctrl">
+      <span class="exlbl">fast 每轮走</span>
+      <div class="exgrp" id="exk"></div>
+      <span class="exsep"></span>
+      <span class="exlbl">环长 L</span>
+      <div class="exgrp" id="exl"></div>
+      <span class="exsep"></span>
+      <span class="exlbl">起始 δ₀</span>
+      <div class="exgrp" id="exd"></div>
+    </div>
+    <div class="exgrid" id="exgrid"></div>
+    <div class="exsay" id="exsay"></div>
+  </div>
+
+  <h3>P3：无环为什么必然停</h3>
+  <p>无环时链长 n，fast 每轮 2 格，最多 ⌈n/2⌉ 轮后 fast 变成 null；循环条件 <span class="mono">while fast and fast.next</span> 在访问 <span class="mono">fast.next.next</span> <b>之前</b>就把它拦住。若只写 <span class="mono">while fast</span>，n 为偶数时会在最后一个节点上访问 <span class="mono">None.next</span>——这是 P3 的代码落点，不是题解的书写习惯。</p>
+
+  <h3>五条常见误解，逐条对账</h3>
+  <table>
+    <colgroup><col style="width:42%"><col style="width:58%"></colgroup>
+    <tr><th>直觉说法</th><th>实际成立的说法</th></tr>
+    <tr><td>"快的会从慢的头上跳过去"</td><td>差 1 时每轮只追近 1 格，位置是整数，<span class="strong">不存在跨越</span>；会跳过的是"差 ≥2 且与 L 不互质"的情形</td></tr>
+    <tr><td>"两人必须同时进环才成立"</td><td>不必。只需存在时刻之后<span class="strong">两人都在环上</strong>，δ 才有意义；进环时刻本来就不用相同</td></tr>
+    <tr><td>"要记下 δ 才能判断"</td><td>δ 不存。它由步长差 1 隐含保证，代码里只有两个指针变量</td></tr>
+    <tr><td>"重合是 slow 追上了 fast"</td><td>方向固定：<span class="strong">fast 从背后追上 slow</span>。所以循环里先移动再判等，不会漏掉第一次重合</td></tr>
+    <tr><td>"fast 走 3 步更快"</td><td>看 P4：k−1=2 时 gcd(2,L) 决定成败，L=4、δ₀ 奇数就永远追不上</td></tr>
+  </table>
+
+  <h3>这张证明真正值钱的东西：判据降维</h3>
+  <p>四段证明拼起来，可迁移的只有一句方法论：</p>
+  <div class="formula">依赖历史的判据（你来过没有）&nbsp;&nbsp;→&nbsp;&nbsp;依赖当前状态的不变量（你俩此刻重合没有）</div>
+  <p><b>历史需要存储，状态只需要观察。</b>这就是为什么 O(1) 在这里不是妥协，而是换了个判据之后的自然结果。同族题全部是这一条的变体：142 找入口（相遇后 a = L − b）、876 找中点（δ 退化成常数 L/2 的极端情形）、143 把两个模型串起来。</p>
+</section>
+
+<!-- ===== 00 ===== -->
+<section class="sec" id="s0">
+  <div class="eyebrow">00 / 定位 · 地图的元信息</div>
+  <h2>先给你一张坐标系，再给细节</h2>
+  <p class="sub">你之前 2003、206 两版之所以吸收得好，是因为先立了"区间 + 不变量"的骨架。这版同样先立骨架，再落到代码。</p>
+
+  <table>
+    <colgroup><col style="width:22%"><col style="width:78%"></colgroup>
+    <tr><th>维度</th><th>归属</th></tr>
+    <tr><td class="k">刷题阶段</td><td>Phase 1 线性结构（与 2003 移除元素、206 反转链表同一批）</td></tr>
+    <tr><td class="k">元模型</td><td>M-L1 链表游标状态机：用常数个游标在"只能单向访问"的链上维护一个全局量</td></tr>
+    <tr><td class="k">本题的全局量</td><td><span class="sc-d">δ</span>：环上 fast 到 slow 的剩余步数（待追弧长度）</td></tr>
+    <tr><td class="k">与前两题的关系</td><td>不变量换了，骨架没换：三个游标 → 两个游标 → 两条区间的交界点</td></tr>
+    <tr><td class="k">你的故障域迁移</td><td>206 踩的是"类名当变量"；141 会踩"边界判断顺序"。<span class="strong">同族刷题的价值就是一次修完一类坑</span></td></tr>
+  </table>
+
+  <h3>三层目标各自交付什么</h3>
+  <table>
+    <colgroup><col style="width:20%"><col style="width:44%"><col style="width:36%"></colgroup>
+    <tr><th>层</th><th>本题的交付物</th><th>怎么算掌握</th></tr>
+    <tr><td class="k">底层模型层</td><td>三区间（Sₐ / S_c / S_δ）+ 两条不变量 + 位移账本</td><td>能徒手推出 δ 每步 -1</td></tr>
+    <tr><td class="k">题型模板层</td><td>快慢指针骨架（判环 / 找中点 / 找入口共用）</td><td>能不看题写出 6 行</td></tr>
+    <tr><td class="k">面试表达层</td><td>30 秒口头建模 + 边界自证 + 追问应答</td><td>能在白板上边写边讲</td></tr>
+  </table>
+</section>
+
+<!-- ===== 01 ===== -->
+<section class="sec" id="s1">
+  <div class="eyebrow">01 / 模型 · L1 放大「三个色块」</div>
+  <h2>三个区间，两格节点</h2>
+  <p class="sub">链表被切成直道与环之后，全局状态只需要三个数：还剩多长直道、环多长、待追多远。这三个数就是你在纸上的全部画面。</p>
+
+  <table>
+    <colgroup><col style="width:12%"><col style="width:26%"><col style="width:14%"><col style="width:48%"></colgroup>
+    <tr><th>区间</th><th>定义</th><th>长度</th><th>动态行为</th></tr>
+    <tr>
+      <td class="k mono sc-dim">Sₐ</td>
+      <td class="k">直道区间：head 到环入口之前的节点</td>
+      <td class="mono">a</td>
+      <td>slow 每走一步就吃掉一格，<b>只减不增</b>；slow 入环即耗尽（a=0）</td>
+    </tr>
+    <tr>
+      <td class="k mono sc-dim">S_c</td>
+      <td class="k">环区间：入口节点开始的闭合回路</td>
+      <td class="mono">L</td>
+      <td><b>恒定闭合</b>，没有出口。fast 一旦进来就永远在里面转</td>
+    </tr>
+    <tr>
+      <td class="k mono sc-d">S_δ</td>
+      <td class="k">待追弧：沿运动方向，从 fast 到 slow 的那段弧</td>
+      <td class="mono">δ</td>
+      <td><b>每轮恰好 -1</b>，归零即相遇。这是整个算法唯一的收敛量</td>
+    </tr>
+  </table>
+
+  <div class="formula">δ = ( pos(slow) − pos(fast) ) mod L &nbsp;&nbsp;·&nbsp;&nbsp; 每轮 δ ← δ − 1 &nbsp;&nbsp;·&nbsp;&nbsp; 相遇 ⟺ δ = 0</div>
+
+  <p>把 δ 想成 206 里的 Sᵤ：<b>一个不断缩小的区间</b>，只是它长在环上、并绕着圈走。你在 206 里已经接受"待处理区间一路缩小到零"这个画面，这里只是把它搬到环上——这是本次唯一的认知迁移成本。</p>
+
+  <h3>节点是双格结构（这是你上次专门要求过的画法）</h3>
+  <p>每个节点两个格子：<b>数据域</b>（存 val）与<b>指针域</b>（存"指向谁"）。指针域里写的不是箭头装饰，而是<b>后继节点的值</b>；尾节点指向环入口时，指针域会写成入口节点的值，而不是 ∅。这样你随时能核对"链接关系是否还完整"。</p>
+
+  <div class="inv">
+    <div>
+      <div class="h">I1 · 无环侧</div>
+      fast 每步 +2，位移严格大于 slow，因此<b>必然先抵达链表末尾之外</b>。循环因 fast 越界而终止，这本身就证明了"无环"，不需要额外判据。
+    </div>
+    <div>
+      <div class="h">I2 · 有环侧</div>
+      两游标都进环后沿同一方向运动。以 slow 为参照系，fast 每轮净前进 <b>+1</b>，所以待追弧 δ 单调减 1，必在 ≤ L 步内归零。
+    </div>
+    <div>
+      <div class="h">公理 · 位移账本</div>
+      每轮：Δslow = +1，Δfast = +2，<b>Δδ = +1 − 2 = −1</b>（mod L）。这个恒等式是"为什么一定相遇"的全部数学，与环多大、从哪进无关。
+    </div>
+  </div>
+
+  <p class="tight">推论：由于 δ 的初值最大为 L−1，收敛所需轮数 ≤ L；而 slow 走到尾最多 n 步，因此总轮数 ≤ n，总时间 O(n)。</p>
+</section>
+
+<!-- ===== 02 ===== -->
+<section class="sec" id="s2">
+  <div class="eyebrow">02 / 落地 · L2 放大「两条指令 → 相对位移」</div>
+  <h2>把四行代码打包成一个原子算子 F</h2>
+  <p class="sub">INTJ 容易在"宏观画面懂了、代码对不上"这里断层。解法是把一轮循环打包成一个不可拆的整体动作 F，再单独检查每行的读写对象。</p>
+
+  <div class="formula">F = 判界 → slow+1 → fast+2 → 判等 &nbsp;&nbsp;（四个动作串行，顺序固定，不可交换）</div>
+
+  <h3>为什么顺序不能换</h3>
+  <ul>
+    <li><b>判界必须最先</b>：后面要读 <span class="mono">fast.next.next</span>，若 fast 或其 next 为空，这行直接抛出空指针异常。判界就是给后面两行开路。</li>
+    <li><b>判等必须最后</b>：初始时 slow 与 fast 站在同一个节点，这是<b>结构性事实</b>而非环的证据。先判等会把"两人同起点"误判为"相遇"。</li>
+    <li><b>两个移动不能并行写</b>：<span class="mono">slow, fast = slow.next, fast.next.next</span> 在 Python 里靠元组求值可以，但一旦 slow 先动、再用 slow 去算 fast，就会少走一格。</li>
+  </ul>
+
+  <h3>逐行落地表（把代码挂到画面上）</h3>
+  <table class="matrix">
+    <colgroup><col style="width:7%"><col style="width:30%"><col style="width:23%"><col style="width:20%"><col style="width:20%"></colgroup>
+    <tr><th>行</th><th>代码</th><th>读 / 写对象</th><th>画面变化</th><th>改的是什么</th></tr>
+    <tr><td class="mono">1</td><td class="mono">slow = fast = head</td><td>写两个游标</td><td>两个标签同时贴到首节点</td><td>游标初始化</td></tr>
+    <tr><td class="mono">2</td><td class="mono">while fast and fast.next:</td><td>只读 fast、fast.next</td><td>不动；等价于问"前面还有格子吗"</td><td>判据（不改变状态）</td></tr>
+    <tr><td class="mono">3</td><td class="mono">slow = slow.next</td><td>写 slow</td><td>Sₐ 缩一格；若跨进环，Sₐ 归零</td><td>游标 + 区间边界</td></tr>
+    <tr><td class="mono">4</td><td class="mono">fast = fast.next.next</td><td>写 fast</td><td>δ 缩短 2 的位移；以 slow 为参照净缩 1</td><td>游标 + δ</td></tr>
+    <tr><td class="mono">5</td><td class="mono">if slow is fast</td><td>比较两个地址</td><td>δ = 0 时两标签叠在同一格</td><td>判据（产出答案）</td></tr>
+    <tr><td class="mono">6</td><td class="mono">return False</td><td>无</td><td>fast 停在链表外，环框不存在</td><td>退出路径</td></tr>
+  </table>
+  <p class="sub" style="margin-top:14px">这张表的用法：以后任何链表题，先按"读/写对象 / 画面变化 / 改的是游标还是判据"三列拆一遍，断层会立刻暴露在哪一行。</p>
+</section>
+
+<!-- ===== 03 ===== -->
+<section class="sec" id="s3">
+  <div class="eyebrow">03 / 推演 · L3 放大「时间轴：δ 如何归零」</div>
+  <h2>用动画校验模型，而不是校验代码</h2>
+  <p class="sub">要看的不是"代码跑通了"，而是三个数在同步变化：Sₐ 只减、S_c 恒定、δ 每步 -1。任一时刻你都能用账本反驳画面。</p>
+
+  <div class="demo" id="demoA">
+    <div class="demo-head">
+      <div class="t">演示 A · <b>a = 3，L = 6</b> · head = [1,2,3,4,5,6,7,8,9]，尾节点 9 接回节点 4</div>
+      <div class="r">直道 → 入环 → 收敛（三阶段齐全）</div>
+    </div>
+    <div class="stage" id="stageA"></div>
+    <div class="ctrl">
+      <button class="btn" data-act="prev" type="button">← 上一步</button>
+      <button class="btn pri" data-act="next" type="button">下一步 →</button>
+      <button class="btn" data-act="play" type="button">播放</button>
+      <button class="btn" data-act="reset" type="button">重置</button>
+      <div class="phases">
+        <span class="ph a on" data-ph="A">① 直道追及</span>
+        <span class="ph" data-ph="B">② 入环合流</span>
+        <span class="ph" data-ph="C">③ 单向收敛</span>
+      </div>
+      <span class="count" data-count>1 / 1</span>
+    </div>
+    <div class="bar">
+      <div class="panel">
+        <div class="panel-t">代码联动</div>
+        <div data-code></div>
+      </div>
+      <div class="panel">
+        <div class="panel-t">区间账本</div>
+        <div class="led" data-led></div>
+      </div>
+    </div>
+    <div class="panel" style="border-top:1px solid var(--line)">
+      <div class="panel-t">执行前 / 本行动作 / 执行后</div>
+      <div class="ba" data-ba></div>
+    </div>
+  </div>
+
+  <p><b>读法：</b>先只看红色那条弧（S_δ）。入环那一刻它被锁定为某个长度，之后每一步短一格，短到 0 时两个标签叠在同一节点上。你会发现它<b>永远不会变长</b>——这就是"必然相遇"的可视证据。</p>
+
+  <div class="demo" id="demoB">
+    <div class="demo-head">
+      <div class="t">演示 B · <b>a = 0，L = 7</b> · head = [1…7]，尾节点 7 接回头节点 1</div>
+      <div class="r">纯环：δ 从 6 一路减到 0</div>
+    </div>
+    <div class="stage" id="stageB"></div>
+    <div class="ctrl">
+      <button class="btn" data-act="prev" type="button">← 上一步</button>
+      <button class="btn pri" data-act="next" type="button">下一步 →</button>
+      <button class="btn" data-act="play" type="button">播放</button>
+      <button class="btn" data-act="reset" type="button">重置</button>
+      <div class="phases">
+        <span class="ph" data-ph="A">① 直道追及</span>
+        <span class="ph" data-ph="B">② 入环合流</span>
+        <span class="ph on" data-ph="C">③ 单向收敛</span>
+      </div>
+      <span class="count" data-count>1 / 1</span>
+    </div>
+    <div class="bar">
+      <div class="panel">
+        <div class="panel-t">代码联动</div>
+        <div data-code></div>
+      </div>
+      <div class="panel">
+        <div class="panel-t">区间账本</div>
+        <div class="led" data-led></div>
+      </div>
+    </div>
+    <div class="panel" style="border-top:1px solid var(--line)">
+      <div class="panel-t">执行前 / 本行动作 / 执行后</div>
+      <div class="ba" data-ba></div>
+    </div>
+  </div>
+
+  <p><b>这个演示专门打一个直觉错误：</b>fast 并没有"绕着圈跑得快所以马上撞上"。它每轮只把弧缩短 1 格，因此烧掉 7 轮才归零。收敛速度只由<b>相对速度</b>决定，与绝对速度无关。</p>
+
+  <h3>第四种结局：无环时是怎么退出的</h3>
+  <div class="card">
+    <div class="card-t">EXIT PATH · 无环</div>
+    <p class="tight mono" style="font-size:13px;color:#9db1c2">[1] → [2] → ∅ &nbsp;&nbsp;（pos = −1，没有任何回边）</p>
+    <p style="margin:10px 0 0">fast 走两步就站到链表外：<span class="mono">fast.next == null</span> 使循环条件为假，退出并返回 False。<b>注意：此时并不存在"环框"，画面里只有一条直道</b>——所以"退出"这个动作本身就是无环的证明，不需要再补一次判断。</p>
+  </div>
+</section>
+
+<!-- ===== 04 ===== -->
+<section class="sec" id="s4">
+  <div class="eyebrow">04 / 纠偏 · L4 补齐认知断层</div>
+  <h2>你的断层具体断在哪一层</h2>
+  <p class="sub">断层不在"看不懂代码"，而在"两套描述自由的维度不一致"。先定位，再修。</p>
+
+  <div class="card">
+    <div class="card-t">DIAGNOSIS</div>
+    <p class="tight">你的宏观画面用<b>一个自由度</b>描述状态（区间还剩多少）；代码用<b>两个自由度</b>描述状态（slow 在哪、fast 在哪）。两套描述之间缺一个换算量，所以你只能"看到"区间在缩，却不知道区间长度对应哪一行代码。</p>
+    <p style="margin:0">这个换算量就是 δ。一旦把"两个绝对位置"折叠成"一个相对距离"，画面与代码就同维了：<b>δ 的每一次 −1，恰好就是一轮循环</b>。这也是 206 里 Sᵣ/Sᵤ 能对上代码的原因——那里的区间长度直接等于 cur 的位置。</p>
+  </div>
+
+  <h3>五条常见幻觉，逐条掐掉</h3>
+  <div class="myths">
+    <div class="myth">
+      <div><span class="lbl">你可能会想</span>δ 每次可能跳好几格，甚至一步跳过 slow</div>
+      <div><span class="lbl">事实</span>相对位移每轮<b>恰好 +1</b>，δ 只能减 1。只有"步长差 ≥ 2"才可能跳过，而一旦跳过就可能永远错过（见 05 的 gcd 条件）。</div>
+    </div>
+    <div class="myth">
+      <div><span class="lbl">你可能会想</span>fast 更快，所以相遇会很快发生</div>
+      <div><span class="lbl">事实</span>收敛速度只取决于相对速度 1。演示 B 里 fast 每轮跑两格，仍要 7 轮才归零。</div>
+    </div>
+    <div class="myth">
+      <div><span class="lbl">你可能会想</span>相遇的那个节点就是环的入口</div>
+      <div><span class="lbl">事实</span>a ≠ 0 时相遇点一般不在入口（演示 A 相遇在节点 7，入口是节点 4）。求入口是 142 的额外一步推导。</div>
+    </div>
+    <div class="myth">
+      <div><span class="lbl">你可能会想</span>一进循环就可以先判 slow == fast</div>
+      <div><span class="lbl">事实</span>两者初始同点是结构性事实。先判等会让 <span class="mono">[1], pos=-1</span> 直接返回 True。</div>
+    </div>
+    <div class="myth">
+      <div><span class="lbl">你可能会想</span>环上的"距离"就是画出来的弧长</div>
+      <div><span class="lbl">事实</span>距离是<b>步数模 L</b>，与视觉弧长无关；节点排得疏密不同，δ 也不变。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 05 ===== -->
+<section class="sec" id="s5">
+  <div class="eyebrow">05 / 解法 · L5 横向：还有哪些走法</div>
+  <h2>四种解法：先要基准，再要最优</h2>
+  <p class="sub">基准解不是废物，它是你验证最优解逻辑的对照组。上来只写最优，一旦出错你没有第二把尺子。</p>
+
+  <h3>解法 0 · 哈希集合（基准，先拿到 AC）</h3>
+<pre class="code"><span class="kw">def</span> <span class="fn">hasCycle</span>(head):
+    seen = <span class="kw">set</span>()            <span class="cm"># 记录"来过"的节点身份</span>
+    <span class="kw">while</span> head:
+        <span class="kw">if</span> head <span class="kw">in</span> seen:   <span class="cm"># 命中即证明轨迹重复</span>
+            <span class="kw">return</span> <span class="kw">True</span>
+        seen.add(head)
+        head = head.next
+    <span class="kw">return</span> <span class="kw">False</span>            <span class="cm"># 走到空 = 无环</span></pre>
+  <p class="sub" style="margin:12px 0 0">时间 O(n)，空间 O(n)。它把"判重"这个语义讲清楚了，但没有回答"能不能不记住任何东西"——这正是优化动机。</p>
+
+  <h3>解法 1 · 快慢指针（Floyd，面试标准解）</h3>
+<pre class="code"><span class="kw">def</span> <span class="fn">hasCycle</span>(head):
+    slow = fast = head            <span class="cm"># ① 同起点（此时同点不算相遇）</span>
+    <span class="kw">while</span> fast <span class="kw">and</span> fast.next:      <span class="cm"># ② 判界：无环则在此退出</span>
+        slow = slow.next          <span class="cm"># ③ +1 格</span>
+        fast = fast.next.next     <span class="cm"># ④ +2 格</span>
+        <span class="kw">if</span> slow <span class="kw">is</span> fast:          <span class="cm"># ⑤ 地址比较，不是值比较</span>
+            <span class="kw">return</span> <span class="kw">True</span>
+    <span class="kw">return</span> <span class="kw">False</span>                <span class="cm"># ⑥ 循环自然退出 = 无环</span></pre>
+
+  <h3>解法 2 · 改指针 / 改值做标记（知道即可，不作主答案）</h3>
+  <p>思路是走过就把节点标记成"已访问"（改 <span class="mono">next</span> 指向自己，或把 val 改成哨兵值），再次命中即判环。空间确实 O(1)，但<b>它修改了输入</b>：评测端如果复用链表，或者你后面还要做 142，数据已经被破坏。面试里写这个会被追问"输入被你改了怎么办"，性价比为负。</p>
+
+  <h3>解法 3 · 计数上限（走 n+1 步）</h3>
+  <p>无环链表最多 n 个节点，所以走 n 步还没到空就必然有环。逻辑成立，但要先求 n（多一趟遍历），且严重依赖"环长不超过 n"这个隐含约束。它是可用的，只是不如 Floyd 干净。</p>
+
+  <h3>决策矩阵</h3>
+  <table class="matrix">
+    <colgroup><col style="width:21%"><col style="width:10%"><col style="width:10%"><col style="width:12%"><col style="width:14%"><col style="width:33%"></colgroup>
+    <tr><th>解法</th><th>时间</th><th>空间</th><th>改数据</th><th>面试评价</th><th>关键约束</th></tr>
+    <tr><td>快慢指针 Floyd</td><td class="mono">O(n)</td><td class="mono sc-m">O(1)</td><td>否</td><td>首选</td><td>边界条件必须写对，否则空指针或误判</td></tr>
+    <tr><td>哈希集合</td><td class="mono">O(n)</td><td class="mono">O(n)</td><td>否</td><td>基准 / 保底</td><td>空间不满足进阶要求</td></tr>
+    <tr><td>改标记</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td class="sc-d">是</td><td>不建议</td><td>破坏输入，后续题无法复用</td></tr>
+    <tr><td>计数上限</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td>否</td><td>可接受</td><td>需额外一趟求 n，靠隐含假设</td></tr>
+  </table>
+
+  <h3>为什么慢指针必须 +1、快指针必须 +2</h3>
+  <p>设相对速度 k（fast 比 slow 每步多走 k−1 格），进入环时待追弧为 δ，环长 L。每一轮 δ ← (δ − (k−1)) mod L。这个同余方程有解的条件是：</p>
+  <div class="formula">gcd(k − 1, L) &nbsp;整除&nbsp; δ</div>
+  <table>
+    <colgroup><col style="width:18%"><col style="width:20%"><col style="width:62%"></colgroup>
+    <tr><th>相对速度</th><th>是否能保证相遇</th><th>原因</th></tr>
+    <tr><td class="mono">1（fast 走 2 步）</td><td class="sc-m">一定能</td><td>gcd = 1，整除任何 δ。这是唯一无条件收敛的选择</td></tr>
+    <tr><td class="mono">2（fast 走 3 步）</td><td class="sc-d">可能永不</td><td>若 L 为偶数而 δ 为奇数，δ 永远取不到 0，fast 会一次次跳过 slow</td></tr>
+    <tr><td class="mono">0（同速）</td><td class="sc-d">永不</td><td>δ 恒定，两人并排转圈，永远不重合</td></tr>
+  </table>
+  <p class="sub" style="margin:12px 0 0">所以"走 2 步"不是习惯，是<b>收敛性约束</b>。这条论证把它从模板记忆升级为模型约束——面试官问"为什么不能走 3 步"时，答 gcd 条件即可，不要答"会跳过"这种没依据的话。</p>
+</section>
+
+<!-- ===== 06 ===== -->
+<section class="sec" id="s6">
+  <div class="eyebrow">06 / 验证 · L6 纵向：边界与出口</div>
+  <h2>四类用例的实跑结果</h2>
+  <p class="sub">下面的轮数、相遇节点、δ 序列都是在云主机上用同一套模拟跑出来的真实数字，不是手推的估计。</p>
+
+  <table>
+    <colgroup><col style="width:26%"><col style="width:9%"><col style="width:9%"><col style="width:18%"><col style="width:38%"></colgroup>
+    <tr><th>输入</th><th>a / L</th><th>轮数</th><th>结论</th><th>过程要点</th></tr>
+    <tr><td class="mono">[1..9], pos=3</td><td class="mono">3 / 6</td><td class="mono">6</td><td class="sc-m">true</td><td>δ 序列 3 → 2 → 1 → 0，相遇在节点 7（入口是 4）</td></tr>
+    <tr><td class="mono">[1..7], pos=0</td><td class="mono">0 / 7</td><td class="mono">7</td><td class="sc-m">true</td><td>纯环，δ 6 → 5 → 4 → 3 → 2 → 1 → 0，整圈才归零</td></tr>
+    <tr><td class="mono">[3,2,0,-4], pos=1</td><td class="mono">1 / 3</td><td class="mono">3</td><td class="sc-m">true</td><td>第 1 轮就双双入环，δ 2 → 1 → 0</td></tr>
+    <tr><td class="mono">[1,2], pos=0</td><td class="mono">0 / 2</td><td class="mono">2</td><td class="sc-m">true</td><td>δ 1 → 0，最短的非平凡环</td></tr>
+    <tr><td class="mono">[1], pos=0</td><td class="mono">0 / 1</td><td class="mono">1</td><td class="sc-m">true</td><td>单节点自环：第 1 轮 fast 与 slow 同时回到自己</td></tr>
+    <tr><td class="mono">[1], pos=-1</td><td class="mono">—</td><td class="mono">0</td><td class="sc-dim">false</td><td>fast.next 为空，循环不进入</td></tr>
+    <tr><td class="mono">[]</td><td class="mono">—</td><td class="mono">0</td><td class="sc-dim">false</td><td>head 为空，直接返回</td></tr>
+    <tr><td class="mono">[1,2], pos=-1</td><td class="mono">—</td><td class="mono">1</td><td class="sc-dim">false</td><td>第 1 轮 fast 走两步后越界，判界拦下</td></tr>
+  </table>
+
+  <p class="sub" style="margin-top:14px">注意 <span class="mono">[1], pos=0</span> 这一行：它和 <span class="mono">[1], pos=-1</span> 的区别只在"指针域是否指回自己"，但代码路径完全不同——一个在循环内相遇，一个根本不进循环。<b>边界题的分水岭往往就在一个指针域</b>。</p>
+</section>
+
+<!-- ===== 07 ===== -->
+<section class="sec" id="s7">
+  <div class="eyebrow">07 / 故障域</div>
+  <h2>避坑清单与报错复盘</h2>
+  <p class="sub">这部分是可以跨题复用的资产：下次遇到任何双指针题，先过一遍清单。</p>
+
+  <h3>避坑清单（七条，按发生频率排序）</h3>
+  <ul>
+    <li><b>循环条件顺序写反</b>：必须是 <span class="mono">while fast and fast.next</span>，不能是 <span class="mono">fast.next and fast</span>。前者靠短路求值做安全阀，后者在 fast 为空时直接崩。</li>
+    <li><b>先判等、后移动</b>：初始同点会被误判为相遇。<span class="mono">[1], pos=-1</span> 会错报 True。</li>
+    <li><b>漏掉 fast.next 的判空</b>：只写 <span class="mono">while fast</span>，fast 走两步时越界。</li>
+    <li><b>用值比较代替地址比较</b>：节点值可重复，<span class="mono">[1,1,1]</span> 成环会误判。必须 <span class="mono">is</span> / <span class="mono">==</span>（引用比较）。</li>
+    <li><b>把 pos 当参数</b>：函数签名里没有它，它只是评测端建环的施工说明。</li>
+    <li><b>在 head 上提前解引用</b>：<span class="mono">head.next</span> 在空链表时会抛异常，判断要用 fast 而不是 head。</li>
+    <li><b>只移动一个指针</b>：每轮两个指针都必须动，否则 δ 不变化，直接死循环。</li>
+  </ul>
+
+  <h3>报错复盘（症状 → 根因 → 修法）</h3>
+  <table>
+    <colgroup><col style="width:33%"><col style="width:30%"><col style="width:37%"></colgroup>
+    <tr><th>症状</th><th>根因</th><th>修法</th></tr>
+    <tr><td class="mono">AttributeError: 'NoneType' object has no attribute 'next'</td><td>判界顺序错，或漏判 fast.next</td><td>改为 <span class="mono">while fast and fast.next</span></td></tr>
+    <tr><td class="mono">[1], pos=-1 返回 True</td><td>初始同点被判为相遇</td><td>判等移到两次移动之后</td></tr>
+    <tr><td class="mono">[1,2], pos=-1 返回 True</td><td>fast 越界前未被拦住</td><td>补 fast.next 判空</td></tr>
+    <tr><td class="mono">TLE（超时）</td><td>只移动了一个指针，或 while 条件恒真</td><td>确认每轮两指针都前移，且循环条件含 fast</td></tr>
+    <tr><td class="mono">[1,1,1] 自环误判</td><td>用了值比较</td><td>改 <span class="mono">is</span>（Python）/ <span class="mono">==</span>（Go、Java 的引用比较）</td></tr>
+  </table>
+</section>
+
+<!-- ===== 08 ===== -->
+<section class="sec" id="s8">
+  <div class="eyebrow">08 / 表达 · 对外输出层</div>
+  <h2>面试表达层：30 秒建模话术</h2>
+  <p class="sub">背句式，不背答案。面试是口头建模加白板推演，你说出来什么比写出来什么更重要。</p>
+
+  <div class="card">
+    <div class="card-t">SCRIPT</div>
+    <p style="margin:0">"这题本质是<b>单出边有向图判环</b>。允许额外空间的话，用哈希集合 O(n)/O(n) 就能过，这是基准；瓶颈在空间，所以我不记录访问过谁，而是用两只速度不同的游标把'轨迹重复'转成'相遇'——不变量是环上待追弧每步减 1，因此最多环长步必然归零。边界上 fast 会先出界，所以循环条件必须是 fast 和 fast.next 都非空，这同时也是无环时的终止判据。"</p>
+  </div>
+
+  <h3>追问应答储备</h3>
+  <table>
+    <colgroup><col style="width:34%"><col style="width:66%"></colgroup>
+    <tr><th>追问</th><th>应答</th></tr>
+    <tr><td>快指针走 3 步行不行</td><td>相对速度变成 2，需要 gcd(2, L) 整除 δ；L 偶、δ 奇时永不收敛，所以不能作为通用解。</td></tr>
+    <tr><td>空间还能不能再省</td><td>已经是 O(1)，下界被"必须同时保存两个位置以计算相对位移"锚定。</td></tr>
+    <tr><td>能不能不修改输入</td><td>哈希方案不修改但耗空间；改标记方案省空间但破坏输入，只适合一次性判定。</td></tr>
+    <tr><td>如果要求找入口呢</td><td>相遇后把 slow 放回 head，两者同速前进，再次相遇即入口（见 09 的推导）。</td></tr>
+  </table>
+</section>
+
+<!-- ===== 09 ===== -->
+<section class="sec" id="s9">
+  <div class="eyebrow">09 / 迁移 · 变体与自检</div>
+  <h2>变体训练：自己改题，确认模型边界</h2>
+  <p class="sub">同族题只改一两处，就能验证你真的掌握了模型，而不是记住了这道题的答案。</p>
+
+  <h3>变体 1 · 142 环形链表 II（求入口）</h3>
+  <p>设直道长 a，入口到相遇点长 b，环长 L。相遇时 slow 走了 a + b，fast 走了 a + b + L，且 fast 是 slow 的两倍：</p>
+  <div class="formula">2(a + b) = a + b + L &nbsp;&nbsp;⟹&nbsp;&nbsp; a = L − b</div>
+  <p>含义：<b>从 head 走到入口的距离 a，恰好等于从相遇点继续走到入口的距离 L − b</b>。所以相遇后让 slow 回到 head，两个指针都改成每次 1 格同速前进，再次相遇的位置就是入口。</p>
+<pre class="code"><span class="cm"># 在 141 的相遇判定之后追加三行</span>
+slow = head
+<span class="kw">while</span> slow <span class="kw">is not</span> fast:
+    slow = slow.next
+    fast = fast.next
+<span class="kw">return</span> slow          <span class="cm"># 环入口</span></pre>
+
+  <h3>变体 2 · 求环长</h3>
+  <p>相遇后固定一个指针不动，另一个绕行一圈并计数，回到起点时的计数就是 L。这是"<b>相遇点是一个可靠的锚</b>"这一性质的直接用途。</p>
+
+  <h3>变体 3 · 876 链表的中间节点 / 143 重排链表</h3>
+  <p>876 只用到骨架里的一半：不需要判等，fast 到尽头时 slow 就是中点。143 是三模型串行：876 找中点 → 206 反转后半段 → 归并两段。<b>能做 143 而边界不崩，就说明 M-L1 真的收敛成了模板。</b></p>
+
+  <div class="card" style="border-color:#253746">
+    <div class="card-t">SELF-CHECK</div>
+    <p style="margin:0">今天我拿到的是<b>一个可复用的判环模型（δ 单调收敛）加一套可迁移的边界规则</b>，还是只 AC 了一道简单题？如果三天后让你不看代码重画演示 A 的 δ 序列，你画得出来吗？画不出来，说明这一题还没归档。</p>
+  </div>
+</section>
+
+<div class="foot">
+  数据来源：页面内所有轮数、相遇节点、δ 序列，均由同一套模拟在云主机（当前默认执行环境）上实跑得到；演示 A、B 的动画由同一份模拟数据驱动，不是示意动画。<br>
+  符号约定：a = 直道长度，L = 环长，δ = 待追弧长度，pos(x) = 节点在环上的序号（0 起）。<br>
+  本页为单文件自包含 HTML，离线双击即可打开，不依赖任何本地文件或网络接口。
+</div>
+</div>
+</main>
+
+<style>
+.sv{font-family:var(--mono)}
+.sv-val{font-size:16px;fill:#e2edf6}
+.sv-ptr{font-size:11px;fill:#7d95a7}
+.sv-lbl{font-size:12px;fill:#93a8b9}
+.sv-zone{font-size:12.5px;fill:#b2c6d4}
+.sv-chip{font-size:10px;font-weight:700;fill:#06131b}
+.sv-delta{font-size:12.5px;fill:#ff7089}
+.cl{white-space:pre}
+</style>
+<script>
+'use strict';
+/* ================= 配置 ================= */
+const CFG = {
+  A: {vals:[1,2,3,4,5,6,7,8,9], entry:3, W:1000, H:520,
+      road:{y:88, x0:96, dx:128}, ring:{cx:618, cy:326, r:126}},
+  B: {vals:[1,2,3,4,5,6,7], entry:0, W:1000, H:474,
+      road:{y:88, x0:96, dx:128}, ring:{cx:500, cy:264, r:126}}
+};
+
+const CODE = [
+  {n:1, t:'slow = fast = head',                     c:'  ① 同起点'},
+  {n:2, t:'while fast and fast.next:',              c:'  ② 判界'},
+  {n:3, t:'    slow = slow.next',                   c:'  ③ +1'},
+  {n:4, t:'    fast = fast.next.next',              c:'  ④ +2'},
+  {n:5, t:'    if slow is fast:',                   c:'  ⑤ 判等'},
+  {n:6, t:'return False',                           c:'  ⑥ 无环'}
+];
+
+/* ================= 纯逻辑 ================= */
+function geometry(cfg){
+  const n = cfg.vals.length;
+  const a = cfg.entry >= 0 ? cfg.entry : 0;
+  const L = n - a;
+  const pos = [];
+  for (let i = 0; i < n; i++){
+    if (i < a){
+      pos.push({x: cfg.road.x0 + i * cfg.road.dx, y: cfg.road.y, rp: null});
+    } else {
+      const k = i - a;
+      const ang = (180 - k * 360 / L) * Math.PI / 180;
+      pos.push({
+        x: cfg.ring.cx + cfg.ring.r * Math.cos(ang),
+        y: cfg.ring.cy - cfg.ring.r * Math.sin(ang),
+        rp: k
+      });
+    }
+  }
+  return {pos, a, L, n};
+}
+
+function ringPos(g, idx){
+  if (idx === null || idx === undefined) return null;
+  return (idx < g.a) ? null : idx - g.a;
+}
+
+function nxtOf(cfg, i){
+  if (i === null || i === undefined) return null;
+  const n = cfg.vals.length;
+  if (i < n - 1) return i + 1;
+  return cfg.entry >= 0 ? cfg.entry : null;
+}
+
+function labelIdx(i){
+  return (i === null || i === undefined) ? '∅' : ('#' + i);
+}
+
+function buildSteps(cfg, g){
+  const steps = [];
+  let s = 0, f = 0, entered = false, iter = 0;
+  steps.push({line:1, hl:[1], s, f, ph: (g.a > 0 ? 'A' : 'B'), title:'两游标同起点',
+    note:'slow 与 fast 都指向首节点。此刻同点是结构事实，不能据此判相遇。',
+    chain:'① 初始化两个游标'});
+  while (true){
+    iter++;
+    if (iter > 60) break;
+    const f1 = nxtOf(cfg, f);
+    if (f === null || f1 === null){
+      steps.push({line:2, hl:[2], s, f, ph:'X', title:'判界失败：fast 已越界',
+        note:'fast 或其 next 为空，循环条件为假，直接退出。这条退出路径本身就是无环的证明。',
+        chain:'② 判界 → 假'});
+      steps.push({line:6, hl:[6], s, f, ph:'X', title:'循环自然退出',
+        note:'没有发生相遇，返回 False。', chain:'⑥ return False'});
+      return {steps, cyclic:false};
+    }
+    const preS = s, preF = f;
+    const rs0 = ringPos(g, preS), rf0 = ringPos(g, preF);
+    const preDelta = (rs0 !== null && rf0 !== null) ? ((rs0 - rf0 + g.L) % g.L) : null;
+    const s1 = nxtOf(cfg, s), f2 = nxtOf(cfg, f1);
+    const rs1 = ringPos(g, s1), rf1 = ringPos(g, f2);
+    let ph;
+    if (rs1 === null) ph = 'A';
+    else if (!entered){ entered = true; ph = 'B'; }
+    else ph = 'C';
+    const meet = (s1 !== null && f2 !== null && s1 === f2);
+    const postDelta = (rs1 !== null && rf1 !== null) ? ((rs1 - rf1 + g.L) % g.L) : null;
+    let note;
+    if (meet) note = 'δ 归零：两游标指向同一节点，判定有环，返回 True。';
+    else if (postDelta === null) note = 'slow 仍在直道：Sₐ 再缩 1 格；δ 尚未定义，fast 在环内空转。';
+    else if (preDelta === null) note = 'slow 刚踏进环：Sₐ 耗尽，δ 锁定为 ' + postDelta + '，从下一轮起单调递减。';
+    else note = 'δ ' + preDelta + ' → ' + postDelta + '（净 −1）：每轮只缩 1 格，不可能跳过。';
+    steps.push({line:5, hl:[2,3,4,5], s:s1, f:f2, ph, meet,
+      title:'第 ' + iter + ' 轮 · slow +1 / fast +2',
+      note: note,
+      chain:'③ slow ' + labelIdx(preS) + '→' + labelIdx(s1)
+        + '　④ fast ' + labelIdx(preF) + '→' + labelIdx(f2)});
+    s = s1; f = f2;
+    if (meet) return {steps, cyclic:true};
+    if (s === null) return {steps, cyclic:false};
+  }
+  return {steps, cyclic:false};
+}
+
+/* ================= SVG 绘制 ================= */
+function esc(v){ return String(v === null || v === undefined ? '∅' : v); }
+
+function chip(x, y, label, color){
+  return '<g><rect x="' + (x - 9) + '" y="' + (y - 15) + '" width="18" height="15" rx="2" fill="' + color + '"/>'
+    + '<text class="sv sv-chip" x="' + x + '" y="' + (y - 4) + '" text-anchor="middle">' + label + '</text></g>';
+}
+
+function edgeTrim(ux, uy, gap){
+  let d = 1e9;
+  if (Math.abs(ux) > 1e-6) d = Math.min(d, 45 / Math.abs(ux));
+  if (Math.abs(uy) > 1e-6) d = Math.min(d, 22 / Math.abs(uy));
+  return d + gap;
+}
+
+function arrow(x1, y1, x2, y2, color, dash){
+  const dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy) || 1;
+  const ux = dx / d, uy = dy / d, nx = -uy, ny = ux;
+  const t1 = edgeTrim(ux, uy, 5), t2 = edgeTrim(ux, uy, 11);
+  const sx = x1 + ux * t1, sy = y1 + uy * t1;
+  const ex = x2 - ux * t2, ey = y2 - uy * t2;
+  const bx = ex - ux * 10, by = ey - uy * 10;
+  return '<line x1="' + sx + '" y1="' + sy + '" x2="' + (ex - ux * 8) + '" y2="' + (ey - uy * 8)
+    + '" stroke="' + color + '" stroke-width="1.6"' + (dash ? ' stroke-dasharray="5 5"' : '') + '/>'
+    + '<polygon points="' + ex + ',' + ey + ' ' + (bx + nx * 4.6) + ',' + (by + ny * 4.6)
+    + ' ' + (bx - nx * 4.6) + ',' + (by - ny * 4.6) + '" fill="' + color + '"/>';
+}
+
+function curveArrow(x1, y1, cx, cy, x2, y2, color, dash){
+  const ux = x2 - cx, uy = y2 - cy, d = Math.hypot(ux, uy) || 1;
+  const vx = ux / d, vy = uy / d;
+  const t2 = edgeTrim(vx, vy, 10);
+  const ex = x2 - vx * t2, ey = y2 - vy * t2;
+  const bx = ex - vx * 10, by = ey - vy * 10;
+  return '<path d="M ' + x1 + ' ' + y1 + ' Q ' + cx + ' ' + cy + ' ' + (ex - vx * 6) + ' ' + (ey - vy * 6)
+    + '" fill="none" stroke="' + color + '" stroke-width="1.6"' + (dash ? ' stroke-dasharray="5 5"' : '') + '/>'
+    + '<polygon points="' + ex + ',' + ey + ' ' + (bx - vy * 4.6) + ',' + (by + vx * 4.6)
+    + ' ' + (bx + vy * 4.6) + ',' + (by - vx * 4.6) + '" fill="' + color + '"/>';
+}
+
+function nodeEl(cfg, g, st, i){
+  const p = g.pos[i], vals = cfg.vals;
+  const isS = st.s === i, isF = st.f === i, meet = isS && isF;
+  let stroke = '#2c4152', fill = '#15222e', sw = 1.5;
+  if (meet){ stroke = '#22c55e'; fill = 'rgba(34,197,94,.16)'; sw = 2.4; }
+  else if (isS){ stroke = '#38bdf8'; sw = 2.2; }
+  else if (isF){ stroke = '#f59e0b'; sw = 2.2; }
+  const succ = (i < vals.length - 1) ? vals[i + 1] : (cfg.entry >= 0 ? vals[cfg.entry] : '∅');
+  let out = '<g>';
+  out += '<rect x="' + (p.x - 45) + '" y="' + (p.y - 22) + '" width="90" height="44" rx="3" fill="'
+    + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '"/>';
+  out += '<line x1="' + (p.x + 13) + '" y1="' + (p.y - 22) + '" x2="' + (p.x + 13) + '" y2="'
+    + (p.y + 22) + '" stroke="' + stroke + '" stroke-width="1" opacity=".55"/>';
+  out += '<text class="sv sv-val" x="' + (p.x - 16) + '" y="' + (p.y + 5) + '" text-anchor="middle">' + vals[i] + '</text>';
+  out += '<text class="sv sv-ptr" x="' + (p.x + 29) + '" y="' + (p.y + 4) + '" text-anchor="middle" opacity=".9">' + esc(succ) + '</text>';
+  out += '</g>';
+  if (meet){
+    out += chip(p.x - 26, p.y - 22, 's', '#38bdf8');
+    out += chip(p.x + 12, p.y - 22, 'f', '#f59e0b');
+  } else if (isS){ out += chip(p.x - 8, p.y - 22, 's', '#38bdf8'); }
+  else if (isF){ out += chip(p.x - 8, p.y - 22, 'f', '#f59e0b'); }
+  return out;
+}
+
+function renderStage(cfg, g, st){
+  const cx = cfg.ring.cx, cy = cfg.ring.cy, vals = cfg.vals;
+  const rs = ringPos(g, st.s), rf = ringPos(g, st.f);
+  const delta = (rs !== null && rf !== null) ? ((rs - rf + g.L) % g.L) : null;
+  let out = '<svg viewBox="0 0 ' + cfg.W + ' ' + cfg.H + '" role="img" aria-label="链表区间与游标状态">';
+
+  /* 环区间框 */
+  if (g.L > 0){
+    out += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (cfg.ring.r + 58)
+      + '" fill="none" stroke="#1f3040" stroke-dasharray="7 7"/>';
+  }
+
+  /* 直道区间括号 */
+  if (g.a > 0){
+    const rem = (st.s === null || st.s >= g.a) ? 0 : g.a - st.s;
+    const by = cfg.road.y + 34;
+    if (rem > 0){
+      const xs = g.pos[st.s].x - 48, xe = g.pos[g.a - 1].x + 48;
+      out += '<path d="M ' + xs + ' ' + (by - 7) + ' L ' + xs + ' ' + by + ' L ' + xe + ' ' + by
+        + ' L ' + xe + ' ' + (by - 7) + '" fill="none" stroke="#33505f"/>';
+      out += '<text class="sv sv-zone" x="' + xs + '" y="' + (by + 18)
+        + '">Sₐ 剩余 ' + rem + ' 格 · 每轮缩 1</text>';
+    } else {
+      out += '<text class="sv sv-zone" x="' + (cfg.road.x0 - 48) + '" y="' + (by + 18)
+        + '">Sₐ 已耗尽（a 归零）</text>';
+    }
+  }
+
+  /* S_δ 待追弧：沿运动方向从 fast 到 slow，走在环外侧的圆弧 */
+  if (delta !== null && delta > 0 && g.L > 0){
+    const R = cfg.ring.r + 48;
+    const span = delta * (360 / g.L);
+    const a0 = (180 - rf * 360 / g.L) * Math.PI / 180;
+    const a1 = a0 - span * Math.PI / 180;
+    const x0 = cx + R * Math.cos(a0), y0 = cy - R * Math.sin(a0);
+    const x1 = cx + R * Math.cos(a1), y1 = cy - R * Math.sin(a1);
+    const large = span > 180 ? 1 : 0;
+    out += '<path d="M ' + x0.toFixed(1) + ' ' + y0.toFixed(1) + ' A ' + R + ' ' + R
+      + ' 0 ' + large + ' 1 ' + x1.toFixed(1) + ' ' + y1.toFixed(1)
+      + '" fill="none" stroke="#ff7089" stroke-width="3" stroke-linecap="round" opacity=".9"/>';
+  }
+
+  /* 箭头 */
+  for (let i = 0; i < vals.length - 1; i++){
+    const a1 = g.pos[i], a2 = g.pos[i + 1];
+    if (i === g.a - 1 && g.a > 0){
+      const x1 = a1.x, y1 = a1.y + 24;
+      const x2 = a2.x, y2 = a2.y;
+      out += curveArrow(x1, y1, x1, a2.y - 10, x2, y2, '#3b5668', false);
+    } else {
+      out += arrow(a1.x, a1.y, a2.x, a2.y, '#3b5668', false);
+    }
+  }
+  if (g.L > 0){
+    const last = g.pos[vals.length - 1], entry = g.pos[g.a];
+    out += arrow(last.x, last.y, entry.x, entry.y, '#8d4451', true);
+  }
+
+  /* 节点 */
+  for (let i = 0; i < vals.length; i++) out += nodeEl(cfg, g, st, i);
+
+  /* 环内说明 */
+  if (g.L > 0){
+    out += '<text class="sv sv-zone" x="' + cx + '" y="' + (cy - 12) + '" text-anchor="middle">S_c · L = ' + g.L + '</text>';
+    out += '<text class="sv sv-lbl" x="' + cx + '" y="' + (cy + 8) + '" text-anchor="middle" opacity=".85">闭合，无出口</text>';
+    if (delta !== null){
+      out += '<text class="sv sv-delta" x="' + cx + '" y="' + (cy + 32) + '" text-anchor="middle">S_δ 待追弧 = ' + delta + '</text>';
+    }
+  }
+
+  /* 回边说明 */
+  if (g.L > 0){
+    const mid = g.pos[vals.length - 1];
+
+  }
+  out += '</svg>';
+  return out;
+}
+</script>
+<script>
+'use strict';
+/* ================= DOM 装配 ================= */
+function renderRow(color, name, val, q){
+  return '<div class="led-row"><span class="sw" style="background:' + color + '"></span>'
+    + '<span>' + name + '</span><span class="v">' + val + '</span>'
+    + '<span class="q">' + q + '</span></div>';
+}
+
+function setup(key, rootId){
+  const cfg = CFG[key], g = geometry(cfg), run = buildSteps(cfg, g);
+  const steps = run.steps;
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  const stageEl = root.querySelector('.stage');
+  const codeEl  = root.querySelector('[data-code]');
+  const ledEl   = root.querySelector('[data-led]');
+  const baEl    = root.querySelector('[data-ba]');
+  const countEl = root.querySelector('[data-count]');
+  const prevBtn = root.querySelector('[data-act="prev"]');
+  const nextBtn = root.querySelector('[data-act="next"]');
+  const playBtn = root.querySelector('[data-act="play"]');
+  const resetBtn= root.querySelector('[data-act="reset"]');
+  let i = 0, timer = null;
+
+  function label(idx){
+    return (idx === null || idx === undefined) ? '∅' : ('#' + idx + ' · ' + cfg.vals[idx]);
+  }
+
+  function render(){
+    const st = steps[i];
+    const pv = steps[Math.max(0, i - 1)];
+    stageEl.innerHTML = renderStage(cfg, g, st);
+
+    codeEl.innerHTML = CODE.map(function(l){
+      let cls = 'cl';
+      if (l.n === st.line) cls += ' on';
+      else if (st.hl && st.hl.indexOf(l.n) >= 0) cls += ' grp';
+      return '<div class="' + cls + '"><span class="no">' + l.n + '</span><span>' + l.t
+        + '<span style="color:#5d7488">' + l.c + '</span></span></div>';
+    }).join('');
+
+    const remA = (st.s === null || st.s >= g.a) ? 0 : g.a - st.s;
+    const rs = ringPos(g, st.s), rf = ringPos(g, st.f);
+    const isInit = (st.line === 1);
+    const delta = (!isInit && rs !== null && rf !== null) ? ((rs - rf + g.L) % g.L) : null;
+    const phName = st.ph === 'A' ? '① 直道追及'
+      : st.ph === 'B' ? '② 入环合流'
+      : st.ph === 'C' ? '③ 单向收敛' : '退出路径';
+
+    ledEl.innerHTML = [
+      renderRow('#38bdf8', 'Sₐ 直道', remA + ' 格', 'slow 已吃掉 ' + (g.a - remA) + ' 格，共 ' + g.a + ' 格'),
+      renderRow('#8298a9', 'S_c 环', g.L + ' 格', '闭合回路，长度恒定，没有出口'),
+      renderRow('#f43f5e', 'S_δ 待追弧', delta === null ? '—' : delta + ' 格',
+        isInit ? '起点：尚未判定，同点不计为相遇'
+          : delta === null ? 'slow 尚未入环，δ 未定义'
+          : delta === 0 ? '归零：两游标重合' : 'fast 还需 ' + delta + ' 步才能追上 slow'),
+      renderRow('#22c55e', '当前阶段', phName, st.note)
+    ].join('');
+
+    baEl.innerHTML =
+      '<div><div class="k">执行前</div><div class="v">s = ' + label(pv.s) + '<br>f = ' + label(pv.f) + '</div></div>'
+      + '<div><div class="k">本轮动作 · 第 ' + st.line + ' 行</div><div class="v">' + st.title
+      + (st.chain ? '<br><span style="color:#5f7587;font-size:11px">' + st.chain + '</span>' : '')
+      + '</div></div>'
+      + '<div><div class="k">执行后</div><div class="v">s = ' + label(st.s) + '<br>f = ' + label(st.f) + '</div></div>';
+
+    countEl.textContent = (i + 1) + ' / ' + steps.length;
+    Array.prototype.forEach.call(root.querySelectorAll('.ph'), function(el){
+      el.classList.toggle('on', el.getAttribute('data-ph') === st.ph);
+    });
+    prevBtn.disabled = (i === 0);
+    nextBtn.disabled = (i === steps.length - 1);
+  }
+
+  function go(n){
+    i = Math.max(0, Math.min(steps.length - 1, n));
+    render();
+  }
+  function stop(){
+    if (timer){ clearInterval(timer); timer = null; playBtn.textContent = '播放'; }
+  }
+
+  prevBtn.addEventListener('click', function(){ stop(); go(i - 1); });
+  nextBtn.addEventListener('click', function(){ stop(); go(i + 1); });
+  resetBtn.addEventListener('click', function(){ stop(); go(0); });
+  playBtn.addEventListener('click', function(){
+    if (timer){ stop(); return; }
+    if (i >= steps.length - 1) go(0);
+    playBtn.textContent = '暂停';
+    timer = setInterval(function(){
+      if (i >= steps.length - 1){ stop(); return; }
+      go(i + 1);
+    }, 1350);
+  });
+  render();
+}
+
+function navSpy(){
+  const links = Array.prototype.slice.call(document.querySelectorAll('#nav a'));
+  const secs = links.map(function(a){ return document.querySelector(a.getAttribute('href')); })
+                    .filter(function(x){ return x; });
+  if (!('IntersectionObserver' in window) || !secs.length) return;
+  const io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (!e.isIntersecting) return;
+      links.forEach(function(a){
+        a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id);
+      });
+    });
+  }, {rootMargin:'-15% 0px -72% 0px', threshold:0});
+  secs.forEach(function(s){ io.observe(s); });
+}
+
+function main(){
+  setup('A', 'demoA');
+  setup('B', 'demoB');
+  navSpy();
+}
+
+if (typeof document !== 'undefined'){
+  document.addEventListener('DOMContentLoaded', main);
+}
+</script>
+<script>
+/* ===== 画面建立：六刀 ===== */
+(function(){
+  var root = document.getElementById('bstage');
+  if (!root) return;
+  var T = [
+    ['第一刀 · 先看清问题的形状',
+     '把 pos 忘掉，它不是参数，只是告诉你这条链长什么样。链表是一张有向图：每个节点只有一条出边。<b>直道有出口</b>（走到 null 就停），<b>环没有出口</b>（走多远都在同一批节点里转）。所以"有环"的真正含义不是"看着像圈"，而是：顺着 next 一直走，<b>总有一天会踩回一个走过的节点</b>。判据层只有一句话：轨迹会不会重复。',
+     '结构'],
+    ['第二刀 · 第一反应是记笔记',
+     '要判断"重复"，最直接的办法是记住走过的每个节点：地址丢进哈希集合，第二次见到就返回 true。它完全正确，O(n) 时间。<b>但它要 n 个格子的额外空间，而题目要 O(1)</b>。这条空间禁令是整道题的转折点：不许你记录，你就只剩下"走"这一个动作可用。',
+     '约束'],
+    ['第三刀 · 一个走不停的人，本身就是探测器',
+     '那就让一个人从 head 一直 next。有环：他永远走不到 null，而且必然重复踩点；没环：他走 a 步就掉出去了。卡点在这里——<b>"走了很久还没重复"算不算没环？</b>没有上界。单指针能发现"有环"（踩重复的那一刻），却永远无法证明"没环"，他只会一直走下去。判据缺一个终止条件。',
+     '卡点'],
+    ['第四刀 · 再放一个人，用相对运动造出终止条件',
+     '既然不能记录位置，就让<b>两个人在同一张图上跑</b>：同起点、同方向、不同速度，一个 +1、一个 +2。<br>关键一步：他俩之间<b>不需要存任何东西</b>就能知道"还差多远"——因为差值由速度差直接产生，每轮固定追近 <b>1 格</b>。<br>于是"会不会重复"被换成一个<b>带终止条件的判定</b>：两者能否重合。<br><span class="hi">这就是"为什么会想到快慢指针"的全部理由：不是灵感，是空间被禁用之后，唯一还没被用掉的资源就是时间与速度。</span>',
+     '发明'],
+    ['第五刀 · 把这条差值画出来',
+     '在环上，slow 每轮 +1、fast 每轮 +2，所以 fast 相对 slow <b>每轮追近 1 格</b>。用 δ 表示"fast 还要绕几格才追上 slow"，则 <b>δ 每轮严格 −1</b>。环长 L 是固定的有限数，δ 从 [0, L−1] 出发、每轮减 1，<b>最多 L 轮必然归零</b>。这是可证明的终止条件，不是"碰运气大概会撞上"。',
+     '收敛'],
+    ['第六刀 · 两条出口，代码只有六行',
+     'δ = 0 的那一步，两个指针指向<b>同一个节点</b>（地址相同，不是值相同）⇒ 有环，返回 true。若链表没环，fast 会先撞到 null，或 fast.next 为 null ⇒ 循环条件失败退出 ⇒ 返回 false。<br>一次遍历、两个变量、六行代码——这就是全部。' +
+     '<br>后面每一节，都只是这张图上某一块的放大。',
+     '出口']
+  ];
+  var i = 0, dots = [];
+  var bd = document.getElementById('bdots');
+  for (var k = 0; k < 6; k++){
+    var d = document.createElement('button');
+    d.className = 'bdot'; d.type = 'button'; d.textContent = k + 1;
+    (function(n){ d.onclick = function(){ go(n); }; })(k);
+    bd.appendChild(d); dots.push(d);
+  }
+  var groups = root.querySelectorAll('g[data-lv]');
+  function go(n){
+    i = Math.min(5, Math.max(0, n));
+    for (var j = 0; j < groups.length; j++){
+      var lv = +groups[j].getAttribute('data-lv');
+      var o = lv === i + 1 ? 1 : (lv < i + 1 ? 0.45 : 0);
+      if (i === 5 && lv === 5) o = 0;
+      groups[j].style.opacity = o;
+      groups[j].style.transition = 'opacity .25s';
+    }
+    for (var j2 = 0; j2 < dots.length; j2++) dots[j2].className = 'bdot' + (j2 === i ? ' on' : '');
+    document.getElementById('bnum').textContent = i + 1;
+    document.getElementById('btag').textContent = T[i][2];
+    document.getElementById('bt').innerHTML = T[i][0];
+    document.getElementById('bd').innerHTML = T[i][1];
+    document.getElementById('bprev').disabled = i === 0;
+    document.getElementById('bnext').disabled = i === 5;
+  }
+  document.getElementById('bprev').onclick = function(){ go(i - 1); };
+  document.getElementById('bnext').onclick = function(){ go(i + 1); };
+  go(0);
+})();
+</script>
+<script>
+/* ===== 反例实验器：差 1 是唯一保证 ===== */
+(function(){
+  var K=2, L=5, D=1;
+  var kEl=document.getElementById('exk'), lEl=document.getElementById('exl'),
+      dEl=document.getElementById('exd'), grid=document.getElementById('exgrid'),
+      say=document.getElementById('exsay');
+  if(!kEl) return;
+  function gcd(a,b){ return b ? gcd(b, a%b) : a; }
+  function mk(host,val,label,onclick){
+    var b=document.createElement('button');
+    b.type='button'; b.className='btn sbtn'; b.textContent=label;
+    b.setAttribute('data-v', val); b.onclick=onclick; host.appendChild(b);
+  }
+  function build(){
+    kEl.innerHTML=''; lEl.innerHTML=''; dEl.innerHTML='';
+    [[2,'2 格 · 差 1'],[3,'3 格 · 差 2'],[4,'4 格 · 差 3']].forEach(function(p){
+      mk(kEl, p[0], p[1], function(){ K=p[0]; render(); });
+    });
+    [4,5,6].forEach(function(v){
+      mk(lEl, v, String(v), function(){ L=v; if(D>=L) D=L-1; build(); render(); });
+    });
+    for(var i=0;i<L;i++){ (function(v){ mk(dEl, v, String(v), function(){ D=v; render(); }); })(i); }
+  }
+  function mark(el, val){
+    Array.prototype.forEach.call(el.children, function(b){
+      b.className = 'btn sbtn' + (+b.getAttribute('data-v') === val ? ' on' : '');
+    });
+  }
+  function render(){
+    mark(kEl,K); mark(lEl,L); mark(dEl,D);
+    var seq=[], d=D, zeroAt=-1;
+    for(var t=0;t<=12;t++){
+      seq.push(d);
+      if(d===0 && zeroAt<0) zeroAt=t;
+      d = (d - (K-1)) % L; if(d<0) d += L;
+    }
+    grid.innerHTML='';
+    seq.forEach(function(v,t){
+      var c=document.createElement('div');
+      c.className='excell'+(v===0?' zero':'')+(t===0?' t0':'');
+      c.innerHTML='<span class="t">t='+t+'</span><br>δ='+v;
+      grid.appendChild(c);
+    });
+    var g=gcd(K-1,L), head='<b>k='+K+'（差 '+(K-1)+'）· L='+L+' · δ₀='+D+'</b>：';
+    if(zeroAt>=0){
+      say.innerHTML = head + '第 '+zeroAt+' 轮 δ 归零 ⇒ 会相遇。'
+        + 'gcd('+(K-1)+','+L+')='+g+'，'
+        + (g===1 ? '与任何 δ₀ 都相容——这正是"差 1"的特权。'
+                 : '它恰好整除 δ₀='+D+'，所以这一组是碰巧成功；换一个 δ₀ 就未必。')
+        + '（归零之后实际就停止了，右侧数值只是同余序列的延续，用来看周期。）';
+    } else {
+      say.innerHTML = head + '<b style="color:#ff7089">12 轮内 δ 从未归零 ⇒ 两个指针永远不会重合</b>，'
+        + '这套参数对这个环是错的。原因：gcd('+(K-1)+','+L+')='+g+'，δ 只能在 '+(L/g)+' 个余数里打转，够不到 0。';
+    }
+  }
+  build(); render();
+})();
+</script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->

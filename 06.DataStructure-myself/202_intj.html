@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>202. 快乐数 · INTJ 专属图码同构工作台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --bg-elevated: #334155;
+            --border-subtle: #334155;
+            --accent-blue: #38bdf8;
+            --accent-amber: #fb923c;
+            --accent-emerald: #34d399;
+            --accent-rose: #fb7185;
+            --accent-purple: #c084fc;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        /* 严格保证 Python 代码缩进与等宽字体渲染 */
+        .code-container, .code-pre, .code-line, .code-content {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+            white-space: pre !important;
+            tab-size: 4 !important;
+            -moz-tab-size: 4 !important;
+            font-variant-ligatures: none;
+        }
+
+        .code-line {
+            display: flex;
+            align-items: stretch;
+            min-height: 1.65rem;
+            line-height: 1.65rem;
+            border-left: 3px solid transparent;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .code-line:hover {
+            background-color: rgba(51, 65, 85, 0.35);
+        }
+
+        .code-line.active-line {
+            background-color: rgba(56, 189, 248, 0.16) !important;
+            border-left-color: #38bdf8 !important;
+        }
+
+        .code-line.active-line-amber {
+            background-color: rgba(251, 146, 60, 0.18) !important;
+            border-left-color: #fb923c !important;
+        }
+
+        .code-line.active-line-emerald {
+            background-color: rgba(52, 211, 153, 0.18) !important;
+            border-left-color: #34d399 !important;
+        }
+
+        .code-line.active-line-rose {
+            background-color: rgba(251, 113, 133, 0.18) !important;
+            border-left-color: #fb7185 !important;
+        }
+
+        .line-num {
+            width: 2.5rem;
+            min-width: 2.5rem;
+            text-align: right;
+            padding-right: 0.85rem;
+            color: #64748b;
+            user-select: none;
+            font-size: 0.78rem;
+        }
+
+        .code-content {
+            position: relative;
+            flex: 1;
+            font-size: 0.84rem;
+            padding-right: 1rem;
+        }
+
+        /* 4空格缩进视觉对齐参考线 */
+        .indent-guide {
+            display: inline-block;
+            border-left: 1px dashed rgba(148, 163, 184, 0.22);
+            height: 100%;
+        }
+
+        /* 语法高亮配色 */
+        .syn-kw { color: #c084fc; font-weight: 600; }
+        .syn-fn { color: #38bdf8; font-weight: 600; }
+        .syn-var { color: #e2e8f0; }
+        .syn-num { color: #fb923c; font-weight: 600; }
+        .syn-op { color: #94a3b8; }
+        .syn-cm { color: #64748b; font-style: italic; }
+        .syn-bool { color: #34d399; font-weight: 600; }
+        .syn-self { color: #f472b6; }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* 动画过渡 */
+        .node-transition {
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.6)); }
+            50% { filter: drop-shadow(0 0 14px rgba(52, 211, 153, 0.95)); }
+        }
+        .glow-emerald {
+            animation: pulse-glow 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-sky-500/30 selection:text-sky-200">
+
+    <!-- 顶部全局导航栏 -->
+    <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-sky-500/20">
+                    202
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">202. 快乐数 (Happy Number)</h1>
+                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">简单 · 隐式链表同构</span>
+                    </div>
+                    <p class="text-xs text-slate-400">INTJ 专属认知架构：拓扑破冰 ➔ 坍缩边界 ➔ 算术剥皮 ➔ 141 状态机零成本移植</p>
+                </div>
+            </div>
+
+            <!-- 双模式切换器 -->
+            <div class="flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 self-stretch sm:self-auto">
+                <button id="btn-mode-cuts" onclick="switchMainMode('cuts')" class="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 bg-sky-500 text-slate-950 shadow-md">
+                    <span>🔪</span>
+                    <span>八刀原子切片向导</span>
+                </button>
+                <button id="btn-mode-sandbox" onclick="switchMainMode('sandbox')" class="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
+                    <span>🧪</span>
+                    <span>隐式链表三阶段沙盒</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主工作区 -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-5">
+
+        <!-- ==================== 模式 1：八刀原子切片向导 ==================== -->
+        <section id="view-cuts" class="space-y-5">
+            <!-- 八刀横向进度条 -->
+            <div class="bg-slate-800/70 border border-slate-700/80 rounded-2xl p-3">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">原子认知切片导航（一刀只切透一个底层问题）</span>
+                    <span id="cut-progress-text" class="text-xs font-mono text-sky-400">第 0 刀 / 共 8 刀</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5" id="cut-nav-container">
+                    <!-- 由 JS 动态渲染按钮 -->
+                </div>
+            </div>
+
+            <!-- 当前切片主内容容器 -->
+            <div id="cut-stage" class="bg-slate-800/50 border border-slate-700/80 rounded-2xl p-5 lg:p-6 shadow-xl min-h-[540px] flex flex-col justify-between">
+                <!-- 由 JS 渲染 Cut 0 ~ Cut 7 -->
+            </div>
+
+            <!-- 底部上一刀 / 下一刀 控制栏 -->
+            <div class="flex items-center justify-between bg-slate-800/60 border border-slate-700/70 rounded-xl px-4 py-3">
+                <button id="btn-prev-cut" onclick="stepCut(-1)" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:pointer-events-none text-xs sm:text-sm font-medium text-slate-200 transition flex items-center gap-2">
+                    <span>←</span>
+                    <span id="prev-cut-label">上一刀</span>
+                </button>
+                <div class="hidden md:flex items-center gap-2 text-xs text-slate-400">
+                    <span>💡 快捷键提示：可使用键盘</span>
+                    <kbd class="px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-slate-300 font-mono">←</kbd>
+                    <kbd class="px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-slate-300 font-mono">→</kbd>
+                    <span>切换切片</span>
+                </div>
+                <button id="btn-next-cut" onclick="stepCut(1)" class="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 disabled:opacity-40 disabled:pointer-events-none text-xs sm:text-sm font-semibold text-slate-950 transition flex items-center gap-2 shadow-md shadow-sky-500/20">
+                    <span id="next-cut-label">下一刀</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== 模式 2：隐式链表三阶段沙盒 ==================== -->
+        <section id="view-sandbox" class="hidden space-y-5">
+            <!-- 沙盒顶部控制栏 -->
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 space-y-4">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <!-- 预设用例与自定义输入 -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-semibold text-slate-400 mr-1">预设拓扑：</span>
+                        <button onclick="loadSandboxPreset(19)" id="sb-preset-19" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                            n = 19 (示例1·快乐数)
+                        </button>
+                        <button onclick="loadSandboxPreset(2)" id="sb-preset-2" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                            n = 2 (示例2·8节点死循环)
+                        </button>
+                        <button onclick="loadSandboxPreset(7)" id="sb-preset-7" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                            n = 7 (长链快乐数)
+                        </button>
+                        <button onclick="loadSandboxPreset(1)" id="sb-preset-1" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                            n = 1 (起点即终点)
+                        </button>
+                        <button onclick="loadSandboxPreset(999)" id="sb-preset-999" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                            n = 999 (大数坍缩验证)
+                        </button>
+
+                        <!-- 自定义输入 -->
+                        <div class="flex items-center gap-1.5 ml-auto sm:ml-2 bg-slate-900/90 border border-slate-700 rounded-lg px-2 py-1">
+                            <span class="text-xs text-slate-400 font-mono">n =</span>
+                            <input id="sb-custom-input" type="number" min="1" max="2147483647" value="19" class="w-24 bg-transparent text-xs font-mono text-white focus:outline-none" placeholder="输入正整数">
+                            <button onclick="applyCustomSandboxInput()" class="px-2 py-0.5 rounded bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 text-xs font-semibold transition">
+                                载入
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 算法切换：快慢指针 vs 哈希表 -->
+                    <div class="flex items-center gap-2 self-start lg:self-auto">
+                        <span class="text-xs font-semibold text-slate-400">执行引擎：</span>
+                        <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-700">
+                            <button id="sb-algo-floyd" onclick="switchSandboxAlgo('floyd')" class="px-3 py-1 rounded-md text-xs font-semibold transition bg-sky-500 text-slate-950">
+                                🐢🐇 快慢指针 O(1)
+                            </button>
+                            <button id="sb-algo-hash" onclick="switchSandboxAlgo('hash')" class="px-3 py-1 rounded-md text-xs font-semibold transition text-slate-400 hover:text-white">
+                                🗂️ 哈希表 seen O(log n)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 播放控制条与实时状态看板 -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-slate-700/70">
+                    <div class="flex items-center gap-2">
+                        <button onclick="sandboxReset()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs font-medium text-slate-200 transition">
+                            ⏮ 重置
+                        </button>
+                        <button onclick="sandboxStep(-1)" id="sb-btn-prev" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-xs font-medium text-slate-200 transition">
+                            ⏪ 上一步
+                        </button>
+                        <button onclick="sandboxTogglePlay()" id="sb-btn-play" class="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition shadow-md shadow-emerald-500/20">
+                            ▶ 自动播放
+                        </button>
+                        <button onclick="sandboxStep(1)" id="sb-btn-next" class="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 disabled:opacity-40 text-slate-950 text-xs font-bold transition">
+                            ⏩ 下一步
+                        </button>
+                        <span id="sb-step-counter" class="ml-2 text-xs font-mono text-slate-400">Step 0 / 0</span>
+                    </div>
+
+                    <!-- 状态寄存器徽章 -->
+                    <div id="sb-registers" class="flex flex-wrap items-center gap-2">
+                        <!-- 动态渲染寄存器状态 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 沙盒主体：左图（隐式链表轨道 + 算术拆解） + 右码（实时行级高亮） -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <!-- 左侧：隐式链表拓扑画布 (7列) -->
+                <div class="lg:col-span-7 bg-slate-800/50 border border-slate-700/80 rounded-2xl p-4 flex flex-col justify-between space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <span>🧭 隐式链表拓扑跑道</span>
+                                <span id="sb-topology-badge" class="px-2 py-0.5 text-xs rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">收敛至 1 号自环黑洞</span>
+                            </h3>
+                            <p id="sb-step-explanation" class="text-xs text-slate-300 mt-1">初始化起点状态，准备推进。</p>
+                        </div>
+                    </div>
+
+                    <!-- SVG 拓扑轨道 -->
+                    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-2 flex items-center justify-center min-h-[340px] relative overflow-hidden">
+                        <svg id="sb-svg-canvas" viewBox="0 0 680 340" class="w-full h-auto max-h-[360px] select-none"></svg>
+                    </div>
+
+                    <!-- 底部：当前步数位平方和算术拆解器 -->
+                    <div id="sb-arithmetic-box" class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <!-- 由 JS 动态更新当前 get_next(x) 的数位平方和分解 -->
+                    </div>
+                </div>
+
+                <!-- 右侧：实时行级追踪代码面板 (5列) -->
+                <div class="lg:col-span-5 bg-slate-800/50 border border-slate-700/80 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <span>💻 Python 实时行级状态机追踪</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">严格保留 4/8/12 空格缩进视觉对齐线</p>
+                        </div>
+                        <button onclick="copySandboxCode()" id="btn-copy-sb-code" class="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs font-medium text-slate-200 transition">
+                            📋 复制代码
+                        </button>
+                    </div>
+
+                    <div id="sb-code-panel" class="bg-slate-950 border border-slate-800 rounded-xl py-3 overflow-x-auto flex-1">
+                        <!-- 由 JS 渲染带行号和缩进参考线的 Python 代码 -->
+                    </div>
+
+                    <!-- 诊断结论框 -->
+                    <div id="sb-verdict-box" class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 text-xs text-slate-300 leading-relaxed">
+                        <!-- 动态总结 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // =========================================================================
+        // 全局工具函数：数位平方和分解与序列生成
+        // =========================================================================
+        function getDigitsBreakdown(n) {
+            const digits = [];
+            let temp = n;
+            if (temp === 0) digits.push(0);
+            while (temp > 0) {
+                digits.unshift(temp % 10);
+                temp = Math.floor(temp / 10);
+            }
+            const nextVal = digits.reduce((acc, d) => acc + d * d, 0);
+            const formula = digits.map(d => `${d}²`).join(' + ') + ` = ${nextVal}`;
+            return { digits, nextVal, formula };
+        }
+
+        function getNext(n) {
+            let total = 0;
+            while (n > 0) {
+                const d = n % 10;
+                total += d * d;
+                n = Math.floor(n / 10);
+            }
+            return total;
+        }
+
+        // 生成完整隐式链表拓扑结构（柄部 + 环部）
+        function analyzeTrajectory(startN) {
+            const indexMap = new Map();
+            const nodes = [];
+            let curr = startN;
+            while (!indexMap.has(curr)) {
+                indexMap.set(curr, nodes.length);
+                nodes.push(curr);
+                curr = getNext(curr);
+            }
+            const cycleEntryIndex = indexMap.get(curr);
+            const isHappy = (curr === 1);
+            return {
+                nodes,              // 唯一节点列表
+                cycleEntryIndex,    // 入环口在 nodes 中的索引
+                cycleEntryVal: curr,
+                isHappy
+            };
+        }
+
+        // 严格保持缩进的 Python 代码行渲染器
+        function renderPythonLines(linesConfig, activeLineNums = [], highlightClass = 'active-line', clickableStateMap = null) {
+            return linesConfig.map(line => {
+                const isActive = activeLineNums.includes(line.num);
+                const activeCls = isActive ? highlightClass : '';
+                const clickAttr = clickableStateMap && clickableStateMap[line.num]
+                    ? `onclick="selectCut7State(${clickableStateMap[line.num]})" style="cursor:pointer;"`
+                    : '';
+
+                // 计算前导空格数量，插入 4 空格缩进对齐虚线
+                const rawIndent = line.indent || 0;
+                let indentHtml = '';
+                for (let i = 0; i < rawIndent; i += 4) {
+                    indentHtml += `<span class="indent-guide">    </span>`;
+                }
+
+                return `<div class="code-line ${activeCls}" data-line="${line.num}" ${clickAttr}><span class="line-num">${line.num}</span><span class="code-content">${indentHtml}${line.html}</span></div>`;
+            }).join('');
+        }
+
+        // 通用复制到剪贴板（兼容 iframe）
+        function copyTextToClipboard(text, btnElement, successLabel = '✅ 已复制') {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                if (btnElement) {
+                    const orig = btnElement.innerHTML;
+                    btnElement.innerHTML = successLabel;
+                    setTimeout(() => { btnElement.innerHTML = orig; }, 1600);
+                }
+            } catch (e) {}
+            document.body.removeChild(textarea);
+        }
+
+        // =========================================================================
+        // 顶部主模式切换（八刀向导 vs 三阶段沙盒）
+        // =========================================================================
+        let currentMainMode = 'cuts';
+
+        function switchMainMode(mode) {
+            currentMainMode = mode;
+            const viewCuts = document.getElementById('view-cuts');
+            const viewSandbox = document.getElementById('view-sandbox');
+            const btnCuts = document.getElementById('btn-mode-cuts');
+            const btnSandbox = document.getElementById('btn-mode-sandbox');
+
+            if (mode === 'cuts') {
+                viewCuts.classList.remove('hidden');
+                viewSandbox.classList.add('hidden');
+                btnCuts.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 bg-sky-500 text-slate-950 shadow-md';
+                btnSandbox.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white';
+                renderCurrentCut();
+            } else {
+                viewCuts.classList.add('hidden');
+                viewSandbox.classList.remove('hidden');
+                btnSandbox.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 bg-sky-500 text-slate-950 shadow-md';
+                btnCuts.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white';
+                sandboxPause();
+                renderSandbox();
+            }
+        }
+
+        // =========================================================================
+        // 模式 1：八刀原子切片配置与状态管理
+        // =========================================================================
+        const CUTS_META = [
+            { id: 0, short: '第 0 刀 · 隐式链表', title: '第 0 刀 · 拓扑破冰：没有 ListNode，哪来的链表？' },
+            { id: 1, short: '第 1 刀 · 坍缩天花板', title: '第 1 刀 · 物理边界：为什么数字绝不会飙升到无穷大？' },
+            { id: 2, short: '第 2 刀 · 两大终局', title: '第 2 刀 · 拓扑二分：「1 号自环黑洞」vs「8 节点死循环圈」' },
+            { id: 3, short: '第 3 刀 · 算术剥皮机', title: '第 3 刀 · 推进引擎：用 divmod(n, 10) 打造 .next 剥皮机' },
+            { id: 4, short: '第 4 刀 · 哈希印章法', title: '第 4 刀 · 方案一（代数记忆）：哈希表 seen 印章拦截器' },
+            { id: 5, short: '第 5 刀 · 141 零成本移植', title: '第 5 刀 · 方案二（物理运动）：从 141 到 202 的零成本移植' },
+            { id: 6, short: '第 6 刀 · 双结局追击', title: '第 6 刀 · 双结局步进推演：相对速度 Δv = 1 的追击实况' },
+            { id: 7, short: '第 7 刀 · 图码同构台', title: '第 7 刀 · 图码同构工作台（左码右图投影 + 141➔202 基因对比）' }
+        ];
+
+        let currentCutIndex = 0;
+
+        // 各刀内部交互子状态
+        let cut0Sample = 19; // 19 or 2
+        let cut1TestNum = 999;
+        let cut3PeelerState = { orig: 19, currN: 19, total: 0, history: [], lastDigit: null, finished: false };
+        let cut4Sample = 2; // 19 or 2
+        let cut4Step = 0;
+        let cut6Scenario = 'unhappy'; // 'happy' (19) or 'unhappy' (2)
+        let cut6Step = 0;
+        let cut7Tab = 'isomorphism'; // 'isomorphism' or 'gene-diff'
+        let cut7ActiveState = 3; // 1, 2, 3, 4
+        let cut7MicroScenario = 2; // 19 or 2
+        let cut7MicroStep = 0;
+
+        function renderCutNav() {
+            const container = document.getElementById('cut-nav-container');
+            container.innerHTML = CUTS_META.map((c, idx) => {
+                const isActive = idx === currentCutIndex;
+                const cls = isActive
+                    ? 'bg-sky-500 text-slate-950 font-bold border-sky-400 shadow-md shadow-sky-500/20'
+                    : 'bg-slate-900/70 hover:bg-slate-700/70 text-slate-300 border-slate-700/80';
+                return `<button onclick="goToCut(${idx})" class="px-2.5 py-2 rounded-xl text-xs border transition text-left truncate ${cls}">${c.short}</button>`;
+            }).join('');
+
+            document.getElementById('cut-progress-text').textContent = `第 ${currentCutIndex} 刀 / 共 7 刀 (0~7)`;
+            const prevBtn = document.getElementById('btn-prev-cut');
+            const nextBtn = document.getElementById('btn-next-cut');
+            prevBtn.disabled = currentCutIndex === 0;
+            nextBtn.disabled = currentCutIndex === CUTS_META.length - 1;
+
+            if (currentCutIndex > 0) {
+                document.getElementById('prev-cut-label').textContent = `上一刀：${CUTS_META[currentCutIndex - 1].short}`;
+            } else {
+                document.getElementById('prev-cut-label').textContent = '已是第一刀';
+            }
+
+            if (currentCutIndex < CUTS_META.length - 1) {
+                document.getElementById('next-cut-label').textContent = `下一刀：${CUTS_META[currentCutIndex + 1].short}`;
+            } else {
+                document.getElementById('next-cut-label').textContent = '已完成全部八刀';
+            }
+        }
+
+        function goToCut(idx) {
+            if (idx < 0 || idx >= CUTS_META.length) return;
+            currentCutIndex = idx;
+            renderCutNav();
+            renderCurrentCut();
+        }
+
+        function stepCut(delta) {
+            goToCut(currentCutIndex + delta);
+        }
+
+        function renderCurrentCut() {
+            const stage = document.getElementById('cut-stage');
+            switch (currentCutIndex) {
+                case 0: stage.innerHTML = renderCut0HTML(); break;
+                case 1: stage.innerHTML = renderCut1HTML(); break;
+                case 2: stage.innerHTML = renderCut2HTML(); break;
+                case 3: stage.innerHTML = renderCut3HTML(); break;
+                case 4: stage.innerHTML = renderCut4HTML(); break;
+                case 5: stage.innerHTML = renderCut5HTML(); break;
+                case 6: stage.innerHTML = renderCut6HTML(); break;
+                case 7: stage.innerHTML = renderCut7HTML(); break;
+            }
+        }
+
+        // ==================== 第 0 刀：隐式链表拓扑破冰 ====================
+        function setCut0Sample(val) {
+            cut0Sample = val;
+            renderCurrentCut();
+        }
+
+        function renderCut0HTML() {
+            const is19 = cut0Sample === 19;
+            return `
+            <div class="space-y-5">
+                <!-- 顶部标题与灵魂发问 -->
+                <div class="border-b border-slate-700/80 pb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">第 0 刀 · 拓扑破冰</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-white mt-1.5">没有 <code class="text-sky-400 font-mono">ListNode</code>，哪来的链表？</h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                            🎯 <strong class="text-amber-300">核心破局点</strong>：题目只给了一个整数 <code class="font-mono text-sky-300">n</code>，为什么它本质上和「141. 环形链表」是同一道题？
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700 self-start">
+                        <button onclick="setCut0Sample(19)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${is19 ? 'bg-emerald-500 text-slate-950 shadow' : 'text-slate-300 hover:text-white'}">
+                            示例 1：n = 19 (快乐数)
+                        </button>
+                        <button onclick="setCut0Sample(2)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${!is19 ? 'bg-rose-500 text-slate-950 shadow' : 'text-slate-300 hover:text-white'}">
+                            示例 2：n = 2 (死循环)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 显式链表 vs 隐式链表 同构对照卡 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-900/80 border border-slate-700/80 rounded-xl p-4">
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">🔗 141 题：显式链表 (Explicit Linked List)</div>
+                        <div class="flex items-center gap-3 text-xs sm:text-sm text-slate-200">
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-600 font-mono text-sky-300">节点 = ListNode 对象</span>
+                            <span>➔</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-600 font-mono text-amber-300">指针 = node.next</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2.5 leading-relaxed">
+                            内存里已经提前分配好了一串节点，你顺着现成的 <code class="text-amber-300 font-mono">.next</code> 引用往前走。
+                        </p>
+                    </div>
+
+                    <div class="bg-sky-950/30 border border-sky-500/40 rounded-xl p-4">
+                        <div class="text-xs font-bold text-sky-400 uppercase tracking-wider mb-2">⚡ 202 题：隐式状态转移链表 (Implicit Linked List)</div>
+                        <div class="flex items-center gap-3 text-xs sm:text-sm text-slate-200">
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-sky-500/40 font-mono text-sky-300">节点 = 当前整数 n</span>
+                            <span>➔</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-amber-500/40 font-mono text-amber-300">指针 = get_next(n)</span>
+                        </div>
+                        <p class="text-xs text-slate-300 mt-2.5 leading-relaxed">
+                            只要一个系统满足<strong class="text-white">「当前状态唯一决定下一个状态」</strong>（数位平方和确定唯一），它就是一条边走边生成的单向链表！
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 动态 SVG 隐式链表生成画面 -->
+                <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-400">
+                            ${is19 ? '🟢 n = 19 的隐式链表轨迹（4 步收敛至 1）：' : '🔴 n = 2 的隐式链表轨迹（进入 8 节点闭环）：'}
+                        </span>
+                        <span class="text-xs font-mono text-amber-300">箭头代表调用一次 get_next(n)</span>
+                    </div>
+                    ${is19 ? `
+                    <svg viewBox="0 0 760 170" class="w-full h-auto">
+                        <defs>
+                            <marker id="arrow-c0" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8"></path>
+                            </marker>
+                            <marker id="arrow-c0-green" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 8 5 L 0 9 z" fill="#34d399"></path>
+                            </marker>
+                        </defs>
+                        <!-- 连线与公式标签 -->
+                        <line x1="98" y1="85" x2="195" y2="85" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arrow-c0)"/>
+                        <text x="146" y="70" fill="#94a3b8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">1²+9²=82</text>
+
+                        <line x1="255" y1="85" x2="352" y2="85" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arrow-c0)"/>
+                        <text x="303" y="70" fill="#94a3b8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">8²+2²=68</text>
+
+                        <line x1="412" y1="85" x2="509" y2="85" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arrow-c0)"/>
+                        <text x="460" y="70" fill="#94a3b8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">6²+8²=100</text>
+
+                        <line x1="569" y1="85" x2="655" y2="85" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrow-c0-green)"/>
+                        <text x="612" y="70" fill="#34d399" font-size="11" font-family="JetBrains Mono" text-anchor="middle">1²+0²+0²=1</text>
+
+                        <!-- 1 号自环 -->
+                        <path d="M 702 62 C 735 30, 745 140, 702 108" fill="none" stroke="#34d399" stroke-width="2.2" stroke-dasharray="4 2" marker-end="url(#arrow-c0-green)"/>
+                        <text x="730" y="38" fill="#34d399" font-size="11" font-family="JetBrains Mono" text-anchor="middle">1²=1 (自环终点)</text>
+
+                        <!-- 节点 -->
+                        <g transform="translate(68,85)">
+                            <circle r="28" fill="#0f172a" stroke="#38bdf8" stroke-width="3"/>
+                            <text y="5" fill="#f8fafc" font-size="15" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">19</text>
+                            <text y="46" fill="#38bdf8" font-size="11" font-weight="bold" text-anchor="middle">🚩 head</text>
+                        </g>
+                        <g transform="translate(225,85)">
+                            <circle r="28" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/>
+                            <text y="5" fill="#f8fafc" font-size="15" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">82</text>
+                        </g>
+                        <g transform="translate(382,85)">
+                            <circle r="28" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/>
+                            <text y="5" fill="#f8fafc" font-size="15" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">68</text>
+                        </g>
+                        <g transform="translate(539,85)">
+                            <circle r="28" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/>
+                            <text y="5" fill="#f8fafc" font-size="14" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">100</text>
+                        </g>
+                        <g transform="translate(685,85)">
+                            <circle r="28" fill="#064e3b" stroke="#34d399" stroke-width="3"/>
+                            <text y="5" fill="#34d399" font-size="16" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">1</text>
+                            <text y="46" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle">🎯 快乐终点</text>
+                        </g>
+                    </svg>
+                    ` : `
+                    <svg viewBox="0 0 760 175" class="w-full h-auto">
+                        <defs>
+                            <marker id="arrow-c0-red" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 8 5 L 0 9 z" fill="#fb7185"></path>
+                            </marker>
+                            <marker id="arrow-c0-blue" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8"></path>
+                            </marker>
+                        </defs>
+                        <!-- 2 -> 4 -> 16 -> 37 -> 58 -> 89 -> 145 -> 42 -> 20 -> 回到 4 -->
+                        <line x1="72" y1="75" x2="128" y2="75" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arrow-c0-blue)"/>
+                        <line x1="176" y1="75" x2="222" y2="75" stroke="#fb7185" stroke-width="2.2" marker-end="url(#arrow-c0-red)"/>
+                        <line x1="270" y1="75" x2="316" y2="75" stroke="#fb7185" stroke-width="2.2" marker-end="url(#arrow-c0-red)"/>
+                        <line x1="364" y1="75" x2="410" y2="75" stroke="#fb7185" stroke-width="2.2" marker-end="url(#arrow-c0-red)"/>
+                        <line x1="458" y1="75" x2="504" y2="75" stroke="#fb7185" stroke-width="2.2" marker-end="url(#arrow-c0-red)"/>
+                        <line x1="552" y1="75" x2="598" y2="75" stroke="#fb7185" stroke-width="2.2" marker-end="url(#arrow-c0-red)"/>
+                        <line x1="646" y1="75" x2="692" y2="75" stroke="#fb7185" stroke-width="2.2" marker-end="url(#arrow-c0-red)"/>
+
+                        <!-- 42 -> 20 -> 4 底部回环弧线 -->
+                        <path d="M 716 99 C 716 155, 434 155, 434 138" fill="none" stroke="#fb7185" stroke-width="2.2" marker-end="url(#arrow-c0-red)"/>
+                        <path d="M 386 135 C 240 150, 152 145, 152 103" fill="none" stroke="#fb7185" stroke-width="2.2" stroke-dasharray="5 3" marker-end="url(#arrow-c0-red)"/>
+                        <text x="275" y="162" fill="#fb7185" font-size="11" font-family="JetBrains Mono" text-anchor="middle">2²+0² = 4 (重新踩中入环口 4，陷入 8 节点死循环！)</text>
+
+                        <!-- 节点绘制 -->
+                        ${[
+                            {x: 48, y: 75, val: 2, color: '#38bdf8', label: '🚩 head'},
+                            {x: 152, y: 75, val: 4, color: '#fb7185', label: '🚪 入环口'},
+                            {x: 246, y: 75, val: 16, color: '#fb7185', label: ''},
+                            {x: 340, y: 75, val: 37, color: '#fb7185', label: ''},
+                            {x: 434, y: 75, val: 58, color: '#fb7185', label: ''},
+                            {x: 528, y: 75, val: 89, color: '#fb7185', label: ''},
+                            {x: 622, y: 75, val: 145, color: '#fb7185', label: ''},
+                            {x: 716, y: 75, val: 42, color: '#fb7185', label: ''},
+                            {x: 410, y: 132, val: 20, color: '#fb7185', label: ''}
+                        ].map(nd => `
+                            <g transform="translate(${nd.x},${nd.y})">
+                                <circle r="22" fill="#0f172a" stroke="${nd.color}" stroke-width="2.5"/>
+                                <text y="4" fill="#f8fafc" font-size="13" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">${nd.val}</text>
+                                ${nd.label ? `<text y="-28" fill="${nd.color}" font-size="11" font-weight="bold" text-anchor="middle">${nd.label}</text>` : ''}
+                            </g>
+                        `).join('')}
+                    </svg>
+                    `}
+                </div>
+
+                <!-- 一句话直觉结论 -->
+                <div class="bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-transparent border-l-4 border-sky-400 rounded-r-xl p-3.5">
+                    <p class="text-xs sm:text-sm text-slate-200">
+                        🧠 <strong class="text-sky-300">第 0 刀直觉锚点</strong>：别被整数表象迷惑！把每个数字看成链表节点，把「求各位平方和」封装成函数 <code class="font-mono text-amber-300">get_next(n)</code>，这道题就是 <strong class="text-white">141. 环形链表</strong> 的孪生兄弟。但在直接套模板前，有一个灵魂拷问必须先解决——<strong class="text-rose-300">万一数字一直变大、不进环也不到 1 怎么办？</strong>（请看第 1 刀）
+                    </p>
+                </div>
+            </div>
+            `;
+        }
+
+        // ==================== 第 1 刀：物理边界（引力坍缩天花板） ====================
+        function setCut1TestNum(val) {
+            cut1TestNum = val;
+            renderCurrentCut();
+        }
+
+        function renderCut1HTML() {
+            const chain = [];
+            let curr = cut1TestNum;
+            for (let i = 0; i < 5; i++) {
+                const info = getDigitsBreakdown(curr);
+                chain.push({ val: curr, next: info.nextVal, formula: info.formula });
+                curr = info.nextVal;
+            }
+
+            return `
+            <div class="space-y-5">
+                <div class="border-b border-slate-700/80 pb-4">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">第 1 刀 · 物理边界与抽屉原理</span>
+                    <h2 class="text-lg sm:text-xl font-bold text-white mt-1.5">为什么数字绝对不会「一路飙升到无穷大」？</h2>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                        🎯 <strong class="text-amber-300">INTJ 严谨性拷问</strong>：题目直接断言「要么变为 1，要么无限循环」。凭什么不会出现第 3 种结局——<strong class="text-white">平方和越算越大，直奔无穷大 $\\infty$？</strong>
+                    </p>
+                </div>
+
+                <!-- 位数天花板坍缩对比表 + 视觉柱状图 -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    <div class="lg:col-span-7 bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 space-y-3">
+                        <div class="text-xs font-bold text-sky-400 uppercase tracking-wider">📉 指数级增长 vs 线性平方和：4 位数即是「坍缩悬崖」</div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="border-b border-slate-700 text-slate-400">
+                                        <th class="py-2 px-2">位数 $d$</th>
+                                        <th class="py-2 px-2">该位数最大值 $n$</th>
+                                        <th class="py-2 px-2">下一步平方和 $\\text{get\\_next}(n)$</th>
+                                        <th class="py-2 px-2">物理趋势（对比原数）</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800 font-mono">
+                                    <tr>
+                                        <td class="py-2 px-2 text-slate-300">1 位数</td>
+                                        <td class="py-2 px-2 text-white">9</td>
+                                        <td class="py-2 px-2 text-amber-300">9² = 81</td>
+                                        <td class="py-2 px-2 text-amber-400">↗ 短暂膨胀 (9 ➔ 81)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-2 text-slate-300">2 位数</td>
+                                        <td class="py-2 px-2 text-white">99</td>
+                                        <td class="py-2 px-2 text-amber-300">9² × 2 = 162</td>
+                                        <td class="py-2 px-2 text-amber-400">↗ 微幅越界 (99 ➔ 162)</td>
+                                    </tr>
+                                    <tr class="bg-sky-500/10">
+                                        <td class="py-2 px-2 text-sky-300 font-bold">3 位数</td>
+                                        <td class="py-2 px-2 text-white font-bold">999</td>
+                                        <td class="py-2 px-2 text-emerald-300 font-bold">9² × 3 = 243</td>
+                                        <td class="py-2 px-2 text-emerald-400 font-sans font-semibold">🔒 锁死在 [1, 243] 铁笼内！</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-2 text-slate-300">4 位数</td>
+                                        <td class="py-2 px-2 text-white">9,999</td>
+                                        <td class="py-2 px-2 text-emerald-300">9² × 4 = 324</td>
+                                        <td class="py-2 px-2 text-emerald-400 font-sans">↘ 断崖暴跌 96.7% (4位变3位)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-2 text-slate-300">10 位数 (题设上限)</td>
+                                        <td class="py-2 px-2 text-white">2,147,483,647</td>
+                                        <td class="py-2 px-2 text-emerald-300">≤ 9² × 10 = 810</td>
+                                        <td class="py-2 px-2 text-emerald-400 font-sans">↘ 一步坠入 810 以内！</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed pt-1">
+                            💡 <strong class="text-white">第一性原理解释</strong>：数字本身的量级随位数呈 <strong class="text-amber-300">指数级 $10^d$</strong> 暴涨，而各位平方和的最大值仅随位数呈 <strong class="text-sky-300">线性 $81 \\times d$</strong> 增长。只要 $d \\ge 4$，必然满足 $81d < 10^{d-1}$，每一次迭代都在被强行「降维打击」！
+                        </p>
+                    </div>
+
+                    <!-- 右侧：互动「大数引力坍缩实验仪」 -->
+                    <div class="lg:col-span-5 bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">🧪 互动验证：大数引力坍缩实验仪</div>
+                            <p class="text-xs text-slate-400 mb-3">点击下方超大极限数字，观察它是如何在 1~2 步内瞬间掉进 <code class="text-emerald-300 font-mono">[1, 243]</code> 铁笼里的：</p>
+                            <div class="flex flex-wrap gap-1.5 mb-3">
+                                ${[
+                                    { label: '999 (3位极限)', val: 999 },
+                                    { label: '9,999 (4位极限)', val: 9999 },
+                                    { label: '2,147,483,647 (2³¹-1)', val: 2147483647 },
+                                    { label: '1,999,999,999', val: 1999999999 }
+                                ].map(btn => `
+                                    <button onclick="setCut1TestNum(${btn.val})" class="px-2.5 py-1 rounded-lg text-xs font-mono border transition ${cut1TestNum === btn.val ? 'bg-amber-500 text-slate-950 font-bold border-amber-400' : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'}">
+                                        ${btn.label}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- 坍缩步骤轨迹列表 -->
+                        <div class="space-y-2 bg-slate-950 border border-slate-800 rounded-xl p-3">
+                            ${chain.map((step, idx) => `
+                                <div class="flex items-center justify-between text-xs font-mono py-1 ${idx < chain.length - 1 ? 'border-b border-slate-800/80' : ''}">
+                                    <span class="text-slate-400">Step ${idx + 1}:</span>
+                                    <span class="text-white font-bold">${step.val.toLocaleString()}</span>
+                                    <span class="text-slate-500">➔</span>
+                                    <span class="text-sky-300 truncate max-w-[155px]" title="${step.formula}">${step.formula}</span>
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] ${step.next <= 243 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300'}">
+                                        ${step.next <= 243 ? '≤ 243 笼内' : '继续坍缩'}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="text-xs text-slate-300 bg-slate-800/70 rounded-lg p-2.5 border border-slate-700">
+                            📦 <strong class="text-amber-300">抽屉原理（鸽巢原理）终极闭环</strong>：既然任何数在 2 步之内必然跌入不超过 <code class="font-mono text-emerald-300">243</code> 个格子的有限房间，你在 <code class="font-mono">243</code> 个格子里最多走 <code class="font-mono">244</code> 步，<strong class="text-white">绝对会踩中之前踩过的格子（成环）！</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-amber-500/10 via-sky-500/10 to-transparent border-l-4 border-amber-400 rounded-r-xl p-3.5">
+                    <p class="text-xs sm:text-sm text-slate-200">
+                        🧠 <strong class="text-amber-300">第 1 刀直觉锚点</strong>：宇宙有引力上限！超过 3 位数的整数每走一步都会断崖式缩水，全部被关进 <code class="font-mono text-emerald-300">[1, 243]</code> 的有限盒子里。在有限盒子里无限走下去，<strong class="text-white">100% 必定成环</strong>——区别只在于进的是什么环（请看第 2 刀）。
+                    </p>
+                </div>
+            </div>
+            `;
+        }
+
+        // ==================== 第 2 刀：两大终局拓扑对比 ====================
+        function renderCut2HTML() {
+            return `
+            <div class="space-y-5">
+                <div class="border-b border-slate-700/80 pb-4">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">第 2 刀 · 两大终局拓扑</span>
+                    <h2 class="text-lg sm:text-xl font-bold text-white mt-1.5">既然所有数字必进环，快乐数与非快乐数的拓扑差在哪？</h2>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                        🎯 <strong class="text-emerald-300">底层统一视角</strong>：其实快乐数<strong class="text-white">也会进环</strong>！因为 $1^2 = 1$，所以 <code class="font-mono text-emerald-300">1</code> 本身就是一个<strong class="text-emerald-300">长度为 1 的自环黑洞</strong>。
+                    </p>
+                </div>
+
+                <!-- 左右双跑道并排对比 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <!-- 左：快乐数拓扑 -->
+                    <div class="bg-slate-900/90 border border-emerald-500/40 rounded-xl p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+                                🟢 终局 A：快乐数 (以 n = 19 为例)
+                            </span>
+                            <span class="text-xs font-mono text-emerald-400">环长 L = 1 (节点 1 自环)</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-2">
+                            <svg viewBox="0 0 460 210" class="w-full h-auto">
+                                <defs>
+                                    <marker id="arr-c2-g" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 1 L 8 5 L 0 9 z" fill="#34d399"></path>
+                                    </marker>
+                                    <marker id="arr-c2-b" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8"></path>
+                                    </marker>
+                                </defs>
+                                <!-- 19 -> 82 -> 68 -> 100 -> 1 -->
+                                <line x1="65" y1="105" x2="118" y2="105" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-c2-b)"/>
+                                <line x1="162" y1="105" x2="215" y2="105" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-c2-b)"/>
+                                <line x1="259" y1="105" x2="312" y2="105" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-c2-b)"/>
+                                <line x1="356" y1="105" x2="395" y2="105" stroke="#34d399" stroke-width="2.5" marker-end="url(#arr-c2-g)"/>
+
+                                <!-- 1 的自环 -->
+                                <path d="M 422 80 C 455 35, 455 175, 422 130" fill="none" stroke="#34d399" stroke-width="2.5" marker-end="url(#arr-c2-g)"/>
+                                <text x="415" y="42" fill="#34d399" font-size="11" font-family="JetBrains Mono" font-weight="bold" text-anchor="middle">1² = 1 (死守在 1)</text>
+
+                                ${[
+                                    {x: 43, y: 105, v: 19, c: '#38bdf8', lb: '🚩起点'},
+                                    {x: 140, y: 105, v: 82, c: '#38bdf8', lb: ''},
+                                    {x: 237, y: 105, v: 68, c: '#38bdf8', lb: ''},
+                                    {x: 334, y: 105, v: 100, c: '#38bdf8', lb: ''},
+                                    {x: 418, y: 105, v: 1, c: '#34d399', lb: '🎯黑洞 1'}
+                                ].map(n => `
+                                    <g transform="translate(${n.x},${n.y})">
+                                        <circle r="21" fill="${n.v===1?'#064e3b':'#0f172a'}" stroke="${n.c}" stroke-width="2.5"/>
+                                        <text y="4" fill="#f8fafc" font-size="12" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">${n.v}</text>
+                                        ${n.lb ? `<text y="38" fill="${n.c}" font-size="11" font-weight="bold" text-anchor="middle">${n.lb}</text>` : ''}
+                                    </g>
+                                `).join('')}
+                            </svg>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            ✅ <strong class="text-emerald-300">与 141 题的映射关系</strong>：在 141 题中，无环链表以 <code class="font-mono text-sky-300">None</code> 终结；在 202 题中，快乐数以 <code class="font-mono text-emerald-300">1</code> 终结。甚至更爽的是：<strong class="text-white">1 还可以无限调用 <code class="font-mono">get_next(1) == 1</code> 而不报空指针错！</strong>
+                        </p>
+                    </div>
+
+                    <!-- 右：非快乐数拓扑 -->
+                    <div class="bg-slate-900/90 border border-rose-500/40 rounded-xl p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-xs font-bold border border-rose-500/30">
+                                🔴 终局 B：非快乐数 (以 n = 2 为例)
+                            </span>
+                            <span class="text-xs font-mono text-rose-400">环长 L = 8 (永恒死循环圈)</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-2">
+                            <svg viewBox="0 0 460 210" class="w-full h-auto">
+                                <defs>
+                                    <marker id="arr-c2-r" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 1 L 8 5 L 0 9 z" fill="#fb7185"></path>
+                                    </marker>
+                                </defs>
+                                <!-- 勺子柄 2 -> 4 -->
+                                <line x1="68" y1="105" x2="162" y2="105" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-c2-b)"/>
+                                <text x="115" y="92" fill="#38bdf8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">柄部 a=1</text>
+
+                                <!-- 圆环轨道 -->
+                                <circle cx="290" cy="105" r="78" fill="none" stroke="#fb7185" stroke-width="2" stroke-dasharray="5 3"/>
+                                <text x="290" y="102" fill="#fb7185" font-size="11" font-weight="bold" text-anchor="middle">8 节点死循环</text>
+                                <text x="290" y="118" fill="#94a3b8" font-size="10" font-family="JetBrains Mono" text-anchor="middle">绝不包含节点 1</text>
+
+                                <!-- 起点 2 -->
+                                <g transform="translate(45,105)">
+                                    <circle r="21" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/>
+                                    <text y="4" fill="#f8fafc" font-size="13" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">2</text>
+                                    <text y="38" fill="#38bdf8" font-size="11" font-weight="bold" text-anchor="middle">🚩起点</text>
+                                </g>
+
+                                <!-- 环上 8 个节点 -->
+                                ${[
+                                    { ang: 180, val: 4, lb: '🚪入环' },
+                                    { ang: 135, val: 16, lb: '' },
+                                    { ang: 90, val: 37, lb: '' },
+                                    { ang: 45, val: 58, lb: '' },
+                                    { ang: 0, val: 89, lb: '' },
+                                    { ang: -45, val: 145, lb: '' },
+                                    { ang: -90, val: 42, lb: '' },
+                                    { ang: -135, val: 20, lb: '' }
+                                ].map(item => {
+                                    const rad = (item.ang * Math.PI) / 180;
+                                    const cx = (290 + 78 * Math.cos(rad)).toFixed(1);
+                                    const cy = (105 - 78 * Math.sin(rad)).toFixed(1);
+                                    return `
+                                    <g transform="translate(${cx},${cy})">
+                                        <circle r="18" fill="#0f172a" stroke="#fb7185" stroke-width="2.2"/>
+                                        <text y="4" fill="#f8fafc" font-size="11" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">${item.val}</text>
+                                    </g>`;
+                                }).join('')}
+                            </svg>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            ❌ <strong class="text-rose-300">与 141 题的映射关系</strong>：所有非快乐数最终都会跌入上面这个由 <code class="font-mono text-rose-300">4 ➔ 16 ➔ 37 ➔ 58 ➔ 89 ➔ 145 ➔ 42 ➔ 20 ➔ 4</code> 组成的 <strong class="text-white">ρ 形（勺子形）环形链表</strong>，永远碰不到 1！
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-emerald-500/10 via-rose-500/10 to-transparent border-l-4 border-emerald-400 rounded-r-xl p-3.5">
+                    <p class="text-xs sm:text-sm text-slate-200">
+                        🧠 <strong class="text-emerald-300">第 2 刀直觉锚点</strong>：全宇宙的正整数只有这两种归宿——要么掉进 <strong class="text-emerald-300">1 号自环（快乐数，返回 True）</strong>，要么掉进 <strong class="text-rose-300">不含 1 的死循环圈（非快乐数，返回 False）</strong>。接下来我们先造出驱动链表的引擎 <code class="font-mono text-amber-300">get_next(n)</code>（请看第 3 刀）。
+                    </p>
+                </div>
+            </div>
+            `;
+        }
+
+        // ==================== 第 3 刀：推进引擎 divmod(n, 10) 十进制剥皮机 ====================
+        function initCut3Peeler(num) {
+            cut3PeelerState = {
+                orig: num,
+                currN: num,
+                total: 0,
+                history: [],
+                lastDigit: null,
+                finished: false
+            };
+            renderCurrentCut();
+        }
+
+        function stepCut3Peeler() {
+            if (cut3PeelerState.currN <= 0) {
+                cut3PeelerState.finished = true;
+                renderCurrentCut();
+                return;
+            }
+            const d = cut3PeelerState.currN % 10;
+            const nextN = Math.floor(cut3PeelerState.currN / 10);
+            const sq = d * d;
+            cut3PeelerState.total += sq;
+            cut3PeelerState.lastDigit = d;
+            cut3PeelerState.history.push({ prevN: cut3PeelerState.currN, nextN, digit: d, sq, runningTotal: cut3PeelerState.total });
+            cut3PeelerState.currN = nextN;
+            if (cut3PeelerState.currN === 0) {
+                cut3PeelerState.finished = true;
+            }
+            renderCurrentCut();
+        }
+
+        function renderCut3HTML() {
+            const st = cut3PeelerState;
+            const codeLines = [
+                { num: 1, indent: 0, html: `<span class="syn-kw">def</span> <span class="syn-fn">get_next</span>(<span class="syn-var">n</span>: <span class="syn-fn">int</span>) -> <span class="syn-fn">int</span>:` },
+                { num: 2, indent: 4, html: `<span class="syn-var">total</span> = <span class="syn-num">0</span>` },
+                { num: 3, indent: 4, html: `<span class="syn-kw">while</span> <span class="syn-var">n</span> > <span class="syn-num">0</span>:` },
+                { num: 4, indent: 8, html: `<span class="syn-var">n</span>, <span class="syn-var">digit</span> = <span class="syn-fn">divmod</span>(<span class="syn-var">n</span>, <span class="syn-num">10</span>)  <span class="syn-cm"># 同时完成 n // 10 与 n % 10</span>` },
+                { num: 5, indent: 8, html: `<span class="syn-var">total</span> += <span class="syn-var">digit</span> * <span class="syn-var">digit</span>     <span class="syn-cm"># 剥下的末位平方累加</span>` },
+                { num: 6, indent: 4, html: `<span class="syn-kw">return</span> <span class="syn-var">total</span>` }
+            ];
+
+            let activeLines = [1, 2, 3];
+            let hlClass = 'active-line';
+            if (st.history.length > 0 && !st.finished) {
+                activeLines = [3, 4, 5];
+                hlClass = 'active-line-amber';
+            } else if (st.finished) {
+                activeLines = [6];
+                hlClass = 'active-line-emerald';
+            }
+
+            const strDigits = String(st.currN > 0 ? st.currN : '').split('');
+
+            return `
+            <div class="space-y-5">
+                <div class="border-b border-slate-700/80 pb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">第 3 刀 · 推进引擎 (.next 算术实现)</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-white mt-1.5">如何不转字符串，用纯算术打造 <code class="text-sky-400 font-mono">get_next(n)</code> 十进制剥皮机？</h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                            🎯 <strong class="text-purple-300">工程素养</strong>：转字符串 <code class="font-mono text-slate-400">str(n)</code> 会产生额外内存分配；用 <code class="font-mono text-amber-300">divmod(n, 10)</code> 每次直接从个位「削下一片」平方累加，零对象开销。
+                        </p>
+                    </div>
+                    <!-- 测试数字切换 -->
+                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-900 p-1.5 rounded-xl border border-slate-700 self-start">
+                        <span class="text-xs text-slate-400 px-1.5">装填数字：</span>
+                        ${[19, 82, 68, 100, 145].map(num => `
+                            <button onclick="initCut3Peeler(${num})" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition ${st.orig === num ? 'bg-purple-500 text-slate-950 shadow' : 'text-slate-300 hover:text-white'}">
+                                ${num}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- 左：十进制剥皮机交互器 | 右：get_next 代码 -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    <div class="lg:col-span-7 bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-amber-300 uppercase tracking-wider">🔪 十进制剥皮流水线 (每次剥离个位数)</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="stepCut3Peeler()" ${st.finished ? 'disabled' : ''} class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 text-xs font-bold transition shadow">
+                                    🔪 剥下一位 (divmod)
+                                </button>
+                                <button onclick="initCut3Peeler(${st.orig})" class="px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium transition">
+                                    🔄 重置
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 数字方块视觉展示 -->
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-around gap-4 min-h-[145px]">
+                            <!-- 当前剩余 n -->
+                            <div class="text-center">
+                                <div class="text-xs text-slate-400 mb-1.5 font-mono">当前剩余 n (n // 10)</div>
+                                <div class="flex items-center justify-center gap-1.5 min-h-[48px]">
+                                    ${st.currN > 0 ? strDigits.map((d, idx) => `
+                                        <div class="w-11 h-12 rounded-xl flex items-center justify-center font-mono text-lg font-bold border-2 ${idx === strDigits.length - 1 ? 'bg-amber-500/20 border-amber-400 text-amber-300' : 'bg-slate-800 border-slate-600 text-white'}">
+                                            ${d}
+                                        </div>
+                                    `).join('') : `
+                                        <div class="px-4 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-mono text-sm font-bold">
+                                            n == 0 (剥皮完毕！)
+                                        </div>
+                                    `}
+                                </div>
+                            </div>
+
+                            <div class="text-slate-500 font-mono text-lg">➔</div>
+
+                            <!-- 刚剥下的个位 digit -->
+                            <div class="text-center">
+                                <div class="text-xs text-slate-400 mb-1.5 font-mono">刚剥下的末位 (n % 10)</div>
+                                <div class="min-h-[48px] flex items-center justify-center">
+                                    ${st.lastDigit !== null ? `
+                                        <div class="px-3.5 py-2 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-300 font-mono text-sm font-bold">
+                                            digit = ${st.lastDigit} ➔ +${st.lastDigit}² (${st.lastDigit * st.lastDigit})
+                                        </div>
+                                    ` : `<span class="text-xs text-slate-500 font-mono">等待点击「剥下一位」</span>`}
+                                </div>
+                            </div>
+
+                            <div class="text-slate-500 font-mono text-lg">➔</div>
+
+                            <!-- 累加器 total -->
+                            <div class="text-center">
+                                <div class="text-xs text-slate-400 mb-1.5 font-mono">平方和累加器 total</div>
+                                <div class="w-24 h-12 rounded-xl bg-sky-500/15 border-2 border-sky-400 flex items-center justify-center font-mono text-xl font-extrabold text-sky-300 mx-auto">
+                                    ${st.total}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 历史步骤日志 -->
+                        <div class="space-y-1.5">
+                            <div class="text-xs text-slate-400 font-semibold">剥皮拆解记录：</div>
+                            ${st.history.length === 0 ? `<div class="text-xs text-slate-500 font-mono">尚未开始拆解 n = ${st.orig}，请点击右上角「🔪 剥下一位」按钮。</div>` : st.history.map((h, i) => `
+                                <div class="text-xs font-mono bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center justify-between">
+                                    <span class="text-slate-400">第 ${i + 1} 刀：divmod(${h.prevN}, 10) ➔ 商 n=${h.nextN}, 余数 digit=${h.digit}</span>
+                                    <span class="text-emerald-300 font-bold">total += ${h.digit}² ➔ ${h.runningTotal}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 右：代码面板 -->
+                    <div class="lg:col-span-5 bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="text-xs font-bold text-sky-400 uppercase tracking-wider mb-2">💻 独立封装的 .next 状态转移函数</div>
+                            <div class="bg-slate-950 border border-slate-800 rounded-xl py-3 overflow-x-auto">
+                                ${renderPythonLines(codeLines, activeLines, hlClass)}
+                            </div>
+                        </div>
+                        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3 text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                            <div class="font-bold text-white">💡 为什么要把 <code class="font-mono text-sky-300">get_next(n)</code> 单独抽成一个函数？</div>
+                            <p>对 INTJ 的 <strong class="text-sky-300">Te（外倾思考）</strong> 而言，<strong class="text-white">「职责解耦」</strong>是代码清晰的第一准则：</p>
+                            <ul class="list-disc list-inside text-slate-300 space-y-1">
+                                <li><code class="font-mono text-sky-300">get_next(n)</code> 只管「怎么迈出一步」（相当于链表的 <code class="font-mono text-amber-300">.next</code>）；</li>
+                                <li>外层主函数 <code class="font-mono text-emerald-300">isHappy(n)</code> 只管「怎么判环」，两者互不污染！</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-purple-500/10 via-sky-500/10 to-transparent border-l-4 border-purple-400 rounded-r-xl p-3.5">
+                    <p class="text-xs sm:text-sm text-slate-200">
+                        🧠 <strong class="text-purple-300">第 3 刀直觉锚点</strong>：有了 <code class="font-mono text-sky-300">get_next(n)</code> 这个「链表推进器」，接下来的任务就跟 141 题一模一样了——如何检测这条隐式链表有没有掉进死循环？我们先看最直观的方案一（第 4 刀），再看 $O(1)$ 空间的快慢指针移植（第 5 刀）。
+                    </p>
+                </div>
+            </div>
+            `;
+        }
+
+        // ==================== 第 4 刀：方案一（哈希表 seen 印章拦截器） ====================
+        const CUT4_DATA = {
+            19: [
+                { n: 19, seen: [], action: '初始状态：n = 19，既不是 1 也未在 seen 中出现，进入循环。', lines: [3, 4] },
+                { n: 82, seen: [19], action: '将 19 盖章存入 seen={19}，n 推进至 get_next(19) = 82。', lines: [5, 6] },
+                { n: 68, seen: [19, 82], action: '将 82 盖章存入 seen={19, 82}，n 推进至 get_next(82) = 68。', lines: [5, 6] },
+                { n: 100, seen: [19, 82, 68], action: '将 68 盖章存入 seen={19, 82, 68}，n 推进至 get_next(68) = 100。', lines: [5, 6] },
+                { n: 1, seen: [19, 82, 68, 100], action: '将 100 盖章存入 seen，n 推进至 1！触发 n != 1 终止，返回 n == 1 (True)！', lines: [4, 7], done: true, happy: true }
+            ],
+            2: [
+                { n: 2, seen: [], action: '初始状态：n = 2，进入 while 循环。', lines: [3, 4] },
+                { n: 4, seen: [2], action: '记录 2，推进至 4（即将踏入 8 节点死循环圈的入口）。', lines: [5, 6] },
+                { n: 16, seen: [2, 4], action: '记录入环口 4，推进至 16。', lines: [5, 6] },
+                { n: 37, seen: [2, 4, 16], action: '记录 16，推进至 37。', lines: [5, 6] },
+                { n: 58, seen: [2, 4, 16, 37], action: '记录 37，推进至 58。', lines: [5, 6] },
+                { n: 89, seen: [2, 4, 16, 37, 58], action: '记录 58，推进至 89。', lines: [5, 6] },
+                { n: 145, seen: [2, 4, 16, 37, 58, 89], action: '记录 89，推进至 145。', lines: [5, 6] },
+                { n: 42, seen: [2, 4, 16, 37, 58, 89, 145], action: '记录 145，推进至 42。', lines: [5, 6] },
+                { n: 20, seen: [2, 4, 16, 37, 58, 89, 145, 42], action: '记录 42，推进至 20。', lines: [5, 6] },
+                { n: 4, seen: [2, 4, 16, 37, 58, 89, 145, 42, 20], action: '💥 记录 20，推进至 4！发现 4 已在 seen 印章池中，循环终止，返回 n == 1 (False)！', lines: [4, 7], done: true, happy: false }
+            ]
+        };
+
+        function setCut4Sample(val) {
+            cut4Sample = val;
+            cut4Step = 0;
+            renderCurrentCut();
+        }
+
+        function stepCut4(delta) {
+            const arr = CUT4_DATA[cut4Sample];
+            cut4Step = Math.max(0, Math.min(arr.length - 1, cut4Step + delta));
+            renderCurrentCut();
+        }
+
+        function renderCut4HTML() {
+            const steps = CUT4_DATA[cut4Sample];
+            const cur = steps[cut4Step];
+
+            const codeLines = [
+                { num: 1, indent: 0, html: `<span class="syn-kw">class</span> <span class="syn-fn">Solution</span>:` },
+                { num: 2, indent: 4, html: `<span class="syn-kw">def</span> <span class="syn-fn">isHappy</span>(<span class="syn-self">self</span>, <span class="syn-var">n</span>: <span class="syn-fn">int</span>) -> <span class="syn-fn">bool</span>:` },
+                { num: 3, indent: 8, html: `<span class="syn-var">seen</span> = <span class="syn-fn">set</span>()  <span class="syn-cm"># 历史状态印章池</span>` },
+                { num: 4, indent: 8, html: `<span class="syn-kw">while</span> <span class="syn-var">n</span> != <span class="syn-num">1</span> <span class="syn-kw">and</span> <span class="syn-var">n</span> <span class="syn-kw">not in</span> <span class="syn-var">seen</span>:` },
+                { num: 5, indent: 12, html: `<span class="syn-var">seen</span>.add(<span class="syn-var">n</span>)` },
+                { num: 6, indent: 12, html: `<span class="syn-var">n</span> = <span class="syn-fn">get_next</span>(<span class="syn-var">n</span>)` },
+                { num: 7, indent: 8, html: `<span class="syn-kw">return</span> <span class="syn-var">n</span> == <span class="syn-num">1</span>` }
+            ];
+
+            const hlCls = cur.done ? (cur.happy ? 'active-line-emerald' : 'active-line-rose') : 'active-line';
+
+            return `
+            <div class="space-y-5">
+                <div class="border-b border-slate-700/80 pb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">第 4 刀 · 方案一（代数记忆法）</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-white mt-1.5">哈希表 <code class="text-sky-400 font-mono">seen</code> 印章拦截器：复刻你在 141 题的方法一</h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                            🎯 <strong class="text-sky-300">第一性原理</strong>：走过的每个数字都盖章丢进集合 <code class="font-mono text-sky-300">seen</code>。只要没到 <code class="font-mono text-emerald-300">1</code> 且没踩中旧脚印就继续走；一旦跳出循环，直接判断是不是因为到了 <code class="font-mono text-emerald-300">1</code>。
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700 self-start">
+                        <button onclick="setCut4Sample(19)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${cut4Sample === 19 ? 'bg-emerald-500 text-slate-950' : 'text-slate-300'}">
+                            验证 n = 19 (到 1 停)
+                        </button>
+                        <button onclick="setCut4Sample(2)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${cut4Sample === 2 ? 'bg-rose-500 text-slate-950' : 'text-slate-300'}">
+                            验证 n = 2 (撞重停)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    <!-- 左：seen 集合印章池可视化 -->
+                    <div class="lg:col-span-7 bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-300">🗂️ 状态机步进器 (${cut4Step} / ${steps.length - 1})</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="stepCut4(-1)" ${cut4Step === 0 ? 'disabled' : ''} class="px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-xs text-slate-200">← 上一步</button>
+                                <button onclick="stepCut4(1)" ${cut4Step === steps.length - 1 ? 'disabled' : ''} class="px-3.5 py-1 rounded-lg bg-sky-500 hover:bg-sky-400 disabled:opacity-40 text-xs font-bold text-slate-950">👣 推进 1 步 →</button>
+                                <button onclick="setCut4Sample(${cut4Sample})" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300">重置</button>
+                            </div>
+                        </div>
+
+                        <!-- 当前指针 n 与 seen 池 -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-center flex flex-col justify-center">
+                                <span class="text-xs text-slate-400 font-mono">当前状态 n</span>
+                                <span class="text-3xl font-extrabold font-mono mt-1 ${cur.n === 1 ? 'text-emerald-400' : (cur.done && !cur.happy ? 'text-rose-400' : 'text-sky-400')}">${cur.n}</span>
+                                <span class="text-[11px] mt-1 ${cur.n === 1 ? 'text-emerald-300' : (cur.seen.includes(cur.n) ? 'text-rose-300 font-bold' : 'text-slate-400')}">
+                                    ${cur.n === 1 ? '🎯 已抵达 1！' : (cur.seen.includes(cur.n) ? '💥 已在 seen 中！' : '✅ 未在 seen 中')}
+                                </span>
+                            </div>
+
+                            <div class="sm:col-span-2 bg-slate-950 border border-slate-800 rounded-xl p-3">
+                                <div class="text-xs text-slate-400 font-mono mb-2">哈希集合 seen = set() 已盖章记录 (${cur.seen.length} 个元素)：</div>
+                                <div class="flex flex-wrap gap-2 min-h-[54px] items-center">
+                                    ${cur.seen.length === 0 ? `<span class="text-xs text-slate-600 font-mono">{ 空集合 }</span>` : cur.seen.map(val => {
+                                        const isCollided = cur.done && !cur.happy && val === cur.n;
+                                        return `<span class="px-2.5 py-1 rounded-lg font-mono text-xs font-bold border ${isCollided ? 'bg-rose-500/30 border-rose-400 text-rose-200 ring-2 ring-rose-400/50' : 'bg-slate-800 border-slate-700 text-slate-200'}">${val}</span>`;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-xs text-slate-200">
+                            📣 <strong class="text-amber-300">当前步动作</strong>：${cur.action}
+                        </div>
+                    </div>
+
+                    <!-- 右：哈希法精简代码 -->
+                    <div class="lg:col-span-5 bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="text-xs font-bold text-sky-400 uppercase tracking-wider mb-2">💻 哈希集合状态机代码 (带 4/8/12 空格缩进线)</div>
+                            <div class="bg-slate-950 border border-slate-800 rounded-xl py-3 overflow-x-auto">
+                                ${renderPythonLines(codeLines, cur.lines, hlCls)}
+                            </div>
+                        </div>
+                        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3 text-xs text-slate-300 leading-relaxed">
+                            ⚖️ <strong class="text-white">方案一复杂度诊断</strong>：因为任何数字在 1~2 步内都会跌入 <code class="font-mono text-emerald-300">[1, 243]</code>，所以 <code class="font-mono text-sky-300">seen</code> 集合最多存两百多个整数，时间与空间复杂度均为 $O(\\log n)$。但如果我们追求极致的 <strong class="text-amber-300">$O(1)$ 空间复杂度</strong>，能否直接复用你在 141 题收敛出的快慢指针模板？（请看第 5 刀）
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        // ==================== 第 5 刀：方案二（从 141 到 202 的零成本移植） ====================
+        function renderCut5HTML() {
+            const code141 = [
+                { num: 1, indent: 0, html: `<span class="syn-cm"># 141. 环形链表（你收敛的标准状态机）</span>` },
+                { num: 2, indent: 0, html: `<span class="syn-var">slow</span> = <span class="syn-var">fast</span> = <span class="syn-var">head</span>` },
+                { num: 3, indent: 0, html: `<span class="syn-kw">while</span> <span class="syn-var">fast</span> <span class="syn-kw">and</span> <span class="syn-var">fast</span>.next:` },
+                { num: 4, indent: 4, html: `<span class="syn-var">slow</span> = <span class="syn-var">slow</span>.next` },
+                { num: 5, indent: 4, html: `<span class="syn-var">fast</span> = <span class="syn-var">fast</span>.next.next` },
+                { num: 6, indent: 4, html: `<span class="syn-kw">if</span> <span class="syn-var">slow</span> == <span class="syn-var">fast</span>:` },
+                { num: 7, indent: 8, html: `<span class="syn-kw">return</span> <span class="syn-bool">True</span>   <span class="syn-cm"># 有环</span>` },
+                { num: 8, indent: 0, html: `<span class="syn-kw">return</span> <span class="syn-bool">False</span>          <span class="syn-cm"># 触达 None 无环</span>` }
+            ];
+
+            const code202 = [
+                { num: 1, indent: 0, html: `<span class="syn-cm"># 202. 快乐数（1:1 零成本同构移植）</span>` },
+                { num: 2, indent: 0, html: `<span class="syn-var">slow</span> = <span class="syn-var">fast</span> = <span class="syn-var">n</span>` },
+                { num: 3, indent: 0, html: `<span class="syn-kw">while</span> <span class="syn-var">fast</span> != <span class="syn-num">1</span>:` },
+                { num: 4, indent: 4, html: `<span class="syn-var">slow</span> = <span class="syn-fn">get_next</span>(<span class="syn-var">slow</span>)` },
+                { num: 5, indent: 4, html: `<span class="syn-var">fast</span> = <span class="syn-fn">get_next</span>(<span class="syn-fn">get_next</span>(<span class="syn-var">fast</span>))` },
+                { num: 6, indent: 4, html: `<span class="syn-kw">if</span> <span class="syn-var">slow</span> == <span class="syn-var">fast</span> <span class="syn-kw">and</span> <span class="syn-var">slow</span> != <span class="syn-num">1</span>:` },
+                { num: 7, indent: 8, html: `<span class="syn-kw">return</span> <span class="syn-bool">False</span>  <span class="syn-cm"># 死循环相撞</span>` },
+                { num: 8, indent: 0, html: `<span class="syn-kw">return</span> <span class="syn-bool">True</span>           <span class="syn-cm"># 触达 1 号快乐终点</span>` }
+            ];
+
+            return `
+            <div class="space-y-5">
+                <div class="border-b border-slate-700/80 pb-4">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">第 5 刀 · 状态机基因零成本移植</span>
+                    <h2 class="text-lg sm:text-xl font-bold text-white mt-1.5">如何把你在「141. 环形链表」收敛出的 3 步状态机，原封不动搬过来？</h2>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                        🎯 <strong class="text-amber-300">呼应你在 141 题的经典排雷</strong>：还记得你在 141 题踩过的 <code class="font-mono text-rose-300">None.next</code> 崩溃坑吗？看看在 202 题里，为什么 <code class="font-mono text-emerald-300">while fast != 1:</code> 连迈两步却<strong class="text-white">绝对不会崩溃</strong>！
+                    </p>
+                </div>
+
+                <!-- 141 vs 202 基因映射表 -->
+                <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-slate-400">
+                                <th class="py-2 px-3">状态机组件</th>
+                                <th class="py-2 px-3 text-sky-300">141. 环形链表 (你的标准模板)</th>
+                                <th class="py-2 px-3 text-emerald-300">202. 快乐数 (同构镜像)</th>
+                                <th class="py-2 px-3">底层物理意义</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800">
+                            <tr>
+                                <td class="py-2.5 px-3 font-semibold text-slate-300">① 起跑线初始化</td>
+                                <td class="py-2.5 px-3 font-mono text-sky-300">slow = fast = head</td>
+                                <td class="py-2.5 px-3 font-mono text-emerald-300">slow = fast = n</td>
+                                <td class="py-2.5 px-3 text-slate-300">同一起跑线出发，无需像官方题解那样错位抢跑</td>
+                            </tr>
+                            <tr class="bg-amber-500/10">
+                                <td class="py-2.5 px-3 font-semibold text-amber-300">② 循环推进条件 (关键差异!)</td>
+                                <td class="py-2.5 px-3 font-mono text-sky-300">while fast and fast.next:</td>
+                                <td class="py-2.5 px-3 font-mono text-emerald-300">while fast != 1:</td>
+                                <td class="py-2.5 px-3 text-slate-200">
+                                    141 中 <code class="font-mono text-rose-300">None.next</code> 会报错；但 202 中 <strong class="text-emerald-300">get_next(1) == 1</strong>！即便第 1 步踩到 1，第 2 步仍在 1 原地踏步，天然防崩！
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 px-3 font-semibold text-slate-300">③ 慢 1 步 / 快 2 步</td>
+                                <td class="py-2.5 px-3 font-mono text-sky-300">slow.next / fast.next.next</td>
+                                <td class="py-2.5 px-3 font-mono text-emerald-300">get_next(slow) / get_next(get_next(fast))</td>
+                                <td class="py-2.5 px-3 text-slate-300">相对速度 $\\Delta v = 2 - 1 = 1$，环内必套圈碰撞</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 px-3 font-semibold text-slate-300">④ 返回布尔值反转</td>
+                                <td class="py-2.5 px-3 font-mono text-sky-300">撞上返回 True，到头返回 False</td>
+                                <td class="py-2.5 px-3 font-mono text-emerald-300">非1撞上返回 False，到1返回 True</td>
+                                <td class="py-2.5 px-3 text-slate-300">141 找的是「有环」，202 找的是「能到终点 1（无死循环）」</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 左右代码逐行对照 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-xs font-bold text-sky-400 mb-2 px-2">🧬 141. 环形链表（你的 3 步状态机母本）</div>
+                        ${renderPythonLines(code141, [2, 3, 6], 'active-line')}
+                    </div>
+                    <div class="bg-slate-950 border border-emerald-500/40 rounded-xl p-3">
+                        <div class="text-xs font-bold text-emerald-400 mb-2 px-2">🚀 202. 快乐数（1:1 映射后的 $O(1)$ 空间代码）</div>
+                        ${renderPythonLines(code202, [2, 3, 6], 'active-line-emerald')}
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-transparent border-l-4 border-amber-400 rounded-r-xl p-3.5">
+                    <p class="text-xs sm:text-sm text-slate-200">
+                        🧠 <strong class="text-amber-300">第 5 刀直觉锚点</strong>：为什么 202 的第 6 行写了 <code class="font-mono text-emerald-300">if slow == fast:</code>（甚至当循环条件写为 <code class="font-mono text-sky-300">while fast != 1 and slow != fast:</code> 时更短）？因为如果 <code class="font-mono">n</code> 是快乐数，<code class="font-mono text-amber-300">fast</code> 会以 2 倍速率先冲进 <code class="font-mono text-emerald-300">1</code> 号黑洞结束比赛；如果是非快乐数，<code class="font-mono text-amber-300">fast</code> 会在 8 节点环里以 $\\Delta v = 1$ 追上 <code class="font-mono text-sky-300">slow</code>！我们在第 6 刀亲眼看看这两种结局的追击实况。
+                    </p>
+                </div>
+            </div>
+            `;
+        }
+
+        // ==================== 第 6 刀：双结局步进推演（相对速度 Δv = 1） ====================
+        const CUT6_TRACES = {
+            happy: [
+                { slow: 19, fast: 19, desc: '同一起跑线初始化：slow = 19, fast = 19' },
+                { slow: 82, fast: 68, desc: '第 1 轮推进：slow 走 1 步到 82；fast 连走 2 步 (19➔82➔68) 到 68' },
+                { slow: 68, fast: 1, desc: '🎯 第 2 轮推进：slow 走 1 步到 68；fast 连走 2 步 (68➔100➔1) 率先踏入 1 号终点！跳出循环返回 True！', done: true, res: true }
+            ],
+            unhappy: [
+                { slow: 2, fast: 2, gap: '-', desc: '同一起跑线初始化：slow = 2, fast = 2' },
+                { slow: 4, fast: 16, gap: 7, desc: '第 1 轮：slow 到入环口 4；fast 连走 2 步到 16。两指针均已入环，fast 落后 slow 共 7 步 (环长 L=8)' },
+                { slow: 16, fast: 58, gap: 6, desc: '第 2 轮：slow➔16，fast➔58。以 slow 为静止参考系，追击距离从 7 缩减为 6 (Δv = 1)' },
+                { slow: 37, fast: 145, gap: 5, desc: '第 3 轮：slow➔37，fast➔145。环内追击距离缩减为 5' },
+                { slow: 58, fast: 20, gap: 4, desc: '第 4 轮：slow➔58，fast➔20。环内追击距离缩减为 4' },
+                { slow: 89, fast: 16, gap: 3, desc: '第 5 轮：slow➔89，fast➔16。环内追击距离缩减为 3' },
+                { slow: 145, fast: 58, gap: 2, desc: '第 6 轮：slow➔145，fast➔58。环内追击距离缩减为 2' },
+                { slow: 42, fast: 145, gap: 1, desc: '第 7 轮：slow➔42，fast➔145。环内追击距离缩减为 1（下一轮必撞！）' },
+                { slow: 20, fast: 20, gap: 0, desc: '💥 第 8 轮：slow➔20，fast➔20！距离归零精准套圈相撞 (slow == fast != 1)，判定死循环返回 False！', done: true, res: false }
+            ]
+        };
+
+        function setCut6Scenario(sc) {
+            cut6Scenario = sc;
+            cut6Step = 0;
+            renderCurrentCut();
+        }
+
+        function stepCut6(delta) {
+            const arr = CUT6_TRACES[cut6Scenario];
+            cut6Step = Math.max(0, Math.min(arr.length - 1, cut6Step + delta));
+            renderCurrentCut();
+        }
+
+        function renderCut6HTML() {
+            const isHappy = cut6Scenario === 'happy';
+            const arr = CUT6_TRACES[cut6Scenario];
+            const cur = arr[cut6Step];
+
+            // 渲染 SVG 跑道
+            let svgHtml = '';
+            if (isHappy) {
+                const nodes = [
+                    { val: 19, x: 90, y: 120 },
+                    { val: 82, x: 230, y: 120 },
+                    { val: 68, x: 370, y: 120 },
+                    { val: 100, x: 510, y: 120 },
+                    { val: 1, x: 650, y: 120 }
+                ];
+                svgHtml = `
+                <svg viewBox="0 0 740 220" class="w-full h-auto">
+                    <defs>
+                        <marker id="arr-c6" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1 L 8 5 L 0 9 z" fill="#475569"></path>
+                        </marker>
+                    </defs>
+                    ${nodes.slice(0, -1).map((n, i) => `
+                        <line x1="${n.x + 28}" y1="120" x2="${nodes[i+1].x - 28}" y2="120" stroke="#475569" stroke-width="2.5" marker-end="url(#arr-c6)"/>
+                    `).join('')}
+                    ${nodes.map(n => {
+                        const hasSlow = cur.slow === n.val;
+                        const hasFast = cur.fast === n.val;
+                        const stroke = n.val === 1 ? '#34d399' : (hasFast ? '#fb923c' : (hasSlow ? '#38bdf8' : '#475569'));
+                        return `
+                        <g transform="translate(${n.x},${n.y})">
+                            <circle r="27" fill="${n.val === 1 ? '#064e3b' : '#0f172a'}" stroke="${stroke}" stroke-width="3"/>
+                            <text y="5" fill="#f8fafc" font-size="14" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">${n.val}</text>
+                            ${hasSlow ? `<g transform="translate(0, -45)"><rect x="-34" y="-12" width="68" height="22" rx="6" fill="#0284c7"/><text y="3" fill="#fff" font-size="11" font-weight="bold" text-anchor="middle">🐢 slow</text></g>` : ''}
+                            ${hasFast ? `<g transform="translate(0, 48)"><rect x="-34" y="-12" width="68" height="22" rx="6" fill="#ea580c"/><text y="3" fill="#fff" font-size="11" font-weight="bold" text-anchor="middle">🐇 fast</text></g>` : ''}
+                        </g>`;
+                    }).join('')}
+                </svg>`;
+            } else {
+                const cycleVals = [4, 16, 37, 58, 89, 145, 42, 20];
+                const coords = [{ val: 2, x: 95, y: 115 }];
+                cycleVals.forEach((v, idx) => {
+                    const ang = ((180 - idx * 45) * Math.PI) / 180;
+                    coords.push({
+                        val: v,
+                        x: +(430 + 86 * Math.cos(ang)).toFixed(1),
+                        y: +(115 - 86 * Math.sin(ang)).toFixed(1)
+                    });
+                });
+
+                svgHtml = `
+                <svg viewBox="0 0 740 235" class="w-full h-auto">
+                    <line x1="120" y1="115" x2="318" y2="115" stroke="#475569" stroke-width="2.5"/>
+                    <circle cx="430" cy="115" r="86" fill="none" stroke="#475569" stroke-width="2.2" stroke-dasharray="5 3"/>
+                    <text x="430" y="110" fill="#94a3b8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">相对速度 Δv = 1</text>
+                    <text x="430" y="128" fill="#fb7185" font-size="12" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">追击距离 D = ${cur.gap}</text>
+
+                    ${coords.map(n => {
+                        const hasSlow = cur.slow === n.val;
+                        const hasFast = cur.fast === n.val;
+                        const collided = hasSlow && hasFast && cut6Step > 0;
+                        const stroke = collided ? '#fb7185' : (hasFast ? '#fb923c' : (hasSlow ? '#38bdf8' : '#475569'));
+                        return `
+                        <g transform="translate(${n.x},${n.y})">
+                            <circle r="21" fill="${collided ? '#881337' : '#0f172a'}" stroke="${stroke}" stroke-width="2.8"/>
+                            <text y="4" fill="#f8fafc" font-size="12" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">${n.val}</text>
+                            ${hasSlow ? `<text y="-27" fill="#38bdf8" font-size="11" font-weight="bold" text-anchor="middle">🐢slow</text>` : ''}
+                            ${hasFast ? `<text y="35" fill="#fb923c" font-size="11" font-weight="bold" text-anchor="middle">🐇fast</text>` : ''}
+                        </g>`;
+                    }).join('')}
+                </svg>`;
+            }
+
+            return `
+            <div class="space-y-5">
+                <div class="border-b border-slate-700/80 pb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">第 6 刀 · 双结局步进推演</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-white mt-1.5">快慢指针在「快乐数」与「8 节点死循环」中的追击实况</h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                            🎯 <strong class="text-rose-300">物理不变量验证</strong>：在死循环圈内，以 <code class="font-mono text-sky-300">slow</code> 为静止参考系，<code class="font-mono text-amber-300">fast</code> 的逼近速度严格为 $\\Delta v = 2 - 1 = 1$ 步/轮，追击距离 $D$ 依次递减 $7 \\to 6 \\to 5 \\to \\dots \\to 0$，绝不可能跳过！
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700 self-start">
+                        <button onclick="setCut6Scenario('happy')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${isHappy ? 'bg-emerald-500 text-slate-950 shadow' : 'text-slate-300'}">
+                            🟢 结局 A：n = 19 (fast 先撞 1)
+                        </button>
+                        <button onclick="setCut6Scenario('unhappy')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${!isHappy ? 'bg-rose-500 text-slate-950 shadow' : 'text-slate-300'}">
+                            🔴 结局 B：n = 2 (Δv=1 环内追尾)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 步进控制器 + 跑道 -->
+                <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-xs font-mono text-sky-300">🐢 slow = ${cur.slow}</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-xs font-mono text-amber-300">🐇 fast = ${cur.fast}</span>
+                            ${!isHappy ? `<span class="px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-xs font-mono text-rose-300">环内追击距离 D = ${cur.gap}</span>` : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="stepCut6(-1)" ${cut6Step === 0 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-xs text-slate-200">← 上一步</button>
+                            <button onclick="stepCut6(1)" ${cut6Step === arr.length - 1 ? 'disabled' : ''} class="px-4 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 disabled:opacity-40 text-xs font-bold text-slate-950 shadow">👣 单步推进 (${cut6Step}/${arr.length - 1}) →</button>
+                            <button onclick="setCut6Scenario('${cut6Scenario}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300">🔄 重置</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-2">
+                        ${svgHtml}
+                    </div>
+
+                    <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm text-slate-200">
+                        📡 <strong class="text-sky-300">实况解说</strong>：${cur.desc}
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        // ==================== 第 7 刀：图码同构工作台（左码右图实时投影 + 141➔202 基因对比） ====================
+        function switchCut7Tab(tab) {
+            cut7Tab = tab;
+            renderCurrentCut();
+        }
+
+        function selectCut7State(stNum) {
+            cut7ActiveState = stNum;
+            renderCurrentCut();
+        }
+
+        function setCut7MicroScenario(val) {
+            cut7MicroScenario = val;
+            cut7MicroStep = 0;
+            renderCurrentCut();
+        }
+
+        function stepCut7Micro(delta) {
+            const trace = cut7MicroScenario === 19 ? CUT6_TRACES.happy : CUT6_TRACES.unhappy;
+            cut7MicroStep = Math.max(0, Math.min(trace.length - 1, cut7MicroStep + delta));
+            renderCurrentCut();
+        }
+
+        const FULL_202_CODE_TEXT = `class Solution:
+    def isHappy(self, n: int) -> bool:
+        # 1. 算术剥皮器：等价于链表的 node.next
+        def get_next(num: int) -> int:
+            total = 0
+            while num > 0:
+                num, digit = divmod(num, 10)
+                total += digit * digit
+            return total
+
+        # 2. 同一起跑线初始化（直接复用 141 状态机）
+        slow = fast = n
+
+        # 3. 推进与碰撞检测：只要快指针未抵达 1 号终点就继续
+        while fast != 1:
+            slow = get_next(slow)              # 慢指针走 1 步
+            fast = get_next(get_next(fast))    # 快指针连走 2 步
+            if slow == fast and slow != 1:     # 在死循环环内相撞
+                return False
+
+        # 4. 快指针触达 1 号自环黑洞，确认为快乐数
+        return True`;
+
+        function renderCut7HTML() {
+            const isIso = cut7Tab === 'isomorphism';
+
+            // 左侧完整 Python 代码行定义（严格 4/8/12/16 空格缩进）
+            const codeLines202 = [
+                { num: 1, indent: 0, html: `<span class="syn-kw">class</span> <span class="syn-fn">Solution</span>:` },
+                { num: 2, indent: 4, html: `<span class="syn-kw">def</span> <span class="syn-fn">isHappy</span>(<span class="syn-self">self</span>, <span class="syn-var">n</span>: <span class="syn-fn">int</span>) -> <span class="syn-fn">bool</span>:` },
+                { num: 3, indent: 8, html: `<span class="syn-cm"># 态 ①：算术剥皮器（等价于链表的 node.next）</span>` },
+                { num: 4, indent: 8, html: `<span class="syn-kw">def</span> <span class="syn-fn">get_next</span>(<span class="syn-var">num</span>: <span class="syn-fn">int</span>) -> <span class="syn-fn">int</span>:` },
+                { num: 5, indent: 12, html: `<span class="syn-var">total</span> = <span class="syn-num">0</span>` },
+                { num: 6, indent: 12, html: `<span class="syn-kw">while</span> <span class="syn-var">num</span> > <span class="syn-num">0</span>:` },
+                { num: 7, indent: 16, html: `<span class="syn-var">num</span>, <span class="syn-var">digit</span> = <span class="syn-fn">divmod</span>(<span class="syn-var">num</span>, <span class="syn-num">10</span>)` },
+                { num: 8, indent: 16, html: `<span class="syn-var">total</span> += <span class="syn-var">digit</span> * <span class="syn-var">digit</span>` },
+                { num: 9, indent: 12, html: `<span class="syn-kw">return</span> <span class="syn-var">total</span>` },
+                { num: 10, indent: 8, html: `<span class="syn-cm"># 态 ②：同一起跑线初始化</span>` },
+                { num: 11, indent: 8, html: `<span class="syn-var">slow</span> = <span class="syn-var">fast</span> = <span class="syn-var">n</span>` },
+                { num: 12, indent: 8, html: `<span class="syn-cm"># 态 ③：双倍速推进与环内碰撞拦截</span>` },
+                { num: 13, indent: 8, html: `<span class="syn-kw">while</span> <span class="syn-var">fast</span> != <span class="syn-num">1</span>:` },
+                { num: 14, indent: 12, html: `<span class="syn-var">slow</span> = <span class="syn-fn">get_next</span>(<span class="syn-var">slow</span>)` },
+                { num: 15, indent: 12, html: `<span class="syn-var">fast</span> = <span class="syn-fn">get_next</span>(<span class="syn-fn">get_next</span>(<span class="syn-var">fast</span>))` },
+                { num: 16, indent: 12, html: `<span class="syn-kw">if</span> <span class="syn-var">slow</span> == <span class="syn-var">fast</span> <span class="syn-kw">and</span> <span class="syn-var">slow</span> != <span class="syn-num">1</span>:` },
+                { num: 17, indent: 16, html: `<span class="syn-kw">return</span> <span class="syn-bool">False</span>` },
+                { num: 18, indent: 8, html: `<span class="syn-cm"># 态 ④：快指针率先抵达 1 号终点</span>` },
+                { num: 19, indent: 8, html: `<span class="syn-kw">return</span> <span class="syn-bool">True</span>` }
+            ];
+
+            const stateLineMap = {
+                3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1,
+                10: 2, 11: 2,
+                12: 3, 13: 3, 14: 3, 15: 3, 16: 3, 17: 3,
+                18: 4, 19: 4
+            };
+
+            const activeLinesByState = {
+                1: [3, 4, 5, 6, 7, 8, 9],
+                2: [10, 11],
+                3: [12, 13, 14, 15, 16, 17],
+                4: [18, 19]
+            }[cut7ActiveState];
+
+            const hlClassByState = {
+                1: 'active-line',
+                2: 'active-line-amber',
+                3: 'active-line-rose',
+                4: 'active-line-emerald'
+            }[cut7ActiveState];
+
+            return `
+            <div class="space-y-5">
+                <!-- 顶部标题与双视图切换 -->
+                <div class="border-b border-slate-700/80 pb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">第 7 刀 · 图码同构工作台 (终极收官)</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-white mt-1.5">左码右图 · 消除跨模态记忆税，把几何直觉沉淀为肌肉记忆</h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                            🎯 <strong class="text-emerald-300">INTJ 专属设计</strong>：点击左侧任意代码块（或顶部状态按钮），右侧画布立即投影对应的物理画面，内置微缩步进验证器与 141➔202 基因对照。
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700 self-start">
+                        <button onclick="switchCut7Tab('isomorphism')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${isIso ? 'bg-sky-500 text-slate-950 shadow' : 'text-slate-300 hover:text-white'}">
+                            ⚡ 左码右图 · 四态同构工作台
+                        </button>
+                        <button onclick="switchCut7Tab('gene-diff')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${!isIso ? 'bg-purple-500 text-slate-950 shadow' : 'text-slate-300 hover:text-white'}">
+                            🧬 141 题 ➔ 202 题 基因对比视图
+                        </button>
+                    </div>
+                </div>
+
+                ${isIso ? `
+                <!-- 四态快捷切换按钮栏 -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    ${[
+                        { id: 1, title: '态 ①：第 4~9 行', sub: 'get_next(n) 算术剥皮引擎', color: 'sky' },
+                        { id: 2, title: '态 ②：第 11 行', sub: 'slow = fast = n 同起点起跑', color: 'amber' },
+                        { id: 3, title: '态 ③：第 13~17 行', sub: '双倍速追击与碰撞拦截 (含步进器)', color: 'rose' },
+                        { id: 4, title: '态 ④：第 19 行', sub: 'return True 抵达 1 号黑洞', color: 'emerald' }
+                    ].map(st => `
+                        <button onclick="selectCut7State(${st.id})" class="p-2.5 rounded-xl border text-left transition ${cut7ActiveState === st.id ? 'bg-slate-800 border-sky-400 ring-1 ring-sky-400/50' : 'bg-slate-900/70 border-slate-700/80 hover:bg-slate-800/60'}">
+                            <div class="text-xs font-bold text-white">${st.title}</div>
+                            <div class="text-[11px] text-slate-400 truncate mt-0.5">${st.sub}</div>
+                        </button>
+                    `).join('')}
+                </div>
+
+                <!-- 左码右图主体 -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    <!-- 左侧代码面板 (6列) -->
+                    <div class="lg:col-span-6 bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-sky-400">💻 点击任意代码行可切换右侧物理快照</span>
+                            <button onclick="copyTextToClipboard(FULL_202_CODE_TEXT, this)" class="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs font-medium text-slate-200 transition">
+                                📋 复制完整代码
+                            </button>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl py-3 overflow-x-auto">
+                            ${renderPythonLines(codeLines202, activeLinesByState, hlClassByState, stateLineMap)}
+                        </div>
+                    </div>
+
+                    <!-- 右侧实时物理投影画布 (6列) -->
+                    <div class="lg:col-span-6 bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between space-y-4">
+                        ${renderCut7RightSnapshot()}
+                    </div>
+                </div>
+                ` : renderCut7GeneDiffView()}
+            </div>
+            `;
+        }
+
+        function renderCut7RightSnapshot() {
+            if (cut7ActiveState === 1) {
+                return `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-300 text-xs font-bold">态 ① 物理快照：算术剥皮器 = 隐式 .next 指针</span>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                        <svg viewBox="0 0 500 220" class="w-full h-auto">
+                            <rect x="25" y="45" width="120" height="120" rx="16" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/>
+                            <text x="85" y="75" fill="#94a3b8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">输入节点 num</text>
+                            <text x="85" y="115" fill="#f8fafc" font-size="28" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">68</text>
+                            <text x="85" y="145" fill="#38bdf8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">当前状态</text>
+
+                            <!-- 中间剥皮齿轮 -->
+                            <line x1="145" y1="105" x2="185" y2="105" stroke="#fb923c" stroke-width="2.5"/>
+                            <rect x="185" y="35" width="145" height="140" rx="14" fill="#1e293b" stroke="#fb923c" stroke-width="2"/>
+                            <text x="257" y="62" fill="#fb923c" font-size="12" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">divmod(num, 10)</text>
+                            <text x="257" y="92" fill="#e2e8f0" font-size="12" font-family="JetBrains Mono" text-anchor="middle">第1刀: 8² = 64</text>
+                            <text x="257" y="118" fill="#e2e8f0" font-size="12" font-family="JetBrains Mono" text-anchor="middle">第2刀: 6² = 36</text>
+                            <text x="257" y="150" fill="#34d399" font-size="12" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">total = 100</text>
+
+                            <line x1="330" y1="105" x2="365" y2="105" stroke="#34d399" stroke-width="2.5"/>
+                            <rect x="365" y="45" width="115" height="120" rx="16" fill="#0f172a" stroke="#34d399" stroke-width="2.5"/>
+                            <text x="422" y="75" fill="#94a3b8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">返回下一节点</text>
+                            <text x="422" y="115" fill="#34d399" font-size="26" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">100</text>
+                            <text x="422" y="145" fill="#34d399" font-size="11" font-family="JetBrains Mono" text-anchor="middle">等价于 .next</text>
+                        </svg>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed bg-slate-800/70 p-3 rounded-xl border border-slate-700">
+                        🔍 <strong class="text-sky-300">图码映射解析</strong>：第 4~9 行的内部辅助函数把「十进制数位平方和」封装成了一个黑盒转换器。外层状态机完全不需要知道平方和是怎么算的，只需把 <code class="font-mono text-sky-300">get_next(x)</code> 当成链表的 <code class="font-mono text-amber-300">x.next</code> 调用即可。
+                    </p>
+                </div>`;
+            }
+
+            if (cut7ActiveState === 2) {
+                return `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold">态 ② 物理快照：同起点初始化 + 天然防越界探照灯</span>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                        <svg viewBox="0 0 500 220" class="w-full h-auto">
+                            <!-- 黄色前瞻探照灯区域 -->
+                            <path d="M 105 115 L 415 55 L 415 175 Z" fill="rgba(251, 191, 36, 0.09)" stroke="#fbbf24" stroke-dasharray="4 3"/>
+                            <text x="285" y="45" fill="#fbbf24" font-size="11" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">💡 2步前瞻探照灯：即便第1步到1，第2步 get_next(1)=1 仍安全！</text>
+
+                            <line x1="125" y1="115" x2="235" y2="115" stroke="#38bdf8" stroke-width="2.5"/>
+                            <line x1="285" y1="115" x2="395" y2="115" stroke="#fb923c" stroke-width="2.5"/>
+
+                            <g transform="translate(95,115)">
+                                <circle r="28" fill="#0f172a" stroke="#fbbf24" stroke-width="3"/>
+                                <text y="5" fill="#fff" font-size="16" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">n</text>
+                                <text y="-38" fill="#38bdf8" font-size="12" font-weight="bold" text-anchor="middle">🐢 slow</text>
+                                <text y="46" fill="#fb923c" font-size="12" font-weight="bold" text-anchor="middle">🐇 fast</text>
+                            </g>
+                            <g transform="translate(260,115)">
+                                <circle r="24" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                                <text y="4" fill="#94a3b8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">+1步</text>
+                            </g>
+                            <g transform="translate(420,115)">
+                                <circle r="24" fill="#0f172a" stroke="#fb923c" stroke-width="2"/>
+                                <text y="4" fill="#94a3b8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">+2步</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed bg-slate-800/70 p-3 rounded-xl border border-slate-700">
+                        🔍 <strong class="text-amber-300">图码映射解析</strong>：因为我们采用「先移动指针、再检查 <code class="font-mono text-rose-300">if slow == fast</code>」的正向三段式结构，所以第 11 行可以让 <code class="font-mono text-sky-300">slow = fast = n</code> 从同一起跑线出发，彻底告别官方题解里别扭的错位抢跑！
+                    </p>
+                </div>`;
+            }
+
+            if (cut7ActiveState === 3) {
+                const trace = cut7MicroScenario === 19 ? CUT6_TRACES.happy : CUT6_TRACES.unhappy;
+                const cur = trace[cut7MicroStep];
+                return `
+                <div class="space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-xs font-bold">态 ③ 内置微缩步进器：第 13~17 行实时验证</span>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="setCut7MicroScenario(2)" class="px-2 py-1 rounded text-xs font-mono ${cut7MicroScenario === 2 ? 'bg-rose-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-300'}">n=2 (死循环)</button>
+                            <button onclick="setCut7MicroScenario(19)" class="px-2 py-1 rounded text-xs font-mono ${cut7MicroScenario === 19 ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-300'}">n=19 (快乐数)</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col items-center justify-center min-h-[190px]">
+                        <div class="flex items-center gap-4 mb-3">
+                            <div class="px-3 py-1.5 rounded-xl bg-sky-500/15 border border-sky-500/40 font-mono text-sm font-bold text-sky-300">
+                                🐢 slow = ${cur.slow}
+                            </div>
+                            <div class="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 font-mono text-sm font-bold text-amber-300">
+                                🐇 fast = ${cur.fast}
+                            </div>
+                            ${cut7MicroScenario === 2 ? `
+                            <div class="px-3 py-1.5 rounded-xl bg-rose-500/15 border border-rose-500/40 font-mono text-sm font-bold text-rose-300">
+                                距离 D = ${cur.gap}
+                            </div>` : ''}
+                        </div>
+                        <p class="text-xs text-slate-300 text-center px-2 leading-relaxed">${cur.desc}</p>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+                        <button onclick="stepCut7Micro(-1)" ${cut7MicroStep === 0 ? 'disabled' : ''} class="px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-xs text-slate-200">← 退一步</button>
+                        <span class="text-xs font-mono text-slate-300">步进进度：${cut7MicroStep} / ${trace.length - 1}</span>
+                        <button onclick="stepCut7Micro(1)" ${cut7MicroStep === trace.length - 1 ? 'disabled' : ''} class="px-3.5 py-1 rounded-lg bg-rose-500 hover:bg-rose-400 disabled:opacity-40 text-xs font-bold text-slate-950">👣 同步迈 1 轮 →</button>
+                    </div>
+                </div>`;
+            }
+
+            return `
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold">态 ④ 物理快照：快指针踏入 1 号黑洞，返回 True</span>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                    <svg viewBox="0 0 500 210" class="w-full h-auto">
+                        <line x1="95" y1="105" x2="215" y2="105" stroke="#38bdf8" stroke-width="2.5"/>
+                        <line x1="265" y1="105" x2="375" y2="105" stroke="#34d399" stroke-width="3"/>
+                        <path d="M 420 80 C 460 35, 460 175, 420 130" fill="none" stroke="#34d399" stroke-width="2.5" stroke-dasharray="4 2"/>
+
+                        <g transform="translate(70,105)">
+                            <circle r="24" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/>
+                            <text y="5" fill="#fff" font-size="14" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">68</text>
+                            <text y="-34" fill="#38bdf8" font-size="11" font-weight="bold" text-anchor="middle">🐢 slow</text>
+                        </g>
+                        <g transform="translate(240,105)">
+                            <circle r="24" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+                            <text y="5" fill="#94a3b8" font-size="13" font-family="JetBrains Mono" text-anchor="middle">100</text>
+                        </g>
+                        <g transform="translate(405,105)">
+                            <circle r="28" fill="#064e3b" stroke="#34d399" stroke-width="3.5"/>
+                            <text y="6" fill="#34d399" font-size="18" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">1</text>
+                            <text y="-38" fill="#fb923c" font-size="12" font-weight="bold" text-anchor="middle">🐇 fast == 1</text>
+                            <text y="48" fill="#34d399" font-size="12" font-weight="bold" text-anchor="middle">✅ return True</text>
+                        </g>
+                    </svg>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed bg-slate-800/70 p-3 rounded-xl border border-slate-700">
+                    🔍 <strong class="text-emerald-300">图码映射解析</strong>：只要 <code class="font-mono text-amber-300">while fast != 1:</code> 循环正常结束跳出到第 19 行，唯一的原因就是 <code class="font-mono text-amber-300">fast == 1</code>，直接返回 <code class="font-mono text-emerald-300">True</code>！
+                </p>
+            </div>`;
+        }
+
+        function renderCut7GeneDiffView() {
+            const c141 = [
+                { num: 1, indent: 0, html: `<span class="syn-kw">class</span> <span class="syn-fn">Solution</span>:` },
+                { num: 2, indent: 4, html: `<span class="syn-kw">def</span> <span class="syn-fn">hasCycle</span>(<span class="syn-self">self</span>, <span class="syn-var">head</span>: <span class="syn-fn">Optional</span>[<span class="syn-fn">ListNode</span>]) -> <span class="syn-fn">bool</span>:` },
+                { num: 3, indent: 8, html: `<span class="syn-cm"># 1. 同一起跑线初始化</span>` },
+                { num: 4, indent: 8, html: `<span class="syn-var">slow</span> = <span class="syn-var">fast</span> = <span class="syn-var">head</span>` },
+                { num: 5, indent: 8, html: `<span class="syn-cm"># 2. 只要未触达终点 None，继续推进</span>` },
+                { num: 6, indent: 8, html: `<span class="syn-kw">while</span> <span class="syn-var">fast</span> <span class="syn-kw">and</span> <span class="syn-var">fast</span>.next:` },
+                { num: 7, indent: 12, html: `<span class="syn-var">slow</span> = <span class="syn-var">slow</span>.next` },
+                { num: 8, indent: 12, html: `<span class="syn-var">fast</span> = <span class="syn-var">fast</span>.next.next` },
+                { num: 9, indent: 12, html: `<span class="syn-kw">if</span> <span class="syn-var">slow</span> == <span class="syn-var">fast</span>:` },
+                { num: 10, indent: 16, html: `<span class="syn-kw">return</span> <span class="syn-bool">True</span>   <span class="syn-cm"># 环内相遇 -> 有环</span>` },
+                { num: 11, indent: 8, html: `<span class="syn-kw">return</span> <span class="syn-bool">False</span>          <span class="syn-cm"># 抵达 None -> 无环</span>` }
+            ];
+
+            const c202 = [
+                { num: 1, indent: 0, html: `<span class="syn-kw">class</span> <span class="syn-fn">Solution</span>:` },
+                { num: 2, indent: 4, html: `<span class="syn-kw">def</span> <span class="syn-fn">isHappy</span>(<span class="syn-self">self</span>, <span class="syn-var">n</span>: <span class="syn-fn">int</span>) -> <span class="syn-fn">bool</span>:` },
+                { num: 3, indent: 8, html: `<span class="syn-cm"># 1. 同一起跑线初始化</span>` },
+                { num: 4, indent: 8, html: `<span class="syn-var">slow</span> = <span class="syn-var">fast</span> = <span class="syn-var">n</span>` },
+                { num: 5, indent: 8, html: `<span class="syn-cm"># 2. 只要未触达终点 1，继续推进</span>` },
+                { num: 6, indent: 8, html: `<span class="syn-kw">while</span> <span class="syn-var">fast</span> != <span class="syn-num">1</span>:` },
+                { num: 7, indent: 12, html: `<span class="syn-var">slow</span> = <span class="syn-fn">get_next</span>(<span class="syn-var">slow</span>)` },
+                { num: 8, indent: 12, html: `<span class="syn-var">fast</span> = <span class="syn-fn">get_next</span>(<span class="syn-fn">get_next</span>(<span class="syn-var">fast</span>))` },
+                { num: 9, indent: 12, html: `<span class="syn-kw">if</span> <span class="syn-var">slow</span> == <span class="syn-var">fast</span> <span class="syn-kw">and</span> <span class="syn-var">slow</span> != <span class="syn-num">1</span>:` },
+                { num: 10, indent: 16, html: `<span class="syn-kw">return</span> <span class="syn-bool">False</span>  <span class="syn-cm"># 死循环相遇 -> 非快乐</span>` },
+                { num: 11, indent: 8, html: `<span class="syn-kw">return</span> <span class="syn-bool">True</span>           <span class="syn-cm"># 抵达终点 1 -> 快乐数</span>` }
+            ];
+
+            return `
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-900/90 border border-sky-500/40 rounded-xl p-3">
+                        <div class="text-xs font-bold text-sky-300 mb-2">🔗 141. 环形链表：终点是 None，环内碰撞返回 True</div>
+                        <div class="bg-slate-950 rounded-lg p-2">
+                            <svg viewBox="0 0 420 110" class="w-full h-auto">
+                                <line x1="45" y1="55" x2="135" y2="55" stroke="#38bdf8" stroke-width="2.5"/>
+                                <circle cx="205" cy="55" r="42" fill="none" stroke="#34d399" stroke-width="2.5" stroke-dasharray="4 2"/>
+                                <text x="205" y="59" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle">💥 相撞=True</text>
+                                <text x="345" y="59" fill="#94a3b8" font-size="11" font-family="JetBrains Mono" text-anchor="middle">或走到 None=False</text>
+                                <circle cx="45" cy="55" r="16" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                                <text x="45" y="59" fill="#fff" font-size="10" font-family="JetBrains Mono" text-anchor="middle">head</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-emerald-500/40 rounded-xl p-3">
+                        <div class="text-xs font-bold text-emerald-300 mb-2">⚡ 202. 快乐数：终点是 1 ↺，死循环碰撞返回 False</div>
+                        <div class="bg-slate-950 rounded-lg p-2">
+                            <svg viewBox="0 0 420 110" class="w-full h-auto">
+                                <line x1="45" y1="55" x2="135" y2="55" stroke="#38bdf8" stroke-width="2.5"/>
+                                <circle cx="205" cy="55" r="42" fill="none" stroke="#fb7185" stroke-width="2.5" stroke-dasharray="4 2"/>
+                                <text x="205" y="59" fill="#fb7185" font-size="11" font-weight="bold" text-anchor="middle">💥 相撞=False</text>
+                                <text x="345" y="59" fill="#34d399" font-size="11" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">走到 1↺ = True</text>
+                                <circle cx="45" cy="55" r="16" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                                <text x="45" y="59" fill="#fff" font-size="11" font-family="JetBrains Mono" text-anchor="middle">n</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-xs font-bold text-sky-400 mb-2 px-2">141 题标准模板（行号 1~11 严格对齐）</div>
+                        ${renderPythonLines(c141, [4, 6, 9, 10, 11], 'active-line')}
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-xs font-bold text-emerald-400 mb-2 px-2">202 题同构模板（行号 1~11 严格对齐）</div>
+                        ${renderPythonLines(c202, [4, 6, 9, 10, 11], 'active-line-emerald')}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // =========================================================================
+        // 模式 2：隐式链表三阶段沙盒实现
+        // =========================================================================
+        let sbStartN = 19;
+        let sbAlgo = 'floyd';
+        let sbSteps = [];
+        let sbStepIdx = 0;
+        let sbPlayTimer = null;
+        let sbTrajectory = null;
+
+        const SB_CODE_FLOYD = [
+            { num: 1, indent: 0, html: `<span class="syn-kw">class</span> <span class="syn-fn">Solution</span>:` },
+            { num: 2, indent: 4, html: `<span class="syn-kw">def</span> <span class="syn-fn">isHappy</span>(<span class="syn-self">self</span>, <span class="syn-var">n</span>: <span class="syn-fn">int</span>) -> <span class="syn-fn">bool</span>:` },
+            { num: 3, indent: 8, html: `<span class="syn-kw">def</span> <span class="syn-fn">get_next</span>(<span class="syn-var">num</span>: <span class="syn-fn">int</span>) -> <span class="syn-fn">int</span>:` },
+            { num: 4, indent: 12, html: `<span class="syn-var">total</span> = <span class="syn-num">0</span>` },
+            { num: 5, indent: 12, html: `<span class="syn-kw">while</span> <span class="syn-var">num</span> > <span class="syn-num">0</span>:` },
+            { num: 6, indent: 16, html: `<span class="syn-var">num</span>, <span class="syn-var">digit</span> = <span class="syn-fn">divmod</span>(<span class="syn-var">num</span>, <span class="syn-num">10</span>)` },
+            { num: 7, indent: 16, html: `<span class="syn-var">total</span> += <span class="syn-var">digit</span> * <span class="syn-var">digit</span>` },
+            { num: 8, indent: 12, html: `<span class="syn-kw">return</span> <span class="syn-var">total</span>` },
+            { num: 9, indent: 8, html: `<span class="syn-var">slow</span> = <span class="syn-var">fast</span> = <span class="syn-var">n</span>` },
+            { num: 10, indent: 8, html: `<span class="syn-kw">while</span> <span class="syn-var">fast</span> != <span class="syn-num">1</span>:` },
+            { num: 11, indent: 12, html: `<span class="syn-var">slow</span> = <span class="syn-fn">get_next</span>(<span class="syn-var">slow</span>)` },
+            { num: 12, indent: 12, html: `<span class="syn-var">fast</span> = <span class="syn-fn">get_next</span>(<span class="syn-fn">get_next</span>(<span class="syn-var">fast</span>))` },
+            { num: 13, indent: 12, html: `<span class="syn-kw">if</span> <span class="syn-var">slow</span> == <span class="syn-var">fast</span> <span class="syn-kw">and</span> <span class="syn-var">slow</span> != <span class="syn-num">1</span>:` },
+            { num: 14, indent: 16, html: `<span class="syn-kw">return</span> <span class="syn-bool">False</span>` },
+            { num: 15, indent: 8, html: `<span class="syn-kw">return</span> <span class="syn-bool">True</span>` }
+        ];
+
+        const SB_CODE_HASH = [
+            { num: 1, indent: 0, html: `<span class="syn-kw">class</span> <span class="syn-fn">Solution</span>:` },
+            { num: 2, indent: 4, html: `<span class="syn-kw">def</span> <span class="syn-fn">isHappy</span>(<span class="syn-self">self</span>, <span class="syn-var">n</span>: <span class="syn-fn">int</span>) -> <span class="syn-fn">bool</span>:` },
+            { num: 3, indent: 8, html: `<span class="syn-var">seen</span> = <span class="syn-fn">set</span>()` },
+            { num: 4, indent: 8, html: `<span class="syn-kw">while</span> <span class="syn-var">n</span> != <span class="syn-num">1</span> <span class="syn-kw">and</span> <span class="syn-var">n</span> <span class="syn-kw">not in</span> <span class="syn-var">seen</span>:` },
+            { num: 5, indent: 12, html: `<span class="syn-var">seen</span>.add(<span class="syn-var">n</span>)` },
+            { num: 6, indent: 12, html: `<span class="syn-var">n</span> = <span class="syn-fn">get_next</span>(<span class="syn-var">n</span>)` },
+            { num: 7, indent: 8, html: `<span class="syn-kw">return</span> <span class="syn-var">n</span> == <span class="syn-num">1</span>` }
+        ];
+
+        function buildSandboxSteps(startVal, algo) {
+            sbTrajectory = analyzeTrajectory(startVal);
+            const steps = [];
+
+            if (algo === 'floyd') {
+                let slow = startVal;
+                let fast = startVal;
+                steps.push({
+                    slow, fast,
+                    activeLines: [9, 10],
+                    hlClass: 'active-line',
+                    calcSource: startVal,
+                    msg: `初始化同一起跑线：slow = ${slow}, fast = ${fast}。检查 while fast != 1。`,
+                    done: false
+                });
+
+                let round = 0;
+                while (fast !== 1 && round < 40) {
+                    round++;
+                    const prevSlow = slow;
+                    const prevFast = fast;
+                    const midFast = getNext(fast);
+                    slow = getNext(slow);
+                    fast = getNext(midFast);
+
+                    if (slow === fast && slow !== 1) {
+                        steps.push({
+                            slow, fast,
+                            activeLines: [11, 12, 13, 14],
+                            hlClass: 'active-line-rose',
+                            calcSource: prevSlow,
+                            fastTrace: `${prevFast} ➔ ${midFast} ➔ ${fast}`,
+                            msg: `💥 第 ${round} 轮：slow 走到 ${slow}，fast 连迈两步 (${prevFast}➔${midFast}➔${fast})，在死循环圈内精准追尾 (slow == fast != 1)，返回 False！`,
+                            done: true,
+                            result: false
+                        });
+                        return steps;
+                    }
+
+                    steps.push({
+                        slow, fast,
+                        activeLines: [10, 11, 12, 13],
+                        hlClass: fast === 1 ? 'active-line-emerald' : 'active-line-amber',
+                        calcSource: prevSlow,
+                        fastTrace: `${prevFast} ➔ ${midFast} ➔ ${fast}`,
+                        msg: `第 ${round} 轮推进：slow 从 ${prevSlow} 走 1 步到 ${slow}；fast 从 ${prevFast} 连迈 2 步 (${prevFast}➔${midFast}➔${fast})。`,
+                        done: false
+                    });
+                }
+
+                steps.push({
+                    slow, fast,
+                    activeLines: [10, 15],
+                    hlClass: 'active-line-emerald',
+                    calcSource: fast,
+                    msg: `🎯 终局判定：fast == 1，跳出 while 循环，抵达第 15 行直接返回 True（快乐数）！`,
+                    done: true,
+                    result: true
+                });
+            } else {
+                let curr = startVal;
+                const seen = [];
+                steps.push({
+                    curr, seen: [...seen],
+                    activeLines: [3, 4],
+                    hlClass: 'active-line',
+                    calcSource: curr,
+                    msg: `初始化空集合 seen = set()，当前 n = ${curr}。`,
+                    done: false
+                });
+
+                let round = 0;
+                while (curr !== 1 && !seen.includes(curr) && round < 40) {
+                    round++;
+                    const prev = curr;
+                    seen.push(prev);
+                    curr = getNext(prev);
+                    steps.push({
+                        curr, seen: [...seen],
+                        activeLines: [4, 5, 6],
+                        hlClass: 'active-line-amber',
+                        calcSource: prev,
+                        msg: `第 ${round} 步：将 ${prev} 存入 seen 印章池，计算 n = get_next(${prev}) = ${curr}。`,
+                        done: false
+                    });
+                }
+
+                const isHappy = curr === 1;
+                steps.push({
+                    curr, seen: [...seen],
+                    activeLines: [4, 7],
+                    hlClass: isHappy ? 'active-line-emerald' : 'active-line-rose',
+                    calcSource: curr,
+                    msg: isHappy
+                        ? `🎯 终局判定：n == 1，跳出循环，返回 n == 1 (True)！`
+                        : `💥 终局判定：n = ${curr} 已存在于 seen 集合中，拦截死循环，返回 n == 1 (False)！`,
+                    done: true,
+                    result: isHappy
+                });
+            }
+            return steps;
+        }
+
+        function loadSandboxPreset(val) {
+            sandboxPause();
+            sbStartN = val;
+            document.getElementById('sb-custom-input').value = val;
+            sbSteps = buildSandboxSteps(sbStartN, sbAlgo);
+            sbStepIdx = 0;
+            renderSandbox();
+        }
+
+        function applyCustomSandboxInput() {
+            const raw = parseInt(document.getElementById('sb-custom-input').value, 10);
+            const valid = (!isNaN(raw) && raw >= 1) ? Math.min(raw, 2147483647) : 19;
+            loadSandboxPreset(valid);
+        }
+
+        function switchSandboxAlgo(algo) {
+            sandboxPause();
+            sbAlgo = algo;
+            document.getElementById('sb-algo-floyd').className = algo === 'floyd'
+                ? 'px-3 py-1 rounded-md text-xs font-semibold transition bg-sky-500 text-slate-950'
+                : 'px-3 py-1 rounded-md text-xs font-semibold transition text-slate-400 hover:text-white';
+            document.getElementById('sb-algo-hash').className = algo === 'hash'
+                ? 'px-3 py-1 rounded-md text-xs font-semibold transition bg-sky-500 text-slate-950'
+                : 'px-3 py-1 rounded-md text-xs font-semibold transition text-slate-400 hover:text-white';
+            sbSteps = buildSandboxSteps(sbStartN, sbAlgo);
+            sbStepIdx = 0;
+            renderSandbox();
+        }
+
+        function sandboxReset() {
+            sandboxPause();
+            sbStepIdx = 0;
+            renderSandbox();
+        }
+
+        function sandboxStep(delta) {
+            sandboxPause();
+            sbStepIdx = Math.max(0, Math.min(sbSteps.length - 1, sbStepIdx + delta));
+            renderSandbox();
+        }
+
+        function sandboxTogglePlay() {
+            if (sbPlayTimer) {
+                sandboxPause();
+                return;
+            }
+            if (sbStepIdx >= sbSteps.length - 1) {
+                sbStepIdx = 0;
+            }
+            const playBtn = document.getElementById('sb-btn-play');
+            playBtn.innerHTML = '⏸ 暂停播放';
+            sbPlayTimer = setInterval(() => {
+                if (sbStepIdx < sbSteps.length - 1) {
+                    sbStepIdx++;
+                    renderSandbox();
+                } else {
+                    sandboxPause();
+                }
+            }, 950);
+        }
+
+        function sandboxPause() {
+            if (sbPlayTimer) {
+                clearInterval(sbPlayTimer);
+                sbPlayTimer = null;
+            }
+            const playBtn = document.getElementById('sb-btn-play');
+            if (playBtn) playBtn.innerHTML = '▶ 自动播放';
+        }
+
+        function copySandboxCode() {
+            const btn = document.getElementById('btn-copy-sb-code');
+            copyTextToClipboard(FULL_202_CODE_TEXT, btn);
+        }
+
+        function renderSandbox() {
+            if (sbSteps.length === 0) {
+                sbSteps = buildSandboxSteps(sbStartN, sbAlgo);
+            }
+            const cur = sbSteps[sbStepIdx];
+
+            [19, 2, 7, 1, 999].forEach(p => {
+                const el = document.getElementById(`sb-preset-${p}`);
+                if (el) {
+                    el.className = (sbStartN === p)
+                        ? 'px-3 py-1.5 rounded-lg text-xs font-semibold border transition bg-sky-500/20 text-sky-300 border-sky-400'
+                        : 'px-3 py-1.5 rounded-lg text-xs font-semibold border transition bg-slate-900 text-slate-300 border-slate-700 hover:text-white';
+                }
+            });
+
+            document.getElementById('sb-step-counter').textContent = `Step ${sbStepIdx} / ${sbSteps.length - 1}`;
+            document.getElementById('sb-btn-prev').disabled = sbStepIdx === 0;
+            document.getElementById('sb-btn-next').disabled = sbStepIdx === sbSteps.length - 1;
+            document.getElementById('sb-step-explanation').textContent = cur.msg;
+
+            const badge = document.getElementById('sb-topology-badge');
+            if (sbTrajectory.isHappy) {
+                badge.className = 'px-2 py-0.5 text-xs rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+                badge.textContent = `🟢 快乐数拓扑 (共 ${sbTrajectory.nodes.length} 个节点收敛至 1)`;
+            } else {
+                badge.className = 'px-2 py-0.5 text-xs rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30';
+                badge.textContent = `🔴 ρ 形死循环拓扑 (入环口: ${sbTrajectory.cycleEntryVal})`;
+            }
+
+            const regBox = document.getElementById('sb-registers');
+            if (sbAlgo === 'floyd') {
+                regBox.innerHTML = `
+                    <span class="px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-500/40 text-xs font-mono text-sky-300 font-bold">🐢 slow = ${cur.slow}</span>
+                    <span class="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/40 text-xs font-mono text-amber-300 font-bold">🐇 fast = ${cur.fast}</span>
+                    ${cur.fastTrace ? `<span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-slate-300">本轮 fast 两步: ${cur.fastTrace}</span>` : ''}
+                `;
+            } else {
+                regBox.innerHTML = `
+                    <span class="px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-500/40 text-xs font-mono text-sky-300 font-bold">当前 n = ${cur.curr}</span>
+                    <span class="px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-500/40 text-xs font-mono text-purple-300 font-bold">seen 元素数 = ${cur.seen.length}</span>
+                `;
+            }
+
+            const breakdown = getDigitsBreakdown(cur.calcSource);
+            document.getElementById('sb-arithmetic-box').innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs font-mono font-bold">get_next(${cur.calcSource}) 拆解</span>
+                    <span class="text-xs font-mono text-white">${breakdown.formula}</span>
+                </div>
+                <span class="text-xs text-slate-400">数位剥离：${breakdown.digits.join(' , ')}</span>
+            `;
+
+            const codeConfig = sbAlgo === 'floyd' ? SB_CODE_FLOYD : SB_CODE_HASH;
+            document.getElementById('sb-code-panel').innerHTML = renderPythonLines(codeConfig, cur.activeLines, cur.hlClass);
+
+            const vBox = document.getElementById('sb-verdict-box');
+            if (cur.done) {
+                vBox.innerHTML = cur.result
+                    ? `<span class="text-emerald-300 font-bold">✅ 执行完毕：n = ${sbStartN} 是快乐数 (return True)！</span> 轨迹成功收敛至 1 号自环终点。`
+                    : `<span class="text-rose-300 font-bold">❌ 执行完毕：n = ${sbStartN} 不是快乐数 (return False)！</span> 轨迹在 8 节点闭环中被拦截。`;
+            } else {
+                vBox.innerHTML = `⏳ <strong class="text-sky-300">状态机运行中</strong>：点击「⏩ 下一步」或「▶ 自动播放」观察指针移动与右侧代码高亮同步跳转。`;
+            }
+
+            renderSandboxSVG(cur);
+        }
+
+        function renderSandboxSVG(curStep) {
+            const svg = document.getElementById('sb-svg-canvas');
+            const { nodes, cycleEntryIndex, isHappy } = sbTrajectory;
+
+            const coords = [];
+            if (isHappy) {
+                const total = nodes.length;
+                const cols = Math.min(total, 5);
+                nodes.forEach((val, idx) => {
+                    const row = Math.floor(idx / cols);
+                    const colInRow = idx % cols;
+                    const actualCol = (row % 2 === 1) ? (cols - 1 - colInRow) : colInRow;
+                    const x = 95 + actualCol * (490 / Math.max(1, cols - 1));
+                    const y = total <= 5 ? 170 : (95 + row * 135);
+                    coords.push({ val, x: total === 1 ? 340 : x, y });
+                });
+            } else {
+                const stemNodes = nodes.slice(0, cycleEntryIndex);
+                const cycleNodes = nodes.slice(cycleEntryIndex);
+                const cx = 465, cy = 170, r = 105;
+
+                const stemCount = stemNodes.length;
+                stemNodes.forEach((val, idx) => {
+                    const x = 55 + (idx * Math.min(72, 260 / Math.max(1, stemCount)));
+                    const y = 170;
+                    coords.push({ val, x, y, isStem: true });
+                });
+
+                cycleNodes.forEach((val, idx) => {
+                    const angle = Math.PI - (idx * 2 * Math.PI) / cycleNodes.length;
+                    const x = +(cx + r * Math.cos(angle)).toFixed(1);
+                    const y = +(cy - r * Math.sin(angle)).toFixed(1);
+                    coords.push({ val, x, y, isCycle: true });
+                });
+            }
+
+            let edgesHtml = '';
+            for (let i = 0; i < coords.length - 1; i++) {
+                const a = coords[i];
+                const b = coords[i + 1];
+                edgesHtml += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#475569" stroke-width="2.2" marker-end="url(#sb-arrow)"/>`;
+            }
+
+            if (isHappy) {
+                const last = coords[coords.length - 1];
+                edgesHtml += `<path d="M ${last.x + 18} ${last.y - 15} C ${last.x + 55} ${last.y - 45}, ${last.x + 55} ${last.y + 45}, ${last.x + 18} ${last.y + 15}" fill="none" stroke="#34d399" stroke-width="2.2" stroke-dasharray="4 2" marker-end="url(#sb-arrow-green)"/>`;
+            } else {
+                const last = coords[coords.length - 1];
+                const entry = coords[cycleEntryIndex];
+                edgesHtml += `<line x1="${last.x}" y1="${last.y}" x2="${entry.x}" y2="${entry.y}" stroke="#fb7185" stroke-width="2.2" stroke-dasharray="4 2" marker-end="url(#sb-arrow-red)"/>`;
+            }
+
+            const nodesHtml = coords.map((nd, idx) => {
+                let hasSlow = false, hasFast = false, inSeen = false;
+                if (sbAlgo === 'floyd') {
+                    hasSlow = curStep.slow === nd.val;
+                    hasFast = curStep.fast === nd.val;
+                } else {
+                    hasSlow = curStep.curr === nd.val;
+                    inSeen = curStep.seen.includes(nd.val);
+                }
+
+                const collided = sbAlgo === 'floyd' && hasSlow && hasFast && sbStepIdx > 0 && nd.val !== 1;
+                let stroke = '#475569';
+                let fill = '#0f172a';
+                if (nd.val === 1) {
+                    stroke = '#34d399';
+                    fill = '#064e3b';
+                } else if (collided) {
+                    stroke = '#fb7185';
+                    fill = '#881337';
+                } else if (hasFast) {
+                    stroke = '#fb923c';
+                } else if (hasSlow) {
+                    stroke = '#38bdf8';
+                } else if (inSeen) {
+                    stroke = '#a855f7';
+                }
+
+                return `
+                <g transform="translate(${nd.x},${nd.y})" class="node-transition">
+                    <circle r="21" fill="${fill}" stroke="${stroke}" stroke-width="2.8"/>
+                    <text y="4" fill="#f8fafc" font-size="11.5" font-weight="bold" font-family="JetBrains Mono" text-anchor="middle">${nd.val}</text>
+                    ${idx === 0 ? `<text y="-28" fill="#94a3b8" font-size="10" font-family="JetBrains Mono" text-anchor="middle">🚩起点</text>` : ''}
+                    ${hasSlow ? `<g transform="translate(0, -34)"><rect x="-28" y="-10" width="56" height="17" rx="4" fill="#0284c7"/><text y="2" fill="#fff" font-size="9.5" font-weight="bold" text-anchor="middle">${sbAlgo === 'floyd' ? '🐢slow' : '📍curr'}</text></g>` : ''}
+                    ${hasFast ? `<g transform="translate(0, 34)"><rect x="-28" y="-10" width="56" height="17" rx="4" fill="#ea580c"/><text y="2" fill="#fff" font-size="9.5" font-weight="bold" text-anchor="middle">🐇fast</text></g>` : ''}
+                </g>`;
+            }).join('');
+
+            svg.innerHTML = `
+                <defs>
+                    <marker id="sb-arrow" viewBox="0 0 10 10" refX="25" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                        <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748b"></path>
+                    </marker>
+                    <marker id="sb-arrow-green" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                        <path d="M 0 1 L 8 5 L 0 9 z" fill="#34d399"></path>
+                    </marker>
+                    <marker id="sb-arrow-red" viewBox="0 0 10 10" refX="25" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                        <path d="M 0 1 L 8 5 L 0 9 z" fill="#fb7185"></path>
+                    </marker>
+                </defs>
+                ${edgesHtml}
+                ${nodesHtml}
+            `;
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+            if (currentMainMode === 'cuts') {
+                if (e.key === 'ArrowLeft') stepCut(-1);
+                if (e.key === 'ArrowRight') stepCut(1);
+            } else {
+                if (e.key === 'ArrowLeft') sandboxStep(-1);
+                if (e.key === 'ArrowRight') sandboxStep(1);
+            }
+        });
+
+        window.onload = function () {
+            renderCutNav();
+            renderCurrentCut();
+            sbSteps = buildSandboxSteps(sbStartN, sbAlgo);
+        };
+    </script>
+</body>
+</html>

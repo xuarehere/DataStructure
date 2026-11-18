@@ -1,0 +1,712 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>206. 反转链表 · INTJ 模型化教程</title>
+<style>
+  :root{
+    --bg:#0f1419; --panel:#171e26; --panel-2:#1d2630; --line:#2a3540;
+    --txt:#e6edf3; --sub:#9aa7b4; --faint:#6b7885;
+    --cur:#4cc2ff; --pre:#f0b429; --nxt:#b48cff; --ok:#3fb950; --warn:#f85149;
+    --rev-bg:rgba(240,180,41,.07); --rev-line:rgba(240,180,41,.35);
+    --rem-bg:rgba(76,194,255,.07); --rem-line:rgba(76,194,255,.35);
+    --code-bg:#12181f; --mono:ui-monospace,"JetBrains Mono","SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--txt);font-family:var(--sans);line-height:1.7;font-size:15px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  header.hero{border-bottom:1px solid var(--line);padding:46px 0 34px}
+  .kicker{font-family:var(--mono);font-size:13px;color:var(--faint);letter-spacing:.12em;margin-bottom:14px}
+  .kicker b{color:var(--cur)}
+  h1{font-size:32px;font-weight:700;letter-spacing:-.01em;margin-bottom:14px}
+  h1 .num{color:var(--faint);font-family:var(--mono);font-weight:500}
+  .lead{color:var(--sub);max-width:660px;font-size:15.5px}
+  .tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+  .tag{font-family:var(--mono);font-size:12.5px;color:var(--sub);border:1px solid var(--line);border-radius:6px;padding:5px 11px}
+  .tag b{color:var(--txt)}
+  section{padding:38px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:21px;font-weight:700;margin-bottom:6px;display:flex;align-items:baseline;gap:12px}
+  h2 .idx{font-family:var(--mono);color:var(--faint);font-size:14px;font-weight:500}
+  .sec-desc{color:var(--sub);font-size:14px;margin-bottom:22px;max-width:700px}
+  h3{font-size:15.5px;font-weight:600;margin:22px 0 12px}
+  p{margin:10px 0}
+  pre.code{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.75;margin:12px 0}
+  pre.code .cm{color:var(--faint)}
+  pre.code .kw{color:var(--nxt)}
+  pre.code .fn{color:var(--cur)}
+  pre.code .st{color:var(--ok)}
+  code.inline{font-family:var(--mono);font-size:13px;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--cur)}
+  .grid{display:grid;grid-template-columns:1fr;gap:22px}
+  @media(min-width:880px){.grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:repeat(3,1fr)}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+  .def-table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .def-table th,.def-table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  .def-table th{font-family:var(--mono);font-size:12px;color:var(--sub);font-weight:500;text-align:left;width:22%}
+  .def-table td.mono{font-family:var(--mono);color:var(--cur)}
+  .axiom{border-radius:10px;padding:15px 17px;margin:14px 0;font-size:14px}
+  .axiom.inv{background:var(--rev-bg);border-left:3px solid var(--pre)}
+  .axiom.safe{background:rgba(248,81,73,.08);border-left:3px solid var(--warn)}
+  .axiom .ax-title{font-family:var(--mono);font-size:12px;letter-spacing:.08em;margin-bottom:6px}
+  .axiom.inv .ax-title{color:var(--pre)}
+  .axiom.safe .ax-title{color:var(--warn)}
+  .axiom b{color:var(--txt)}
+  .axiom ul{margin:6px 0 0;padding-left:18px;color:var(--sub)}
+  .axiom li{margin:5px 0}
+  .operator{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .operator-head{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13px}
+  .operator-head .fname{color:var(--cur)}
+  .operator-head .io{color:var(--faint);font-size:12px}
+  .operator-body{padding:16px 18px}
+  .op-step{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:7px 0;font-family:var(--mono);font-size:13.5px}
+  .op-step .n{color:var(--faint)}
+  .op-step .desc{color:var(--sub)}
+  .op-step .desc b{color:var(--txt)}
+  .op-step code{color:var(--cur)}
+  .demo-head{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px}
+  .legend span{display:inline-flex;align-items:center;gap:6px;color:var(--sub)}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .stage{display:grid;grid-template-columns:1fr 26px 1fr;gap:16px;align-items:stretch;background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:24px 18px;min-height:230px}
+  @media(max-width:880px){.stage{grid-template-columns:1fr}.divider{height:2px;width:100%}}
+  .zone{border-radius:12px;padding:18px 16px;min-width:0;display:flex;flex-direction:column}
+  .zone-rev{background:var(--rev-bg);border:1.5px solid var(--rev-line)}
+  .zone-rem{background:var(--rem-bg);border:1.5px solid var(--rem-line)}
+  .zone-title{font-family:var(--mono);font-size:12px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+  .zone-rev .zone-title{color:var(--pre)}
+  .zone-rem .zone-title{color:var(--cur)}
+  .zone-title .zt{white-space:nowrap;font-weight:600}
+  .zone-title .sub{color:var(--faint);font-size:11px;width:100%;white-space:normal}
+  .divider{position:relative;display:flex;align-items:center;justify-content:center}
+  .divider::before{content:'';position:absolute;top:8%;bottom:8%;width:2px;background:var(--line)}
+  .divider span{position:relative;background:var(--code-bg);writing-mode:vertical-rl;font-family:var(--mono);font-size:11px;color:var(--faint);padding:8px 0;letter-spacing:.1em}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;justify-content:center;margin-top:auto;overflow-x:auto;padding-bottom:4px}
+  /* 双域节点：左数据域 + 右指针域 */
+  .node{border-radius:10px;border:1.5px solid var(--line);background:var(--panel-2);display:flex;overflow:hidden;font-family:var(--mono);position:relative;transition:border-color .25s,background .25s}
+  .node .nd{width:44px;height:52px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600}
+  .node .nn{width:40px;height:52px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--faint);border-left:1px dashed var(--line)}
+  .node.cur{border-color:var(--cur);box-shadow:0 0 0 3px rgba(76,194,255,.15)}
+  .node.pre{border-color:var(--pre)}
+  .node.nxt{border-color:var(--nxt)}
+  .node.null-node{background:transparent;border-style:dashed;color:var(--faint);font-size:13px;width:52px;height:52px}
+  .node.null-node .nn{display:none}
+  .arrow{color:var(--faint);font-family:var(--mono);font-size:16px;flex:none}
+  .ptr{font-family:var(--mono);font-size:12px;position:absolute;top:-19px;left:50%;transform:translateX(-50%);white-space:nowrap}
+  .ptr.pre{color:var(--pre)}.ptr.cur{color:var(--cur)}.ptr.nxt{color:var(--nxt)}
+  .stage-note{font-family:var(--mono);font-size:13px;color:var(--sub);text-align:center;min-height:22px}
+  .stage-note b{color:var(--txt)}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;align-items:center}
+  button{font-family:var(--mono);font-size:13px;color:var(--txt);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:9px 15px;cursor:pointer;transition:border-color .15s,background .15s}
+  button:hover{border-color:var(--cur)}
+  button.primary{background:var(--cur);border-color:var(--cur);color:#06121a;font-weight:600}
+  button.primary:hover{filter:brightness(1.1)}
+  button:disabled{opacity:.35;cursor:not-allowed}
+  .step-ind{font-family:var(--mono);font-size:12.5px;color:var(--sub);margin-left:auto}
+  .op-code{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;font-family:var(--mono);font-size:13.5px;line-height:1.8}
+  .op-code .op-group{border-left:2px solid transparent;border-radius:6px;padding:2px 10px;margin-left:-10px;transition:background .2s,border-color .2s}
+  .op-code .op-group.active{background:rgba(76,194,255,.1);border-left-color:var(--cur)}
+  .op-code .cm{color:var(--faint)}
+  .op-code .kw{color:var(--nxt)}
+  .op-code .fn{color:var(--cur)}
+  /* 代码逐行高亮 + 语义标签 */
+  .op-code .cline{display:grid;grid-template-columns:26px 1fr auto;gap:10px;padding:2px 10px;border-left:2px solid transparent;border-radius:6px;transition:background .2s,border-color .2s}
+  .op-code .cline.active{background:rgba(76,194,255,.1);border-left-color:var(--cur)}
+  .op-code .line-no{color:var(--faint);font-size:12px}
+  .op-code .sem-tag{font-family:var(--sans);font-size:11.5px;color:var(--faint);white-space:nowrap}
+  /* 三阶段语义卡 */
+  .stage-cards{display:grid;grid-template-columns:1fr;gap:12px;margin-top:18px}
+  @media(min-width:880px){.stage-cards{grid-template-columns:repeat(3,1fr)}}
+  .stage-card{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:15px 16px;transition:border-color .2s,background .2s}
+  .stage-card.active{border-color:var(--cur);background:rgba(76,194,255,.08)}
+  .stage-card .sc-num{font-family:var(--mono);font-size:12px;color:var(--faint);margin-bottom:5px}
+  .stage-card .sc-name{font-weight:600;color:var(--txt);margin-bottom:6px;font-size:14px}
+  .stage-card .sc-desc{font-size:13px;color:var(--sub);line-height:1.6}
+  .stage-card .sc-code{font-family:var(--mono);font-size:12.5px;color:var(--cur);margin-top:7px}
+  /* 锚定表强调列 */
+  .def-table td.role{color:var(--txt)}
+  /* 盲点纠偏 */
+  .myth-grid{display:grid;grid-template-columns:1fr;gap:16px}
+  @media(min-width:880px){.myth-grid{grid-template-columns:1fr 1fr}}
+  .myth{border-radius:12px;padding:18px 20px;border:1px solid var(--line)}
+  .myth.wrong{background:rgba(248,81,73,.07);border-color:rgba(248,81,73,.3)}
+  .myth.right{background:var(--rev-bg);border-color:var(--rev-line)}
+  .myth .m-title{font-family:var(--mono);font-size:12px;letter-spacing:.08em;margin-bottom:8px}
+  .myth.wrong .m-title{color:var(--warn)}
+  .myth.right .m-title{color:var(--pre)}
+  .myth p{font-size:13.5px;color:var(--sub);margin:6px 0}
+  .myth p b{color:var(--txt)}
+  /* 落地对照表 */
+  .land-table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .land-table th,.land-table td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+  .land-table th{font-family:var(--mono);font-size:12px;color:var(--sub);font-weight:500}
+  .land-table td.mono{font-family:var(--mono);color:var(--cur);white-space:nowrap}
+  .land-table tr:last-child td{border-bottom:none}
+  .land-table .tag-write{color:var(--nxt)}
+  /* 时序依赖链 */
+  .dep-chain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0;font-family:var(--mono);font-size:13px}
+  .dep-node{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--txt)}
+  .dep-node b{color:var(--cur)}
+  .dep-arrow{color:var(--faint)}
+  .dep-warn{color:var(--warn);font-family:var(--sans);font-size:13px;margin-top:8px}
+  /* 前后状态对照条 */
+  .io-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center;font-family:var(--mono);font-size:12.5px;color:var(--sub);margin-top:12px}
+  .io-bar .io-box{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
+  .io-bar .io-box b{color:var(--txt)}
+  .io-bar .io-arrow{color:var(--cur)}
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  table.data{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--panel);table-layout:fixed}
+  table.data th,table.data td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  table.data th{font-family:var(--mono);font-size:12px;color:var(--sub);font-weight:500}
+  table.data td.mono{font-family:var(--mono)}
+  table.data tr:last-child td{border-bottom:none}
+  .pit{display:grid;gap:12px}
+  .pit-item{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .pit-item .bad{color:var(--warn);font-family:var(--mono);font-size:12.5px;margin-bottom:4px}
+  .pit-item .good{color:var(--ok);font-size:13.5px}
+  ul.tight{margin:10px 0;padding-left:20px;color:var(--sub)}
+  ul.tight li{margin:6px 0}
+  .case-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  .case-chip{font-family:var(--mono);font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--sub)}
+  .case-chip b{color:var(--ok)}
+  .err-box{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.3);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:13px;color:var(--warn);margin:12px 0}
+  footer{padding:30px 0 50px;color:var(--faint);font-size:12.5px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">LEETCODE CHINA · <b>206. REVERSE LINKED LIST</b> · 单链表 · 模型优先</div>
+    <h1><span class="num">206.</span> 反转链表 · 状态机模型化教程</h1>
+    <p class="lead">先建立系统模型与不变量，再读转移算子，最后用动画做仿真校验。三指针 <code class="inline">pre / cur / nxt</code> 把链表切成两个区间，每轮执行同一个原子算子 F，把待处理节点从右区间搬入左区间，直到右区间为空。</p>
+    <div class="tags">
+      <span class="tag">难度 <b>Easy</b></span>
+      <span class="tag">时间 <b>O(n)</b></span>
+      <span class="tag">最优空间 <b>O(1)</b></span>
+      <span class="tag">样例 <b>1→2→3→4→5 → 5→4→3→2→1</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 00 核心模型（动画之前先建立） ===== -->
+<section>
+  <div class="wrap">
+    <h2><span class="idx">00</span>核心模型 · 区间、变量与不变量</h2>
+    <p class="sec-desc">在看任何动画之前，先固定系统定义。后续每一步推演都只是在维护下面这套定义，不引入新规则。</p>
+
+    <div class="card" style="margin-bottom:22px">
+      <table class="def-table">
+        <colgroup><col style="width:22%"><col style="width:30%"><col style="width:48%"></colgroup>
+        <tbody>
+          <tr><th>符号</th><th>所属区间</th><th>语义定义（全程不变）</th></tr>
+          <tr><td class="mono">Sᵣ</td><td>已反转区间</td><td>内部节点已经按目标顺序反转完成，是一个独立闭环。</td></tr>
+          <tr><td class="mono">Sᵤ</td><td>待反转区间</td><td>仍保持原始顺序，尚未处理。</td></tr>
+          <tr><td class="mono">pre</td><td>指向 Sᵣ 的头</td><td>已反转区间当前的第一个节点；循环终止时它就是答案。</td></tr>
+          <tr><td class="mono">cur</td><td>Sᵤ 的首节点</td><td>本轮要从 Sᵤ 剥离、并入 Sᵣ 的当前处理节点。</td></tr>
+          <tr><td class="mono">nxt</td><td>Sᵤ 的次节点</td><td>cur 的后继；用于在改指针前锁住 Sᵤ 的新入口，防止断链丢节点。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin:22px 0">
+      <h3 style="margin-top:0">边界锚定 · 变量就是区间的交界点</h3>
+      <p style="color:var(--sub);font-size:13.5px;margin-bottom:8px">不要把变量当成“临时存值的盒子”；在这个状态机里，每个变量都是贴在区间边界上的锚点。区间收缩 / 扩张，本质就是这些锚点在移动。</p>
+      <table class="def-table">
+        <colgroup><col style="width:18%"><col style="width:30%"><col style="width:28%"><col style="width:24%"></colgroup>
+        <tbody>
+          <tr><th>变量</th><th>边界角色</th><th>交界位置</th><th>本质</th></tr>
+          <tr><td class="mono">pre</td><td class="role">Sᵣ 头部锚点</td><td>两区间分界线的左侧（Sᵣ 侧）</td><td>已反转区间的入口</td></tr>
+          <tr><td class="mono">cur</td><td class="role">Sᵤ 头部锚点</td><td>两区间分界线的右侧（Sᵤ 侧）</td><td>本轮即将被搬运的节点</td></tr>
+          <tr><td class="mono">nxt</td><td class="role">Sᵤ 下一边界备份</td><td>Sᵤ 的第二个节点</td><td>改指针前提前抓住的下一个交界点</td></tr>
+        </tbody>
+      </table>
+      <p style="color:var(--sub);font-size:13px;margin-top:10px">▶ 核心关系：<code class="inline">pre</code> 与 <code class="inline">cur</code> 永远相邻，共同构成两个区间的分界线；pre 在左，cur 在右。</p>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="axiom inv">
+        <div class="ax-title">INVARIANT · 不变量（每轮结束后必须成立）</div>
+        <ul>
+          <li><b>Sᵣ 内部已完全反转</b>，且 pre 始终是 Sᵣ 的头。</li>
+          <li><b>Sᵤ 保持原始顺序</b>，未被改动。</li>
+          <li>两个区间之间没有共享节点；cur 是唯一的搬运节点。</li>
+        </ul>
+      </div>
+      <div class="axiom safe">
+        <div class="ax-title">AXIOM · 断链公理（最高优先级约束）</div>
+        <ul>
+          <li>单链表只能向后访问；一旦改写 <code class="inline">cur.next</code>，cur 与后继的连接立即断开。</li>
+          <li>因此<b>必须先把后继存入 nxt</b>，再动 <code class="inline">cur.next</code>；顺序不可颠倒。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="axiom inv" style="margin-top:18px">
+      <div class="ax-title">TERMINATION · 终止条件</div>
+      <ul>
+        <li>当 <code class="inline">cur == None</code>，说明 Sᵤ 已空、全部节点并入 Sᵣ；此时 <code class="inline">pre</code> 即为反转后链表的头，返回 pre。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 01 转移算子 F ===== -->
+<section>
+  <div class="wrap">
+    <h2><span class="idx">01</span>原子转移算子 F · 一轮循环 = 一次状态变换</h2>
+    <p class="sec-desc">下面 4 条动作是一个不可拆分的整体：输入旧状态 <code class="inline">(pre, cur, nxt)</code>，输出新状态 <code class="inline">(pre', cur', nxt')</code>。不要逐行单独理解，把它当成一个函数 F。</p>
+
+    <div class="grid grid-2">
+      <div class="operator">
+        <div class="operator-head"><span><span class="fname">F</span> · 单次搬运</span><span class="io">(pre,cur,nxt) → (pre',cur',nxt')</span></div>
+        <div class="operator-body">
+          <div class="op-step"><span class="n">①</span><span class="desc"><code>nxt = cur.next</code>　<b>备份后继</b>：锁住 Sᵤ 下一个入口。</span></div>
+          <div class="op-step"><span class="n">②</span><span class="desc"><code>cur.next = pre</code>　<b>回指前驱</b>：cur 接到 Sᵣ 头部。</span></div>
+          <div class="op-step"><span class="n">③</span><span class="desc"><code>pre = cur</code>　<b>更新 Sᵣ 头</b>：cur 成为新区间头。</span></div>
+          <div class="op-step"><span class="n">④</span><span class="desc"><code>cur = nxt</code>　<b>游标前移</b>：cur 进入 Sᵤ 原入口。</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>算子对应的代码（逐行绑定语义阶段）</h3>
+        <div class="op-code" id="algoCode">
+          <div class="cline" data-line="0"><span class="line-no">1</span><span><span class="kw">def</span> <span class="fn">reverseList</span>(self, head):</span><span class="sem-tag">入口</span></div>
+          <div class="cline" data-line="1"><span class="line-no">2</span><span>pre = <span class="kw">None</span></span><span class="sem-tag">初始化 Sᵣ 为空</span></div>
+          <div class="cline" data-line="2"><span class="line-no">3</span><span>cur = head</span><span class="sem-tag">初始化 Sᵤ 起点</span></div>
+          <div class="cline" data-line="3"><span class="line-no">4</span><span><span class="kw">while</span> cur:</span><span class="sem-tag">Sᵤ 非空则继续</span></div>
+          <div class="cline" data-line="4"><span class="line-no">5</span><span>nxt = cur.next</span><span class="sem-tag">阶段① 边界预备</span></div>
+          <div class="cline" data-line="5"><span class="line-no">6</span><span>cur.next = pre</span><span class="sem-tag">阶段② 节点接入</span></div>
+          <div class="cline" data-line="6"><span class="line-no">7</span><span>pre = cur</span><span class="sem-tag">阶段③ 更新 Sᵣ 边界</span></div>
+          <div class="cline" data-line="7"><span class="line-no">8</span><span>cur = nxt</span><span class="sem-tag">阶段③ 更新 Sᵤ 边界</span></div>
+          <div class="cline" data-line="8"><span class="line-no">9</span><span><span class="kw">return</span> pre</span><span class="sem-tag">返回 Sᵣ 头部</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-cards" id="stageCards">
+      <div class="stage-card" data-stage="1">
+        <div class="sc-num">阶段 ①</div>
+        <div class="sc-name">边界预备</div>
+        <div class="sc-desc">改写 cur 指针之前，先备份 Sᵤ 的下一个入口；否则一旦断链，待反转区间整体丢失。</div>
+        <div class="sc-code">nxt = cur.next</div>
+      </div>
+      <div class="stage-card" data-stage="2">
+        <div class="sc-num">阶段 ②</div>
+        <div class="sc-name">节点接入</div>
+        <div class="sc-desc">修改 cur 的 next 指向 pre，把 cur 接到 Sᵣ 头部，正式并入已反转区间。</div>
+        <div class="sc-code">cur.next = pre</div>
+      </div>
+      <div class="stage-card" data-stage="3">
+        <div class="sc-num">阶段 ③</div>
+        <div class="sc-name">边界更新</div>
+        <div class="sc-desc">pre 右移一格（Sᵣ 扩大），cur 右移到 nxt（Sᵤ 缩小），分界线整体前进一格。</div>
+        <div class="sc-code">pre = cur　·　cur = nxt</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 01.5 盲点纠偏 · 画面到代码的桥接 ===== -->
+<section>
+  <div class="wrap">
+    <h2><span class="idx">01.5</span>盲点纠偏 · 把脑海画面落到具体代码</h2>
+    <p class="sec-desc">你脑海里的“两个空间此消彼长、方块跳来跳去”是对的；断层出现在：画面是“物体搬运”，而链表代码实际是“改指针 + 挪游标”。这一节把两者逐一对上。</p>
+
+    <h3>纠偏一：节点没有被搬运，变的只是箭头指向</h3>
+    <div class="myth-grid">
+      <div class="myth wrong">
+        <div class="m-title">常见心智幻觉（导致卡住）</div>
+        <p>以为有一个小方块从 Sᵤ 被<b>复制 / 搬</b>到 Sᵣ，像把积木从右边格子挪到左边格子。</p>
+        <p>于是会追问：代码里哪一句“把节点搬过去”？找不到这句，就觉得代码和画面对不上。</p>
+      </div>
+      <div class="myth right">
+        <div class="m-title">链表的真实事实</div>
+        <p>节点对象从头到尾<b>位置不变</b>，内存里没有“搬运”这个动作。唯一被改变的，是节点身上的 <code class="inline">next</code> 箭头指向。</p>
+        <p>所谓“并入 Sᵣ”，<b>等价于把 cur 的箭头掉头指回 pre</b>；所谓“区间移动”，只是 pre / cur 两个游标变量换了指向。</p>
+      </div>
+    </div>
+
+    <h3>纠偏二：逐行落地 · 每行代码读写了谁、画面变了什么</h3>
+    <p style="color:var(--sub);font-size:13.5px;margin-bottom:12px">关键区分：前两行改的是<b>节点身上的箭头（next）</b>，后两行改的是<b>游标变量本身（pre / cur）</b>。这是最容易混在一起的地方。</p>
+    <div class="table-wrap">
+      <table class="land-table">
+        <colgroup><col style="width:21%"><col style="width:30%"><col style="width:31%"><col style="width:18%"></colgroup>
+        <thead><tr><th>代码行</th><th>读了谁 / 写了谁</th><th>区间画面发生什么</th><th>改动对象</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="mono">nxt = cur.next</td>
+            <td>读 <code class="inline">cur.next</code>（cur 指向的后继），写入变量 <span class="tag-write">nxt</span>。节点一个都没动。</td>
+            <td>在动手改 cur 之前，先把 Sᵤ 剩下的第一个节点“抓在手里”备份，防止等下断链后找不到它。</td>
+            <td>备份游标 nxt</td>
+          </tr>
+          <tr>
+            <td class="mono">cur.next = pre</td>
+            <td>改写 <span class="tag-write">cur.next</span>，让它指向 pre。这是本轮唯一修改的节点箭头。</td>
+            <td>cur 的箭头掉头，从“指向 Sᵤ 后方”改为“指向 Sᵣ 头部”；cur 就此挂到 Sᵣ 贴分界线的头部。</td>
+            <td>节点箭头 next</td>
+          </tr>
+          <tr>
+            <td class="mono">pre = cur</td>
+            <td>把游标 <span class="tag-write">pre</span> 改写为 cur 当前指向的节点。不改任何节点箭头。</td>
+            <td>Sᵣ 的头锚点右移一格，落到刚接入的 cur 上；Sᵣ 正式扩大一格。</td>
+            <td>游标变量 pre</td>
+          </tr>
+          <tr>
+            <td class="mono">cur = nxt</td>
+            <td>把游标 <span class="tag-write">cur</span> 改写为之前备份的 nxt。不改任何节点箭头。</td>
+            <td>Sᵤ 的头锚点右移到备份的下一个节点；Sᵤ 缩小一格，准备下一轮。</td>
+            <td>游标变量 cur</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>纠偏三：这是一条串行流水线，顺序不可交换</h3>
+    <div class="dep-chain">
+      <span class="dep-node"><b>①</b> nxt 备份后继</span>
+      <span class="dep-arrow">→</span>
+      <span class="dep-node"><b>②</b> cur.next 回指 pre</span>
+      <span class="dep-arrow">→</span>
+      <span class="dep-node"><b>③</b> pre 前移</span>
+      <span class="dep-arrow">→</span>
+      <span class="dep-node"><b>④</b> cur 前移</span>
+    </div>
+    <p class="dep-warn">⚠ 若把 ② 提到 ① 前面：先执行 <code class="inline">cur.next = pre</code>，cur 与后继的连接已断开，此时再 <code class="inline">nxt = cur.next</code> 拿到的就是 pre，Sᵤ 剩余节点整体丢失。所以 ① 必须先于 ②，这是强时序依赖，不能并行建模。</p>
+
+    <h3>纠偏四：画面方向与链表方向</h3>
+    <ul class="tight">
+      <li>两个框左右并排、中间是分界线：<b>Sᵣ 在左，Sᵤ 在右</b>。新节点从分界线一侧进入 Sᵣ，<b>向左堆叠</b>，所以 Sᵣ 从右往左逐渐变宽；Sᵤ 从分界线一侧起，<b>向右缩减</b>。</li>
+      <li>框内位置 ≠ 链表 next 方向：Sᵣ 框内从左到右是「尾 … 头(pre)」，而链表 <code class="inline">next</code> 是从头指向尾，即视觉上<b>箭头朝左</b>；pre 钉在贴分界线的头节点上（Sᵣ 框最右）。</li>
+      <li>每个方块分两格：<b>左格数据域 val</b>（存数值），<b>右格指针域 next</b>（存下一个节点位置）。代码里 <code class="inline">cur.next = pre</code> 改的就是右格；<code class="inline">cur.val</code> 才是左格。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 02 交互推演 ===== -->
+<section>
+  <div class="wrap">
+    <h2><span class="idx">02</span>仿真推演 · 用动画校验模型（模型已建立）</h2>
+    <p class="sec-desc">此时动画只是模拟器：每点一次「下一步」= 执行一次算子 F。观察两个区间如何此消彼长，确认画面始终满足 00 节的不变量。</p>
+    <div class="grid demo-stack">
+      <div class="card">
+        <div class="demo-head">
+          <div class="legend">
+            <span><i class="dot" style="background:var(--pre)"></i>pre · Sᵣ 头</span>
+            <span><i class="dot" style="background:var(--cur)"></i>cur · 待处理</span>
+            <span><i class="dot" style="background:var(--nxt)"></i>nxt · Sᵤ 次节点</span>
+          </div>
+        </div>
+        <div class="stage" id="stage"></div>
+        <div class="stage-note" id="note"></div>
+        <div class="io-bar" id="ioBar"></div>
+        <div class="controls">
+          <button id="btnPrev">上一步</button>
+          <button id="btnPlay" class="primary">播放</button>
+          <button id="btnNext">下一步</button>
+          <button id="btnReset">重置</button>
+          <span class="step-ind" id="stepInd"></span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>轮次读法</h3>
+        <ul class="tight">
+          <li><b>初始态</b>：Sᵣ 为空（pre=None），Sᵤ = 1→2→3→4→5，cur=1。</li>
+          <li><b>每一轮 F</b>：cur 从 Sᵤ 贴分界线的头部剥离，接到 Sᵣ 贴分界线的头部；pre、cur 依次前移。</li>
+          <li><b>终止态</b>：Sᵤ 为空（cur=None）；链表 next 顺序为 5→4→3→2→1，pre=5（Sᵣ 框最右的头节点）。</li>
+        </ul>
+        <h3>边界 Case</h3>
+        <div class="case-row">
+          <div class="case-chip">空链表 <code>head=None</code> → <b>返回 None</b></div>
+          <div class="case-chip">单节点 <code>[1]</code> → <b>一轮后返回原节点</b></div>
+          <div class="case-chip">双节点 <code>[1,2]</code> → <b>2→1</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 03 栈重建法（校验器） ===== -->
+<section>
+  <div class="wrap">
+    <h2><span class="idx">03</span>范式 A · 栈重建法（定位：校验工具，非主模型）</h2>
+    <div class="axiom inv" style="border-left-color:var(--nxt)"><b>模型：</b>序列化 → 栈后进先出 → 反向重建。先把节点值全部压入数组，再从栈顶弹出逐个新建节点串成新链表。逻辑线性直观，但模型不可迁移、空间 O(n)，仅适合用来核对双指针结果。</div>
+    <div class="grid grid-2">
+      <div class="card">
+<pre class="code"><span class="kw">def</span> <span class="fn">reverseList</span>(self, head):
+    <span class="kw">if</span> head <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">return</span> <span class="kw">None</span>
+    tmp = []
+    cur = head
+    <span class="kw">while</span> cur:
+        tmp.append(cur.val)
+        cur = cur.next
+    newHead = <span class="fn">ListNode</span>(tmp.pop())
+    node = newHead
+    <span class="kw">while</span> tmp:
+        node.next = <span class="fn">ListNode</span>(tmp.pop())
+        node = node.next
+    <span class="kw">return</span> newHead</pre>
+      </div>
+      <div class="card">
+        <h3>状态推演（1→2→3→4→5）</h3>
+        <ul class="tight">
+          <li>入栈完成：<code class="inline">tmp = [1,2,3,4,5]</code></li>
+          <li>pop(5) → 新头 <code class="inline">5</code>，依次弹出拼出 <code class="inline">5→4→3→2→1→None</code></li>
+        </ul>
+        <div class="axiom safe"><b>代价：</b>遍历两次链表；空间 O(n)；面试不作最优解推荐。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 04 递归 ===== -->
+<section>
+  <div class="wrap">
+    <h2><span class="idx">04</span>范式 C · 递归（定位：同构表达，拓展理解）</h2>
+    <div class="axiom inv" style="border-left-color:var(--nxt)"><b>子问题定义：</b><code class="inline">reverseList(node)</code> 返回以 node 为起点反转后的头。递归基：node 为空或已是尾节点则直接返回。先递归反转后半段，再把当前节点回指自身、断开原链接。状态藏在调用栈里，不透明，长链表有栈溢出风险。</div>
+<pre class="code"><span class="kw">def</span> <span class="fn">reverseList</span>(self, head):
+    <span class="kw">if</span> head <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> head.next <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">return</span> head
+    newHead = self.<span class="fn">reverseList</span>(head.next)
+    head.next.next = head
+    head.next = <span class="kw">None</span>
+    <span class="kw">return</span> newHead</pre>
+  </div>
+</section>
+
+<!-- ===== 05 对比矩阵 ===== -->
+<section>
+  <div class="wrap">
+    <h2><span class="idx">05</span>范式决策矩阵</h2>
+    <p class="sec-desc">按时间、空间、是否新建节点、可迁移性横向选型。</p>
+    <div class="table-wrap">
+      <table class="data">
+        <colgroup><col style="width:18%"><col style="width:13%"><col style="width:13%"><col style="width:15%"><col style="width:21%"><col style="width:20%"></colgroup>
+        <thead><tr><th>方案</th><th>时间</th><th>空间</th><th>新建节点</th><th>优点 / 缺陷</th><th>定位</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">双指针原地</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td class="mono">无</td><td>时空最优；模型可迁移到多数链表题；需掌握后继缓存</td><td><b>核心心智模型 · 首选</b></td></tr>
+          <tr><td class="mono">栈重建法</td><td class="mono">O(n)</td><td class="mono">O(n)</td><td class="mono">全部新建</td><td>逻辑线性好理解；内存大、遍历两次、不可迁移</td><td>校验工具 / 写测试</td></tr>
+          <tr><td class="mono">递归</td><td class="mono">O(n)</td><td class="mono">O(n)</td><td class="mono">无</td><td>代码极简；状态不透明、调用栈溢出风险</td><td>思想拓展 · 吃透迭代后再看</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 06 避坑清单 ===== -->
+<section>
+  <div class="wrap">
+    <h2><span class="idx">06</span>链表题通用避坑清单</h2>
+    <div class="pit">
+      <div class="pit-item">
+        <div class="bad">✕ 把类名 ListNode 作为循环 / 赋值变量</div>
+        <div class="good">✓ 类型名只读不可写；状态游标用 cur / pre / nxt。</div>
+      </div>
+      <div class="pit-item">
+        <div class="bad">✕ 改 cur.next 前不缓存 nxt，直接断链丢节点</div>
+        <div class="good">✓ 遵守断链公理：先 nxt = cur.next，再改指针。</div>
+      </div>
+      <div class="pit-item">
+        <div class="bad">✕ 遗漏空链表、单节点等边界</div>
+        <div class="good">✓ 先跑 head=None、单节点、双节点三类用例。</div>
+      </div>
+      <div class="pit-item">
+        <div class="bad">✕ 反转结束 return cur</div>
+        <div class="good">✓ 终止时 cur 必为 None；新头是 pre，return pre。</div>
+      </div>
+    </div>
+    <div class="err-box">历史报错复盘：UnboundLocalError: cannot access local variable 'ListNode' —— 写 ListNode = ListNode.next 用局部变量遮蔽了类名，后续 ListNode(...) 构造时类已不存在。</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">LeetCode 206. Reverse Linked List · 三指针区间状态机 · 样例 1→2→3→4→5 仅用于教学推演</div>
+</footer>
+
+<script>
+(function(){
+  const vals = [1,2,3,4,5];
+  const states = [];
+
+  // 阶段级建模：一轮 F 拆为 ① 边界预备 ② 节点接入 ③ 边界更新（含两行）
+  let preI = null, curI = 0, nxtI = null;
+  let rev = [], rem = vals.slice();
+
+  function tri(pi,ci,ni){
+    return {pre: pi===null?'None':vals[pi], cur: ci===null?'None':vals[ci], nxt: ni===null?'None':vals[ni]};
+  }
+
+  states.push({rev:rev.slice(), rem:rem.slice(), preI, curI, nxtI,
+    line:2, stage:0, round:0,
+    before:tri(preI,curI,nxtI), after:tri(preI,curI,nxtI),
+    note:'初始态：Sᵣ 为空（pre=None），Sᵤ = 1→2→3→4→5，cur=1。尚未执行 F。'});
+
+  let round = 0;
+  while(curI !== null){
+    round++;
+    const b0 = tri(preI,curI,nxtI);
+    nxtI = curI + 1 < vals.length ? curI + 1 : null;
+    const moved = vals[curI];
+
+    // ① 边界预备：备份 Sᵤ 下一边界
+    states.push({rev:rev.slice(), rem:rem.slice(), preI, curI, nxtI, line:4, stage:1, round,
+      before:b0, after:tri(preI,curI,nxtI),
+      note:`阶段① 边界预备：nxt = cur.next，先备份 Sᵤ 下一个入口（nxt=${nxtI!==null?vals[nxtI]:'None'}），防止改指针后断链丢节点。`});
+
+    // ② 节点接入：cur 接入 Sᵣ 头部
+    let b = tri(preI,curI,nxtI);
+    rem = rem.slice(1);
+    rev.unshift(moved);
+    states.push({rev:rev.slice(), rem:rem.slice(), preI, curI, nxtI, line:5, stage:2, round,
+      before:b, after:tri(preI,curI,nxtI),
+      note:`阶段② 节点接入：cur.next = pre，节点 ${moved} 反转指向 Sᵣ 头部，并入已反转区间。`});
+
+    // ③a 更新 Sᵣ 边界
+    b = tri(preI,curI,nxtI);
+    preI = curI;
+    states.push({rev:rev.slice(), rem:rem.slice(), preI, curI, nxtI, line:6, stage:3, round,
+      before:b, after:tri(preI,curI,nxtI),
+      note:`阶段③ 边界更新：pre = cur，Sᵣ 锚点右移到节点 ${vals[preI]}，Sᵣ 扩大一格。`});
+
+    // ③b 更新 Sᵤ 边界
+    b = tri(preI,curI,nxtI);
+    curI = nxtI;
+    const done = curI === null;
+    states.push({rev:rev.slice(), rem:rem.slice(), preI, curI, nxtI, line:7, stage:3, round,
+      before:b, after:tri(preI,curI,nxtI),
+      note: done
+        ? `阶段③ 边界更新：cur = nxt，Sᵤ 锚点右移到 None；Sᵤ 已空，pre=${vals[preI]} 即新链表头。`
+        : `阶段③ 边界更新：cur = nxt，Sᵤ 锚点右移到节点 ${vals[curI]}，Sᵤ 缩小一格。`});
+  }
+
+  const stage = document.getElementById('stage');
+  const note = document.getElementById('note');
+  const ioBar = document.getElementById('ioBar');
+  const stepInd = document.getElementById('stepInd');
+  const lines = document.querySelectorAll('#algoCode .cline');
+  const stageCards = document.querySelectorAll('#stageCards .stage-card');
+  let idx = 0, timer = null;
+
+  function nodeEl(val, nextVal, cls, labels){
+    const d = document.createElement('div');
+    d.className = 'node' + (cls ? ' '+cls : '');
+    if(val === null || val === undefined){
+      d.classList.add('null-node');
+      const nd=document.createElement('div'); nd.className='nd'; nd.textContent='None'; d.appendChild(nd);
+    } else {
+      const nd=document.createElement('div'); nd.className='nd'; nd.textContent=val; d.appendChild(nd);
+      const nn=document.createElement('div'); nn.className='nn'; nn.textContent = nextVal===null||nextVal===undefined?'∅':nextVal; d.appendChild(nn);
+    }
+    if(labels && labels.length){
+      labels.forEach((lb,k)=>{
+        const p = document.createElement('span');
+        p.className = 'ptr '+lb+(k>0?' alt':'');
+        p.textContent = lb; d.appendChild(p);
+      });
+    }
+    return d;
+  }
+  function arrowEl(dir){
+    const a = document.createElement('span');
+    a.className = 'arrow';
+    a.textContent = dir==='left' ? '←' : '→';
+    return a;
+  }
+
+  function render(){
+    const s = states[idx];
+    stage.innerHTML = '';
+
+    // Sᵣ 已反转区间（左框，新节点贴分界线右侧进入、向左堆叠）
+    const zoneR = document.createElement('div');
+    zoneR.className = 'zone zone-rev';
+    const tR = document.createElement('div');
+    tR.className = 'zone-title';
+    tR.innerHTML = `<span class="zt">Sᵣ · 已反转区间</span> <span class="sub">pre 贴分界线 · 从右往左增长</span>`;
+    zoneR.appendChild(tR);
+    const rowR = document.createElement('div');
+    rowR.className = 'row';
+    if(s.rev.length === 0){
+      rowR.appendChild(nodeEl(null, null, null, ['pre']));
+    } else {
+      const disp = s.rev.slice().reverse(); // 显示顺序：尾 … 头(pre)，头贴右
+      disp.forEach((v,j)=>{
+        const oi = s.rev.length-1-j;
+        const nextVal = oi+1 < s.rev.length ? s.rev[oi+1] : null;
+        let cls=''; const labs=[];
+        if(s.preI!==null && vals[s.preI]===v && oi===0){cls='pre';labs.push('pre');}
+        rowR.appendChild(nodeEl(v, nextVal, cls, labs));
+        if(j<disp.length-1) rowR.appendChild(arrowEl('left'));
+      });
+    }
+    zoneR.appendChild(rowR);
+    stage.appendChild(zoneR);
+
+    // 分界线
+    const div = document.createElement('div');
+    div.className = 'divider';
+    div.innerHTML = '<span>分界线</span>';
+    stage.appendChild(div);
+
+    // Sᵤ 待反转区间（右框，cur 贴分界线左侧、向右缩减）
+    const zoneU = document.createElement('div');
+    zoneU.className = 'zone zone-rem';
+    const tU = document.createElement('div');
+    tU.className = 'zone-title';
+    tU.innerHTML = `<span class="zt">Sᵤ · 待反转区间</span> <span class="sub">cur 贴分界线 · 从左往右缩减</span>`;
+    zoneU.appendChild(tU);
+    const rowU = document.createElement('div');
+    rowU.className = 'row';
+    if(s.rem.length === 0){
+      rowU.appendChild(nodeEl(null, null, null, ['cur']));
+    } else {
+      s.rem.forEach((v,i)=>{
+        const nextVal = i+1 < s.rem.length ? s.rem[i+1] : null;
+        let cls=''; const labs=[];
+        const ri = vals.indexOf(v);
+        if(s.curI===ri){cls='cur';labs.push('cur');}
+        else if(s.nxtI===ri){cls='nxt';labs.push('nxt');}
+        rowU.appendChild(nodeEl(v, nextVal, cls, labs));
+        if(i<s.rem.length-1) rowU.appendChild(arrowEl('right'));
+      });
+    }
+    zoneU.appendChild(rowU);
+    stage.appendChild(zoneU);
+
+    note.innerHTML = s.note;
+    const ioBox = t => `<span class="io-box">pre=<b>${t.pre}</b> · cur=<b>${t.cur}</b> · nxt=<b>${t.nxt}</b></span>`;
+    ioBar.innerHTML = `执行前 ${ioBox(s.before)} <span class="io-arrow">→</span> 执行后 ${ioBox(s.after)}`;
+    stepInd.textContent = s.round===0 ? `初始态 / ${states.length-1} 步` : `第 ${s.round} 轮 · 步骤 ${idx} / ${states.length-1}`;
+
+    // 代码逐行高亮
+    lines.forEach(l=>l.classList.remove('active'));
+    const activeLine = document.querySelector(`#algoCode .cline[data-line="${s.line}"]`);
+    if(activeLine) activeLine.classList.add('active');
+    // 阶段卡高亮
+    stageCards.forEach(c=>c.classList.toggle('active', parseInt(c.dataset.stage)===s.stage));
+
+    document.getElementById('btnPrev').disabled = idx===0;
+    document.getElementById('btnNext').disabled = idx===states.length-1;
+  }
+
+  function stop(){ if(timer){clearInterval(timer);timer=null;document.getElementById('btnPlay').textContent='播放';} }
+  function play(){
+    if(timer){stop();return;}
+    document.getElementById('btnPlay').textContent='暂停';
+    timer = setInterval(()=>{
+      if(idx>=states.length-1){stop();return;}
+      idx++; render();
+    }, 1000);
+  }
+
+  document.getElementById('btnPrev').onclick = ()=>{stop(); if(idx>0){idx--;render();}};
+  document.getElementById('btnNext').onclick = ()=>{stop(); if(idx<states.length-1){idx++;render();}};
+  document.getElementById('btnPlay').onclick = play;
+  document.getElementById('btnReset').onclick = ()=>{stop(); idx=0; render();};
+  render();
+})();
+</script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->

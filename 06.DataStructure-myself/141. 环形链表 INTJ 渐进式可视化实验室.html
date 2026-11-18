@@ -1,0 +1,2525 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INTJ 算法认知与逆向吸收工作台 v3.0 · 141. 环形链表母本实验室</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            slate: {
+              850: '#131c2e',
+              925: '#090d16',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #090d16;
+      color: #e2e8f0;
+      overflow-x: hidden;
+    }
+    .glass-card {
+      background: rgba(19, 28, 46, 0.78);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+    }
+    .cut-tab {
+      transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .stone-tile {
+      transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .code-row {
+      transition: all 0.25s ease;
+      border-left: 3px solid transparent;
+    }
+    .code-row.active {
+      background-color: rgba(56, 189, 248, 0.15);
+      border-left-color: #38bdf8;
+    }
+    .code-row.crash {
+      background-color: rgba(244, 63, 94, 0.22);
+      border-left-color: #f43f5e;
+    }
+    .code-row.safe {
+      background-color: rgba(16, 185, 129, 0.18);
+      border-left-color: #10b981;
+    }
+    @keyframes radar-pulse {
+      0% { transform: scale(0.9); opacity: 0.85; }
+      70% { transform: scale(1.3); opacity: 0; }
+      100% { transform: scale(1.3); opacity: 0; }
+    }
+    .pulse-circle {
+      animation: radar-pulse 1.6s infinite;
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-sky-500/30 selection:text-sky-200">
+
+  <!-- Top Surgical Progression Header -->
+  <header class="sticky top-0 z-30 bg-slate-925/95 backdrop-blur-md border-b border-slate-800/90 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-col gap-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-mono font-bold text-white text-sm shadow-lg shadow-sky-500/20">
+            🔪
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-base sm:text-lg font-bold text-white tracking-tight">INTJ 算法认知与逆向吸收工作台 v3.0 · 141. 环形链表母本实验室</h1>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">v3.0 新增第七刀：通用破题与逆向吸收 Meta-OS</span>
+            </div>
+            <p class="text-xs text-slate-400">前六刀建立底层画面与洋葱写码法 ➔ 第七刀解决「新题怎么推、别人题解怎么扒、怎么永久掌握」</p>
+          </div>
+        </div>
+        <div class="text-xs font-mono text-slate-400 hidden md:block">
+          当前进度：<span id="header-progress-text" class="text-sky-400 font-bold">第七刀 / 共七刀</span>
+        </div>
+      </div>
+
+      <!-- 7-Cut Stepper Bar -->
+      <nav class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+        <button onclick="goToCut(1)" id="tab-cut-1" class="cut-tab flex items-center gap-2 px-2.5 py-2 rounded-lg text-left">
+          <span id="badge-cut-1" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0">1</span>
+          <div class="truncate">
+            <div class="text-xs font-bold leading-tight truncate">第一刀：立画面</div>
+            <div class="text-[10px] opacity-75 truncate">上帝 vs 迷雾盲人</div>
+          </div>
+        </button>
+
+        <button onclick="goToCut(2)" id="tab-cut-2" class="cut-tab flex items-center gap-2 px-2.5 py-2 rounded-lg text-left">
+          <span id="badge-cut-2" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0">2</span>
+          <div class="truncate">
+            <div class="text-xs font-bold leading-tight truncate">第二刀：推破局</div>
+            <div class="text-[10px] opacity-75 truncate">0到1逼出快慢指针</div>
+          </div>
+        </button>
+
+        <button onclick="goToCut(3)" id="tab-cut-3" class="cut-tab flex items-center gap-2 px-2.5 py-2 rounded-lg text-left">
+          <span id="badge-cut-3" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0">3</span>
+          <div class="truncate">
+            <div class="text-xs font-bold leading-tight truncate">第三刀：切定量</div>
+            <div class="text-[10px] opacity-75 truncate">为什么走2步不走3步</div>
+          </div>
+        </button>
+
+        <button onclick="goToCut(4)" id="tab-cut-4" class="cut-tab flex items-center gap-2 px-2.5 py-2 rounded-lg text-left">
+          <span id="badge-cut-4" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0">4</span>
+          <div class="truncate">
+            <div class="text-xs font-bold leading-tight truncate">第四刀：切Bug</div>
+            <div class="text-[10px] opacity-75 truncate">你的第5步为何踩空</div>
+          </div>
+        </button>
+
+        <button onclick="goToCut(5)" id="tab-cut-5" class="cut-tab flex items-center gap-2 px-2.5 py-2 rounded-lg text-left">
+          <span id="badge-cut-5" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0">5</span>
+          <div class="truncate">
+            <div class="text-xs font-bold leading-tight truncate">第五刀：做手术</div>
+            <div class="text-[10px] opacity-75 truncate">5步削成3步终极版</div>
+          </div>
+        </button>
+
+        <button onclick="goToCut(6)" id="tab-cut-6" class="cut-tab flex items-center gap-2 px-2.5 py-2 rounded-lg text-left">
+          <span id="badge-cut-6" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0">6</span>
+          <div class="truncate">
+            <div class="text-xs font-bold leading-tight truncate">第六刀：元认知</div>
+            <div class="text-[10px] opacity-75 truncate">先写节点·前后补齐</div>
+          </div>
+        </button>
+
+        <button onclick="goToCut(7)" id="tab-cut-7" class="cut-tab flex items-center gap-2 px-2.5 py-2 rounded-lg text-left">
+          <span id="badge-cut-7" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0">7</span>
+          <div class="truncate">
+            <div class="text-xs font-bold leading-tight truncate">第七刀：Meta-OS</div>
+            <div class="text-[10px] opacity-75 truncate">破题·扒题解·永久掌握</div>
+          </div>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+
+    <!-- =================================================================== -->
+    <!-- 第一刀：建立画面感 —— 上帝视角 vs 指针的「迷雾盲人视角」                    -->
+    <!-- =================================================================== -->
+    <section id="cut-1" class="space-y-6">
+      <!-- Knife Headline -->
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-sky-500">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="text-xs font-mono text-sky-400 uppercase tracking-wider">🔪 第一刀 · 先把空间画面立起来</div>
+            <h2 class="text-lg sm:text-xl font-bold text-white">为什么你一眼就能看出链表有环，写代码时却无从下手？</h2>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              因为你用的是<strong>「上帝俯瞰视角」</strong>，而计算机里的指针 <code class="text-sky-400 font-mono">curr</code> 是一个<strong>打着手电筒走在浓雾里的盲人</strong>——它每次低头只能看见<strong>脚下这一块石板的值</strong>，以及<strong>通往下一块石板的单向铁索（<code class="text-sky-400 font-mono">.next</code>）</strong>。一旦迈出下一步，身后的石板瞬间重新陷入黑暗！
+            </p>
+          </div>
+
+          <!-- Chalk Mark & Terrain Switch -->
+          <div class="bg-slate-900/95 p-3 rounded-xl border border-slate-700/80 shrink-0 space-y-2">
+            <div class="text-[11px] font-mono text-slate-400">🛠️ 切换前提与地形对比：</div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="setCut1Chalk(false)" id="c1-btn-nochalk" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition">
+                🚫 不准画粉笔印 (O(1))
+              </button>
+              <button onclick="setCut1Chalk(true)" id="c1-btn-chalk" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition">
+                🖍️ 允许画粉笔印 (方法一 set)
+              </button>
+              <button onclick="toggleCut1Terrain()" id="c1-btn-terrain" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-slate-800 text-amber-300 border border-amber-500/30 hover:bg-slate-700 transition">
+                🔄 地形：9字环路
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dual Perspective Visual Canvas -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left 6 Cols: Human God View -->
+        <div class="lg:col-span-6 glass-card rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">视角 1：你的大脑</span>
+                <h3 class="text-base font-bold text-white mt-1">👁️ 人类上帝俯瞰视角 (God View)</h3>
+              </div>
+              <span class="text-xs text-slate-400">全图亮起，0.1 秒看穿“9字形”环</span>
+            </div>
+
+            <div class="bg-slate-950/90 rounded-xl border border-slate-800/90 p-3">
+              <svg id="c1-god-svg" viewBox="0 0 560 250" class="w-full h-auto select-none"></svg>
+            </div>
+          </div>
+
+          <div class="mt-4 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+            💡 <strong>注意这个链表的形状</strong>：它不是一个大圆圈，而是像数字 <strong class="text-sky-300">“9”</strong>（直道 <code class="font-mono">1 ➔ 2</code> 加上环道 <code class="font-mono">3 ➔ 4 ➔ 5 ➔ 回到 3</code>）。一旦进环，就永远在 <code class="font-mono">3-4-5</code> 里打转。
+          </div>
+        </div>
+
+        <!-- Right 6 Cols: Pointer Fog of War View -->
+        <div class="lg:col-span-6 glass-card rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <span class="text-xs font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">视角 2：代码的真实处境</span>
+                <h3 class="text-base font-bold text-white mt-1">🔦 指针的「迷雾手电筒视角」 (只见脚下1格)</h3>
+              </div>
+              <span id="c1-step-badge" class="text-xs font-mono text-amber-400 font-bold">已走步数: 0</span>
+            </div>
+
+            <!-- Fog Canvas -->
+            <div class="bg-slate-950 rounded-xl border border-slate-800/90 p-3 relative">
+              <svg id="c1-fog-svg" viewBox="0 0 560 250" class="w-full h-auto select-none"></svg>
+            </div>
+          </div>
+
+          <!-- Pointer's Inner Monologue Box -->
+          <div id="c1-monologue" class="mt-4 p-3.5 rounded-xl bg-slate-900 border border-slate-700 text-xs leading-relaxed">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Footstep Control Bar -->
+      <div class="glass-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <button onclick="c1StepForward()" id="c1-btn-step" class="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm shadow-lg shadow-sky-500/25 transition flex items-center gap-2">
+            <span>👣 操纵指针往前走一步 (curr = curr.next)</span>
+          </button>
+          <button onclick="c1Reset()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono transition">
+            ⟲ 回到起点 1
+          </button>
+        </div>
+
+        <button onclick="goToCut(2)" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white font-semibold text-sm shadow-lg transition flex items-center gap-2">
+          <span>画面已建立！看第二刀：不准画粉笔印，怎么破局？</span>
+          <span>➔</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- 第二刀：破局推导 —— 为什么会从 0 到 1 被逼出“快慢双指针”？                 -->
+    <!-- =================================================================== -->
+    <section id="cut-2" class="space-y-6 hidden">
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-indigo-500">
+        <div class="space-y-1.5">
+          <div class="text-xs font-mono text-indigo-400 uppercase tracking-wider">🔪 第二刀 · 从 0 到 1 推导破局思路</div>
+          <h2 class="text-lg sm:text-xl font-bold text-white">如果不看题解，我们是怎么一步步被逼出「快慢双指针」这个念头的？</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            在第一刀里我们看到：**只有 1 个指针且不准在石板上画粉笔印时，它永远不知道自己是不是在原地转圈**。既然地上不准画记号，最自然的想法就是——**多派一个人进去当「活体路标」**！请依次点击下面 3 个脑洞实验，看前两个直觉想法是怎么失败的，从而唯一逼出第 3 个方案：
+          </p>
+        </div>
+      </div>
+
+      <!-- 3 Thought Experiments Selector -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <button onclick="selectCut2Exp('A')" id="c2-tab-A" class="p-4 rounded-2xl border text-left transition-all">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300">脑洞实验 A (失败)</span>
+            <span class="text-xs font-mono text-slate-400">路标不动</span>
+          </div>
+          <div class="text-sm font-bold text-white mt-1">让 slow 站在起点当静止路标，fast 一个人跑</div>
+          <p class="text-xs text-slate-400 mt-1">想看 fast 能不能转一圈回到起点撞上 slow？</p>
+        </button>
+
+        <button onclick="selectCut2Exp('B')" id="c2-tab-B" class="p-4 rounded-2xl border text-left transition-all">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">脑洞实验 B (失败)</span>
+            <span class="text-xs font-mono text-slate-400">同速前进</span>
+          </div>
+          <div class="text-sm font-bold text-white mt-1">让路标 slow 也往前走，两人每次都走 1 步</div>
+          <p class="text-xs text-slate-400 mt-1">一前一后进环，看看两人能不能撞上？</p>
+        </button>
+
+        <button onclick="selectCut2Exp('C')" id="c2-tab-C" class="p-4 rounded-2xl border text-left transition-all">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">脑洞实验 C (破局！)</span>
+            <span class="text-xs font-mono text-emerald-400">一快一慢套圈</span>
+          </div>
+          <div class="text-sm font-bold text-white mt-1">移动路标 (slow走1步) + 套圈猎人 (fast走2步)</div>
+          <p class="text-xs text-slate-400 mt-1">路标负责进环，快指针负责在环里从背后套圈追尾！</p>
+        </button>
+      </div>
+
+      <!-- Interactive Experiment Stage -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left 7 Cols: Animation Canvas -->
+        <div class="lg:col-span-7 glass-card rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 id="c2-canvas-title" class="text-sm font-bold text-white">实验画布</h3>
+              <span id="c2-tick-badge" class="text-xs font-mono px-2.5 py-1 rounded bg-slate-800 text-sky-400 font-bold">第 0 步</span>
+            </div>
+
+            <div class="bg-slate-950/90 rounded-xl border border-slate-800 p-3">
+              <svg id="c2-svg" viewBox="0 0 600 250" class="w-full h-auto select-none"></svg>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <button onclick="c2Step()" id="c2-btn-step" class="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs shadow-lg shadow-sky-500/20 transition">
+                ▶ 往前推演一步
+              </button>
+              <button onclick="c2ToggleAuto()" id="c2-btn-auto" class="px-3.5 py-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition">
+                ⚡ 连续播放动画
+              </button>
+              <button onclick="c2Reset()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+                ⟲ 重置
+              </button>
+            </div>
+            <div class="flex items-center gap-3 text-xs font-mono">
+              <span class="text-sky-400">● slow (路标)</span>
+              <span class="text-amber-400">● fast (探路/追击)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 5 Cols: Surgical Deduction Breakdown -->
+        <div class="lg:col-span-5 glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-4">
+            <div class="text-xs font-mono text-indigo-400 uppercase">🧠 实验现象与第一性原理推导</div>
+            <div id="c2-analysis-box" class="space-y-3 text-xs sm:text-sm text-slate-200 leading-relaxed">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/95 border border-slate-800 space-y-2">
+            <div class="text-xs font-bold text-white">📌 为什么必须一快一慢？（INTJ 一句话本质）</div>
+            <ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4 leading-relaxed">
+              <li><strong class="text-sky-400">为什么要动？</strong> 因为环前面可能有长长的直道（9字形），路标 <code class="font-mono">slow</code> 必须往前走，才能把自己送进环里。</li>
+              <li><strong class="text-amber-400">为什么要快慢不等速？</strong> 因为两个都在动的人，只有存在<strong>速度差</strong>，在操场跑圈时才会发生<strong>套圈相遇</strong>！</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Nav -->
+      <div class="flex justify-between pt-2">
+        <button onclick="goToCut(1)" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+          ← 回到第一刀
+        </button>
+        <button onclick="goToCut(3)" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white font-semibold text-sm shadow-lg transition flex items-center gap-2">
+          <span>懂了为什么用快慢指针！切第三刀：为什么偏偏走 2 步而不是 3 步？</span>
+          <span>➔</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- 第三刀：定量切剖 —— 为什么快指针偏偏走 2 步，而不是 3 步？                 -->
+    <!-- =================================================================== -->
+    <section id="cut-3" class="space-y-6 hidden">
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="text-xs font-mono text-emerald-400 uppercase tracking-wider">🔪 第三刀 · 跳房子石板实验</div>
+            <h2 class="text-lg sm:text-xl font-bold text-white">既然要追人，让 <code class="text-amber-400 font-mono">fast</code> 每次走 3 步岂不是追得更快？为什么必须是 2 步？</h2>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              因为链表**不是连续的塑胶跑道，而是一块一块离散的「跳房子石板」**！假设在环里 <code class="text-amber-400 font-mono">fast</code> 已经追到 <code class="text-sky-400 font-mono">slow</code> 屁股后面**只差 1 块石板**的位置。点击下方按钮，亲眼看看**跳 2 格**和**跳 3 格**在起跳瞬间会发生什么：
+            </p>
+          </div>
+
+          <div class="bg-slate-900/95 p-3 rounded-xl border border-slate-700/80 shrink-0">
+            <div class="text-[11px] font-mono text-slate-400 mb-2">🦘 切换快指针跳跃步长：</div>
+            <div class="flex gap-2">
+              <button onclick="setCut3Mode(2)" id="c3-btn-m2" class="px-3 py-2 rounded-lg text-xs font-mono font-semibold transition">
+                ✅ fast 每次跳 2 格 (必踩中)
+              </button>
+              <button onclick="setCut3Mode(3)" id="c3-btn-m3" class="px-3 py-2 rounded-lg text-xs font-mono font-semibold transition">
+                ❌ fast 每次跳 3 格 (凌空跃过!)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hopscotch Discrete Stone Tiles Visualizer -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-8 glass-card rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-bold text-white">环内局部放大：当 <code class="text-amber-400 font-mono">fast</code> 追到 <code class="text-sky-400 font-mono">slow</code> 身后仅差 1 格石板时</h3>
+              <span id="c3-state-label" class="text-xs font-mono px-2.5 py-1 rounded bg-slate-800 text-amber-300">起跳前：相距 1 格</span>
+            </div>
+
+            <div class="bg-slate-950/90 rounded-xl border border-slate-800 p-4">
+              <svg id="c3-svg" viewBox="0 0 640 240" class="w-full h-auto select-none"></svg>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <button onclick="c3TriggerJump()" id="c3-btn-jump" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition">
+                🦘 点击同时起跳！(看落点)
+              </button>
+              <button onclick="c3Reset()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+                ⟲ 回到起跳前 (相距1格)
+              </button>
+            </div>
+            <div class="text-xs font-mono text-slate-400">
+              口诀：<span class="text-emerald-400 font-bold">慢1快2，每轮追近 1 格，距离必过 0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4 glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div id="c3-explain-card" class="space-y-3 text-xs sm:text-sm text-slate-200 leading-relaxed">
+            <!-- Populated dynamically -->
+          </div>
+
+          <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs text-slate-200 space-y-1.5">
+            <div class="font-bold text-emerald-300">📐 极简算术账本：</div>
+            <p class="leading-relaxed text-slate-300">
+              每跳一次，<code class="font-mono text-sky-300">slow</code> 逃跑 <strong>1 格</strong>，<code class="font-mono text-amber-300">fast</code> 追赶 <strong>2 格</strong>。<br>
+              两人的距离每回合净缩减：<code class="font-mono text-emerald-300 font-bold">2 - 1 = 1 格</code>。<br>
+              不管刚进环时差几格（比如差 4 格），距离都会老老实实按 <code class="font-mono">4 ➔ 3 ➔ 2 ➔ 1 ➔ 0</code> 一格不落地归零，<strong>绝对不可能跨过去</strong>！
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Nav -->
+      <div class="flex justify-between pt-2">
+        <button onclick="goToCut(2)" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+          ← 回到第二刀
+        </button>
+        <button onclick="goToCut(4)" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white font-semibold text-sm shadow-lg transition flex items-center gap-2">
+          <span>画面彻底清晰！切第四刀：看我的第 5 步代码为什么会踩空摔死</span>
+          <span>➔</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- 第四刀：代码切剖 —— 你的第 5 步 while fast: 为什么会踩空摔死？              -->
+    <!-- =================================================================== -->
+    <section id="cut-4" class="space-y-6 hidden">
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="text-xs font-mono text-amber-400 uppercase tracking-wider">🔪 第四刀 · 悬崖跳石板显微镜（诊断你的第 5 步）</div>
+            <h2 class="text-lg sm:text-xl font-bold text-white">既然 <code class="text-amber-400 font-mono">fast</code> 每次要连跳 2 格（<code class="text-rose-400 font-mono">fast.next.next</code>），为什么只写 <code class="text-amber-300 font-mono">while fast:</code> 会摔死？</h2>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              继续用跳房子画面想：如果链表没有环，尽头就是**万丈悬崖 <code class="text-rose-400 font-mono">None</code>**。连跳两格（<code class="font-mono text-amber-300">fast.next</code> 再 <code class="font-mono text-rose-400">.next</code>）相当于**在空中做二段跳**——必须借力踩一下身前第 1 块石板（<code class="font-mono text-amber-300">fast.next</code>），才能跳向第 2 块石板！如果身前第 1 格已经是悬崖 <code class="font-mono">None</code>，你在悬崖半空想借力蹬第二脚（<code class="font-mono text-rose-400">None.next</code>），就会当场踩空报错！
+            </p>
+          </div>
+
+          <div class="bg-slate-900/95 p-3 rounded-xl border border-slate-700/80 shrink-0">
+            <div class="text-[11px] font-mono text-slate-400 mb-2">🛡️ 切换你的第 5 步起跳安检门：</div>
+            <div class="flex gap-2">
+              <button onclick="setCut4Mode('bug')" id="c4-btn-bug" class="px-3 py-2 rounded-lg text-xs font-mono font-semibold transition">
+                🔴 你的原版: while fast:
+              </button>
+              <button onclick="setCut4Mode('safe')" id="c4-btn-safe" class="px-3 py-2 rounded-lg text-xs font-mono font-semibold transition">
+                🟢 双重安全锁: while fast and fast.next:
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cliff Jump Visualizer + User's 5-Step Code -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left 5 Cols: User's 5-Step Code -->
+        <div class="lg:col-span-5 glass-card rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">你的 5 步拆解代码</span>
+              <span id="c4-code-badge" class="text-xs font-mono text-slate-400">测试用例: [1] ➔ [2] ➔ 悬崖None</span>
+            </div>
+
+            <div class="bg-slate-950 rounded-xl border border-slate-800 p-3 font-mono text-xs leading-6 space-y-1 select-none">
+              <div id="c4-row-1" class="code-row px-2.5 py-1 rounded-r flex justify-between">
+                <span><span class="text-sky-400">if not</span> head <span class="text-sky-400">or not</span> head.next: <span class="text-emerald-400">return False</span></span>
+                <span class="text-[10px] text-slate-500">步骤1</span>
+              </div>
+              <div id="c4-row-2" class="code-row px-2.5 py-1 rounded-r flex justify-between">
+                <span>slow = head; fast = head.next</span>
+                <span class="text-[10px] text-slate-500">步骤2</span>
+              </div>
+              <div id="c4-row-5" class="code-row px-2.5 py-1 rounded-r flex justify-between">
+                <span id="c4-while-text"><span class="text-purple-400">while</span> <span class="text-amber-300 font-bold">fast</span>:</span>
+                <span class="text-[10px] text-amber-400 font-bold">步骤5(安检门)</span>
+              </div>
+              <div id="c4-row-3" class="code-row px-2.5 py-1 rounded-r flex justify-between">
+                <span>&nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next; fast = <span class="text-amber-300">fast.next</span><span class="text-rose-400 font-bold">.next</span></span>
+                <span class="text-[10px] text-slate-500">步骤3(二段跳)</span>
+              </div>
+              <div id="c4-row-4" class="code-row px-2.5 py-1 rounded-r flex justify-between">
+                <span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400">if</span> slow == fast: <span class="text-emerald-400">return True</span></span>
+                <span class="text-[10px] text-slate-500">步骤4</span>
+              </div>
+              <div id="c4-row-ret" class="code-row px-2.5 py-1 rounded-r flex justify-between">
+                <span><span class="text-emerald-400">return False</span></span>
+                <span class="text-[10px] text-slate-500">安全出口</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="c4-narrator" class="mt-4 p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 leading-relaxed">
+            <!-- Populated dynamically -->
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+            <div class="flex gap-2">
+              <button onclick="c4Step()" id="c4-btn-step" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition">
+                ▶ 单步推进看画面
+              </button>
+              <button onclick="c4Reset()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+                ⟲ 重置
+              </button>
+            </div>
+            <span id="c4-progress" class="text-xs font-mono text-slate-400">阶段 1 / 3</span>
+          </div>
+        </div>
+
+        <!-- Right 7 Cols: Cliff Stone Tiles SVG -->
+        <div class="lg:col-span-7 glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-bold text-white">悬崖二段跳画面（2 块石板无环链表 <code class="text-sky-400 font-mono">[1] ➔ [2] ➔ None</code>）</h3>
+              <span class="text-xs font-mono text-slate-400">观察 fast 在石板 [2] 上的起跳条件</span>
+            </div>
+
+            <div class="bg-slate-950/90 rounded-xl border border-slate-800 p-3">
+              <svg id="c4-svg" viewBox="0 0 620 230" class="w-full h-auto select-none"></svg>
+            </div>
+          </div>
+
+          <!-- Two-Stone Safety Checklist -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div id="c4-check-1" class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1">
+              <div class="font-mono font-bold text-emerald-400">安检项 1：脚下有砖吗？ (fast != None)</div>
+              <p class="text-slate-300">当前 <code class="font-mono">fast</code> 站在 <code class="font-mono text-white">[石板 2]</code> 上，脚下确实有砖，所以能迈出第一跳 <code class="font-mono">fast.next</code>。</p>
+            </div>
+            <div id="c4-check-2" class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1">
+              <div class="font-mono font-bold text-rose-400">安检项 2：身前垫脚石有砖吗？ (fast.next != None)</div>
+              <p class="text-slate-300">石板 2 前面已经是 <code class="font-mono text-rose-400">悬崖 None</code>！没有垫脚石，第二跳 <code class="font-mono text-rose-400">.next</code> 必在半空踩空摔死！</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Nav -->
+      <div class="flex justify-between pt-2">
+        <button onclick="goToCut(3)" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+          ← 回到第三刀
+        </button>
+        <button onclick="goToCut(5)" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white font-semibold text-sm shadow-lg transition flex items-center gap-2">
+          <span>彻底看懂 Bug 了！切最后一刀：把 5 步代码削成 3 步极简内核</span>
+          <span>➔</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- 第五刀：终极收敛 —— 两刀手术把你的 5 步代码削成 3 步完美内核               -->
+    <!-- =================================================================== -->
+    <section id="cut-5" class="space-y-6 hidden">
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-purple-500">
+        <div class="space-y-1.5">
+          <div class="text-xs font-mono text-purple-400 uppercase tracking-wider">🔪 第五刀 · 代码消融手术台（形成肌肉记忆）</div>
+          <h2 class="text-lg sm:text-xl font-bold text-white">当你把第 5 步写成 <code class="text-emerald-400 font-mono">while fast and fast.next:</code> 后，奇迹发生了：前面两步瞬间可以砍掉！</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            你之前的 5 步代码之所以前面要写 <code class="font-mono text-slate-300">if not head or not head.next:</code> 并让 <code class="font-mono text-amber-300">fast = head.next</code>，完全是被力扣官方题解传染的“历史包袱”。你的结构是**「进循环先跳、跳完再看撞没撞」**，这比官方题解高明得多！请亲手点击下方两把手术刀，把多余的赘肉切掉：
+          </p>
+        </div>
+      </div>
+
+      <!-- Interactive Surgery Console -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left 6 Cols: 2 Surgical Blades + Live Code Transformation -->
+        <div class="lg:col-span-6 glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-white">🛠️ 亲手挥刀：两步消融冗余代码</h3>
+              <span id="c5-status-pill" class="text-xs font-mono px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300">手术前：5 步版本</span>
+            </div>
+
+            <!-- Blade Controls -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button onclick="toggleCut5Blade(1)" id="c5-blade-1" class="p-3 rounded-xl border text-left transition-all">
+                <div class="flex items-center justify-between text-xs font-mono font-bold">
+                  <span>🔪 手术第 1 刀</span>
+                  <span id="c5-b1-tag" class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">点击切除</span>
+                </div>
+                <div class="text-xs font-bold text-white mt-1">砍掉步骤 1 的前置判空 if</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">因为 while 安检门已经全包了！</div>
+              </button>
+
+              <button onclick="toggleCut5Blade(2)" id="c5-blade-2" class="p-3 rounded-xl border text-left transition-all">
+                <div class="flex items-center justify-between text-xs font-mono font-bold">
+                  <span>🔪 手术第 2 刀</span>
+                  <span id="c5-b2-tag" class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">点击归零</span>
+                </div>
+                <div class="text-xs font-bold text-white mt-1">把 fast = head.next 改回同起点</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">因为你是先跳再判，不怕起点相同！</div>
+              </button>
+            </div>
+
+            <!-- Live Transforming Code Block -->
+            <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs sm:text-[13px] leading-6 space-y-1">
+              <div class="text-slate-500">class Solution:</div>
+              <div class="text-slate-300">&nbsp;&nbsp;&nbsp;&nbsp;def hasCycle(self, head: Optional[ListNode]) -> bool:</div>
+
+              <!-- Ablatable Block 1 -->
+              <div id="c5-code-block1" class="transition-all duration-300 px-2 py-1 rounded bg-rose-500/10 border-l-2 border-rose-500/60">
+                <div class="text-slate-500"># 【赘肉 1】下面的 while 已经能自动拦截空链表和单节点了</div>
+                <div><span class="text-sky-400">if not</span> head <span class="text-sky-400">or not</span> head.next: <span class="text-emerald-400">return False</span></div>
+              </div>
+
+              <!-- Ablatable Block 2 -->
+              <div id="c5-code-block2" class="transition-all duration-300 px-2 py-1 rounded bg-amber-500/10 border-l-2 border-amber-500/60">
+                <div class="text-slate-500"># 【赘肉 2】官方题解先判断再跳才被迫错位，你是先跳再判断！</div>
+                <div>slow = head; <span class="text-amber-300 font-bold">fast = head.next</span></div>
+              </div>
+
+              <!-- Core 3-Step Kernel -->
+              <div class="px-2 pt-1 space-y-0.5">
+                <div class="text-emerald-400/90"># 【步骤 A：双重安全安检门】脚下有砖 且 身前第1格有砖</div>
+                <div><span class="text-purple-400">while</span> fast <span class="text-sky-400">and</span> fast.next:</div>
+                <div class="text-emerald-400/90">&nbsp;&nbsp;&nbsp;&nbsp;# 【步骤 B：慢跳 1 格，快跳 2 格】</div>
+                <div>&nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next</div>
+                <div>&nbsp;&nbsp;&nbsp;&nbsp;fast = fast.next.next</div>
+                <div class="text-emerald-400/90">&nbsp;&nbsp;&nbsp;&nbsp;# 【步骤 C：跳完落地后，看有没有踩在同一块石板上】</div>
+                <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400">if</span> slow == fast:</div>
+                <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-emerald-400">return True</span></div>
+                <div><span class="text-emerald-400">return False</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 6 Cols: Deep Explanation & Edge Case Live Verification -->
+        <div class="lg:col-span-6 glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-4">
+            <h3 class="text-sm font-bold text-white">💡 为什么官方题解写得那么拧巴，而你的结构这么顺？</h3>
+
+            <div class="grid grid-cols-1 gap-3 text-xs leading-relaxed">
+              <div class="p-3.5 rounded-xl bg-slate-900/95 border border-slate-800 space-y-1">
+                <div class="font-bold text-rose-300">❌ 官方题解的死结（先检查撞没撞，再跳）：</div>
+                <p class="text-slate-300">
+                  官方题解写的是 <code class="font-mono text-rose-300">while slow != fast:</code>。如果一开始让两人站在同一块起点石板（<code class="font-mono">slow = fast = head</code>），第 0 秒还没起跳，<code class="font-mono">slow != fast</code> 就已经不成立了，循环进都进不去！所以官方**被迫**让 <code class="font-mono text-amber-300">fast = head.next</code> 先抢跑一格，又为了防止 <code class="font-mono">head.next</code> 报错，**被迫**在最前面加 <code class="font-mono">if not head...</code>。
+                </p>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1">
+                <div class="font-bold text-emerald-300">✅ 你的结构优势（先起跳落地，再检查撞没撞）：</div>
+                <p class="text-slate-200">
+                  你把 <code class="font-mono text-emerald-300">if slow == fast:</code> 放在了移动指针**之后**！这意味着哪怕一开始 <code class="font-mono text-sky-300">slow = fast = head</code> 站在同一个起点，进了循环后两人先各自跳出第 1 步（<code class="font-mono">slow</code> 跳 1 格，<code class="font-mono">fast</code> 跳 2 格），落地之后才第一次比较 <code class="font-mono">slow == fast</code>，完全不会原地误判！
+                </p>
+              </div>
+            </div>
+
+            <!-- Interactive Edge Case Tester on the 3-Step Kernel -->
+            <div class="bg-slate-950/90 rounded-xl p-4 border border-slate-800 space-y-3">
+              <div class="text-xs font-mono text-sky-400">🧪 点击测试：看削减后的「3 步极简代码」如何秒过所有极端情况：</div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button onclick="testCut5Case('empty')" class="py-2 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-mono text-slate-200 transition">
+                  ① 空链表 []
+                </button>
+                <button onclick="testCut5Case('one')" class="py-2 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-mono text-slate-200 transition">
+                  ② 单石板 [1]
+                </button>
+                <button onclick="testCut5Case('two')" class="py-2 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-mono text-slate-200 transition">
+                  ③ 双石板无环
+                </button>
+                <button onclick="testCut5Case('cycle')" class="py-2 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-mono text-slate-200 transition">
+                  ④ 有环链表
+                </button>
+              </div>
+              <div id="c5-test-output" class="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 leading-relaxed">
+                👆 点击上方任意按钮，验证去掉步骤 1 和错位起点后是否 100% 严密。
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center pt-2 border-t border-slate-800">
+            <button onclick="goToCut(4)" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+              ← 回到第四刀
+            </button>
+            <button onclick="goToCut(6)" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-sky-500 hover:from-purple-400 hover:to-sky-400 text-white font-semibold text-xs sm:text-sm shadow-lg transition flex items-center gap-2">
+              <span>切第六刀：深度复盘我「先写节点、再前后补齐」的写码习惯</span>
+              <span>➔</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- 第六刀：元认知复盘 —— 剖析你「先写核心节点，再前后补齐」的写码范式           -->
+    <!-- =================================================================== -->
+    <section id="cut-6" class="space-y-6 hidden">
+      <!-- Headline Card -->
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-violet-500">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="text-xs font-mono text-violet-400 uppercase tracking-wider">🔪 第六刀 · INTJ 元认知解剖（专属于你的写码习惯诊断）</div>
+            <h2 class="text-lg sm:text-xl font-bold text-white">为什么你写 LeetCode 总喜欢「先写中间几个核心节点，再逐渐前后补齐」？</h2>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              你观察到了自己极其核心的思维特征：在你的 5 步拆解中，你的代码<strong>并不是从第 1 行按顺序写到最后一行</strong>的，而是<strong>先清场摆棋子（步骤 1&2）➔ 跳过循环直接写单步动作与命中（步骤 3&4）➔ 最后才回头在上下两边补齐 <code class="text-amber-300 font-mono">while</code> 外壳与出口（步骤 5）</strong>。在软件工程认知心理学中，这叫<strong>「由内向外锚定法（Inside-Out Anchoring）」</strong>。下面我们一刀切开它的<strong>3 大高明之处（合理性）</strong>与<strong>2 个致命盲区（不合理性）</strong>，并把它升级为无懈可击的做题武器。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL A: Code Growth Time-Machine (How your brain actually wrote it) -->
+      <div class="glass-card rounded-2xl p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <span class="text-xs font-mono px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">子面板 A · 生长轨迹回放器</span>
+            <h3 class="text-base font-bold text-white mt-1">⏳ 还原你大脑的真实写码时间线（从中间往上下两端长出来）</h3>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="setCut6Phase(1)" id="c6-pbtn-1" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition">
+              ① 先写步骤 1&2 (清场摆子)
+            </button>
+            <button onclick="setCut6Phase(2)" id="c6-pbtn-2" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition">
+              ② 先钉步骤 3&4 (造单帧心脏)
+            </button>
+            <button onclick="setCut6Phase(3)" id="c6-pbtn-3" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition">
+              ③ 后补步骤 5 (套 while 外壳)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          <!-- Left 7 Cols: Live Growing Editor -->
+          <div class="lg:col-span-7 bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs sm:text-[13px] leading-6 flex flex-col justify-between">
+            <div class="space-y-1.5" id="c6-growth-code">
+              <!-- Populated by JS -->
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+              <span>💡 注意看左侧标记的【大脑写入顺序】与【最终代码行号】的错位</span>
+              <span id="c6-phase-indicator" class="text-violet-400 font-bold">当前回放：阶段 ②</span>
+            </div>
+          </div>
+
+          <!-- Right 5 Cols: Cognitive State Analysis -->
+          <div class="lg:col-span-5 flex flex-col justify-between bg-slate-900/90 rounded-xl border border-slate-800 p-4 space-y-3">
+            <div id="c6-phase-desc" class="space-y-3 text-xs sm:text-sm text-slate-200 leading-relaxed">
+              <!-- Populated by JS -->
+            </div>
+            <div class="p-3 rounded-lg bg-violet-500/10 border border-violet-500/25 text-xs text-violet-200 leading-relaxed">
+              🧠 <strong>INTJ 认知特征印证</strong>：直觉主导（Ni）+ 效能辅助（Te）的人极度讨厌在还没想清楚“核心一步怎么走”之前去写虚无缥缈的循环框架。你必须先把最核心的物理动作（步骤 3&4）钉在屏幕上，你的大脑才有安全感去补外面的壳。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL B: 3 Rationalities vs 2 Blind Spots -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left 6 Cols: 3 Rationalities (Why your instinct is brilliant) -->
+        <div class="lg:col-span-6 glass-card rounded-2xl p-5 border-t-4 border-t-emerald-500 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">子面板 B1 · 合理性剖析</span>
+              <h3 class="text-base font-bold text-white mt-1">✅ 为什么你这样写是对的？（3 大天赋合理性）</h3>
+            </div>
+            <span class="text-xs font-mono text-emerald-400 font-bold">请务必保留！</span>
+          </div>
+
+          <div class="space-y-3 text-xs sm:text-sm leading-relaxed">
+            <div class="p-3.5 rounded-xl bg-slate-900/95 border border-slate-800 space-y-1">
+              <div class="font-bold text-emerald-300">1. 认知解耦（把「空间单步动作」与「时间循环边界」拆开）</div>
+              <p class="text-slate-300 text-xs">
+                人类工作记忆容量极小。如果一上来就逼自己写 <code class="font-mono text-amber-300">while ...:</code>，大脑必须同时思考“怎么走”、“怎么算撞上”、“什么时候停”三个维度。你<strong>先写步骤 3（移动）和步骤 4（相遇），等于把时间冻结在「1 帧画面」里</strong>，只解决空间动作，算力消耗直接减半！
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-900/95 border border-slate-800 space-y-1">
+              <div class="font-bold text-emerald-300">2. 天然免疫官方题解的「反人类倒装控制流」</div>
+              <p class="text-slate-300 text-xs">
+                官方题解之所以写出别扭的 <code class="font-mono text-rose-300">while slow != fast:</code>，就是因为作者强行把“命中条件”塞进循环头，结果导致起点不能相同（被迫 <code class="font-mono">fast = head.next</code>）。而你<strong>先写步骤 3 再写步骤 4，最后才在外面包步骤 5 的 <code class="font-mono">while</code></strong>，天然形成了<strong>「先推进状态 ➔ 再检测目标」</strong>的标准状态机，结构远比官方题解优雅！
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-900/95 border border-slate-800 space-y-1">
+              <div class="font-bold text-emerald-300">3. 核心锚定效应（先立主干，再长枝叶）</div>
+              <p class="text-slate-300 text-xs">
+                链表、双指针、二叉树递归题的本质都只有那 3~4 行状态转移代码。先把核心节点写出来作为“不动点”，再往前补初始化、往后补返回值，是最符合工程直觉的构建流。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 6 Cols: 2 Blind Spots (Where the bugs & redundancies sneak in) -->
+        <div class="lg:col-span-6 glass-card rounded-2xl p-5 border-t-4 border-t-rose-500 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300">子面板 B2 · 不合理性（盲区）剖析</span>
+              <h3 class="text-base font-bold text-white mt-1">⚠️ 为什么前后补齐时容易出 Bug？（2 个结构盲区）</h3>
+            </div>
+            <span class="text-xs font-mono text-rose-400 font-bold">只需打 2 个补丁！</span>
+          </div>
+
+          <div class="space-y-3 text-xs sm:text-sm leading-relaxed">
+            <div class="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 space-y-1.5">
+              <div class="font-bold text-rose-300">盲区 1：向上补 <code class="font-mono">while</code> 时的「跨层契约失配」（看脑子没看代码）</div>
+              <p class="text-slate-200 text-xs">
+                <strong>案发现场</strong>：你在步骤 3 写下了 <code class="font-mono text-amber-300">fast = fast.next.next</code>，但在步骤 5 回头往上补 <code class="font-mono">while</code> 时，你脑子里想的是宏观印象“只要快指针没走空就继续”，于是随手写下 <code class="font-mono text-rose-300">while fast:</code>。<br>
+                <strong>根源诊断</strong>：你在向外补壳时，<strong>没有低头去数步骤 3 里的 <code class="font-mono">.next</code> 级数</strong>！步骤 3 连续跨了 <strong>2 级</strong>指针（<code class="font-mono">.next.next</code>），向外包 <code class="font-mono">while</code> 时就必须签署<strong>2 级非空契约（<code class="font-mono text-emerald-300">while fast and fast.next:</code>）</strong>。
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1.5">
+              <div class="font-bold text-amber-300">盲区 2：过早写死前置补丁，且最后缺少「反向消融检查」</div>
+              <p class="text-slate-200 text-xs">
+                <strong>案发现场</strong>：你在还没写核心逻辑前，先在步骤 1 写了 <code class="font-mono">if not head or not head.next:</code>，在步骤 2 写了 <code class="font-mono">fast = head.next</code>（这是你看过官方题解后留下的防御性记忆）。<br>
+                <strong>根源诊断</strong>：既然你是「由内向外」写代码的，<strong>最前面的初始化和边界判空恰恰应该放到最后写！</strong>因为只有等你的 <code class="font-mono">while fast and fast.next:</code> 外壳包好后，你才会发现这个外壳本身就能拦住空链表和单节点，根本不需要步骤 1，也不需要步骤 2 的错位起跑。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL C: Upgraded INTJ Onion Inside-Out 4-Step Method Trainer -->
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500 space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">子面板 C · 终极方法论升级</span>
+            <h3 class="text-base font-bold text-white mt-1">🧅 保留你的天赋习惯，升级为「洋葱由内向外 4 步构建法」</h3>
+            <p class="text-xs text-slate-400 mt-0.5">以后做所有链表/双指针题，彻底放弃从第 1 行往下写，严格按下面 4 层从最中心往外包：</p>
+          </div>
+
+          <!-- 4 Onion Layers Selector -->
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="setOnionLayer(1)" id="onion-btn-1" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition">
+              第1层(最内核)：写单步与命中
+            </button>
+            <button onclick="setOnionLayer(2)" id="onion-btn-2" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition">
+              第2层(往外包)：数.next定while
+            </button>
+            <button onclick="setOnionLayer(3)" id="onion-btn-3" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition">
+              第3层(补首尾)：同起点与默认出口
+            </button>
+            <button onclick="setOnionLayer(4)" id="onion-btn-4" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition">
+              第4层(穿透检验)：免写前置if
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          <!-- Left 6 Cols: Onion Code Visualizer -->
+          <div class="lg:col-span-6 bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs sm:text-[13px] leading-6 flex flex-col justify-between">
+            <div id="onion-code-box" class="space-y-1">
+              <!-- Populated by JS -->
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+              <span>🎯 铁律：里面写几个连续 <code class="text-amber-300">.next</code>，外面 <code class="text-emerald-300">while</code> 就保几个非空</span>
+              <span id="onion-step-tag" class="text-emerald-400 font-bold">进度：1 / 4</span>
+            </div>
+          </div>
+
+          <!-- Right 6 Cols: Interactive Rule & Edge Case Penetration Tester -->
+          <div class="lg:col-span-6 flex flex-col justify-between bg-slate-900/90 rounded-xl border border-slate-800 p-4 space-y-4">
+            <div id="onion-guide-box" class="space-y-2.5 text-xs sm:text-sm text-slate-200 leading-relaxed">
+              <!-- Populated by JS -->
+            </div>
+
+            <!-- Edge Case Penetration Ball Launcher -->
+            <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono text-sky-400 font-bold">🛡️ 第 4 层专属：极端用例穿透测试器（决定要不要补写步骤 1）</span>
+                <div class="flex gap-1.5">
+                  <button onclick="runOnionProbe('empty')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-mono border border-slate-700 transition">
+                    发射 head = None
+                  </button>
+                  <button onclick="runOnionProbe('single')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-mono border border-slate-700 transition">
+                    发射 head = [1]
+                  </button>
+                </div>
+              </div>
+              <div id="onion-probe-result" class="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300">
+                👆 点击右上角发射极端用例，看第 2 层推导出的 <code class="text-emerald-400">while fast and fast.next:</code> 能否自动拦住它们。
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Nav -->
+      <div class="flex justify-between items-center pt-2">
+        <button onclick="goToCut(5)" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+          ← 回到第五刀（代码消融手术台）
+        </button>
+        <button onclick="goToCut(7)" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 hover:from-emerald-400 hover:to-sky-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg transition flex items-center gap-2">
+          <span>切第七刀（终极进化）：INTJ 通用破题与逆向扒题解 Meta-OS</span>
+          <span>➔</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- 第七刀：终极进化 · INTJ 通用破题与题解逆向吸收引擎 (Meta-OS)               -->
+    <!-- =================================================================== -->
+    <section id="cut-7" class="space-y-6 hidden">
+      <!-- Quick Jump Banner for Cuts 1-6 + Cut 7 Overview -->
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-400">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs font-mono px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">🚀 第七刀 · INTJ 刷题元操作系统 (Meta-OS v3.0)</span>
+              <span class="text-xs font-mono text-slate-400">解决：新题怎么推 · 别人题解怎么看 · 如何永久掌握</span>
+            </div>
+            <h2 class="text-lg sm:text-xl font-bold text-white">为什么你懂了这道题还是容易忘？因为你还缺一套「降维破题 + 逆向扒题解」的通用SOP</h2>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              在第六刀里，我们发现了你<strong>「由内向外写代码（先写核心节点，再前后补齐）」</strong>的天赋习惯。但这也解释了为什么你看力扣官方题解会极其痛苦——<strong>因为几乎所有题解作者都是「从第 1 行往下平铺直叙」写的，正好跟你的大脑回路反着来！</strong>下面三大引擎将帮你把这套方法论固化为刷所有 LeetCode 题的永久底层协议。
+            </p>
+          </div>
+
+          <div class="bg-slate-900/95 p-3 rounded-xl border border-slate-700/80 shrink-0 space-y-1.5">
+            <div class="text-[11px] font-mono text-slate-400">🧭 随时回顾前六刀空间画面与手术台：</div>
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="goToCut(1)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono transition">1.立画面</button>
+              <button onclick="goToCut(2)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono transition">2.推破局</button>
+              <button onclick="goToCut(3)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono transition">3.切定量</button>
+              <button onclick="goToCut(4)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono transition">4.切Bug</button>
+              <button onclick="goToCut(5)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono transition">5.做手术</button>
+              <button onclick="goToCut(6)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono transition">6.洋葱法</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- 子模块 A：卡壳破题漏斗 —— 如何从你的「方法一：哈希表」逼出「方法二：快慢指针」 -->
+      <!-- ================================================================= -->
+      <div class="glass-card rounded-2xl p-5 border-t-4 border-t-sky-500 space-y-5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <span class="text-xs font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">子模块 A · 遇到不懂的新题怎么自己分析？</span>
+            <h3 class="text-base sm:text-lg font-bold text-white mt-1">🔬 拒绝盯着白屏干想：用「暴力锚定 ➔ 复杂度砍刀 ➔ 物理等价置换」三步推导最优解</h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              你其实早就写出了「方法一：哈希表 <code class="text-sky-300 font-mono">seen = set()</code>」！INTJ 破题的第一铁律：<strong>永远不要凭空猜巧妙解法，而是拿你已经写出的暴力/哈希解法当靶子，一刀砍掉最占空间的那行代码，逼出它的物理替代品！</strong>
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 shrink-0">
+            <button onclick="setFunnelPattern(0)" id="funnel-pat-0" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition">
+              案例1：环形链表 (Set ➔ 快慢指针)
+            </button>
+            <button onclick="setFunnelPattern(1)" id="funnel-pat-1" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition">
+              案例2：子数组问题 (双循环 ➔ 滑动窗口)
+            </button>
+            <button onclick="setFunnelPattern(2)" id="funnel-pat-2" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition">
+              案例3：最值搜索 (回溯树 ➔ 动态规划)
+            </button>
+          </div>
+        </div>
+
+        <!-- 3-Stage Funnel Interactive Stepper -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" id="funnel-stages-grid">
+          <!-- Populated dynamically by renderFunnel() -->
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- 子模块 B：题解「逆向剥洋葱」X光阅读器（为什么看别人的题解痛苦？怎么秒吸收？） -->
+      <!-- ================================================================= -->
+      <div class="glass-card rounded-2xl p-5 border-t-4 border-t-violet-500 space-y-5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <span class="text-xs font-mono px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">子模块 B · 实在想不出看别人题解时，如何 30 秒逆向扒出内核？</span>
+            <h3 class="text-base sm:text-lg font-bold text-white mt-1">🩻 题解「X光逆向剥洋葱」阅读器：永远别从题解的第 1 行往下读！</h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              既然你写代码是<strong>「先写第 3、4 步核心节点，再往上下补齐」</strong>，那你看别人的题解时也必须<strong>「先盯最里面的循环心脏 ➔ 再看越界锁 ➔ 最后审判作者开头的补丁并翻译成你的洋葱模板」</strong>！请依次点击下方 3 个 X 光透视档位：
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 shrink-0">
+            <button onclick="setXrayPass(1)" id="xray-btn-1" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition">
+              👁️ 第一眼：只看洋葱心(状态转移)
+            </button>
+            <button onclick="setXrayPass(2)" id="xray-btn-2" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition">
+              🛡️ 第二眼：看越界安全契约
+            </button>
+            <button onclick="setXrayPass(3)" id="xray-btn-3" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition">
+              🔪 第三眼：扒掉作者补丁 & 翻译成我的模板
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          <!-- Left 6 Cols: Official Solution under X-Ray -->
+          <div class="lg:col-span-6 bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs sm:text-[13px] leading-6 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2 pb-2 border-b border-slate-800">
+                <span class="text-rose-300 font-bold">📄 别人的题解（力扣官方题解原版）</span>
+                <span id="xray-mode-badge" class="text-[11px] px-2 py-0.5 rounded bg-violet-500/20 text-violet-300">X光透视：第一眼</span>
+              </div>
+              <div id="xray-official-code" class="space-y-1 select-none">
+                <!-- Populated by renderXray() -->
+              </div>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+              💡 绝大多数人从第 1 行读到 <code class="text-amber-300">fast = head.next</code> 就开始怀疑人生：“为什么他要走一步？我怎么想不到？”——其实那只是作者倒装循环留下的补丁！
+            </div>
+          </div>
+
+          <!-- Right 6 Cols: X-Ray Cognitive Translator & Reconstructed Output -->
+          <div class="lg:col-span-6 bg-slate-900/90 rounded-xl border border-slate-800 p-4 flex flex-col justify-between space-y-4">
+            <div id="xray-explanation" class="space-y-3 text-xs sm:text-sm text-slate-200 leading-relaxed">
+              <!-- Populated by renderXray() -->
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-950 border border-emerald-500/30 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-emerald-400">🧬 经你的「洋葱逆向转换器」吸收后的永久入库形态：</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">0 冗余 · 符合直觉</span>
+              </div>
+              <pre id="xray-my-code" class="font-mono text-xs text-slate-200 leading-5 overflow-x-auto"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- 子模块 C：永久性掌握 —— 考场 3 秒「点号守恒推导器」+ 1套母本打通4道同构题  -->
+      <!-- ================================================================= -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left 5 Cols: Dot-Count Conservation Simulator -->
+        <div class="lg:col-span-5 glass-card rounded-2xl p-5 border-t-4 border-t-amber-500 flex flex-col justify-between space-y-4">
+          <div class="space-y-3">
+            <div>
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">永久掌握工具 1 · 免背诵边界推导器</span>
+              <h3 class="text-base font-bold text-white mt-1">⚡ 链表「点号守恒定律」模拟器</h3>
+              <p class="text-xs text-slate-400 mt-0.5">
+                永远不要死记硬背 <code class="font-mono">while</code> 里面写什么！你在循环里最多连写了几个 <code class="font-mono text-amber-300">.next</code>，循环头就必须保护它的每一块前置垫脚石：
+              </p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <button onclick="setDotSim(1)" id="dot-btn-1" class="p-2.5 rounded-xl border text-center font-mono text-xs transition">
+                <div class="font-bold">走 1 步</div>
+                <div class="text-[10px] opacity-75">p.next</div>
+              </button>
+              <button onclick="setDotSim(2)" id="dot-btn-2" class="p-2.5 rounded-xl border text-center font-mono text-xs transition">
+                <div class="font-bold">走 2 步</div>
+                <div class="text-[10px] opacity-75">p.next.next</div>
+              </button>
+              <button onclick="setDotSim(3)" id="dot-btn-3" class="p-2.5 rounded-xl border text-center font-mono text-xs transition">
+                <div class="font-bold">走 3 步</div>
+                <div class="text-[10px] opacity-75">p.next.next.next</div>
+              </button>
+            </div>
+
+            <div id="dot-sim-display" class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3 font-mono text-xs">
+              <!-- Populated by renderDotSim() -->
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs text-amber-200 leading-relaxed">
+            📌 <strong>考场 3 秒肌肉记忆</strong>：写完你最拿手的内部移动代码后，数一数最长的那行有几个 <code class="font-mono">.next</code>。有 $K$ 个点号，外层 <code class="font-mono">while</code> 就一定有 $K$ 个非空判断条件（从 <code class="font-mono">p</code> 一直 <code class="font-mono">and</code> 到第 $K-1$ 步）！
+          </div>
+        </div>
+
+        <!-- Right 7 Cols: 1 Master Template -> 4 LeetCode Problems Diff Switcher -->
+        <div class="lg:col-span-7 glass-card rounded-2xl p-5 border-t-4 border-t-emerald-500 flex flex-col justify-between space-y-4">
+          <div class="space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">永久掌握工具 2 · INTJ 同构模型压缩</span>
+                <h3 class="text-base font-bold text-white mt-1">🧬 1 套洋葱母本，只改 2 行打通 4 道经典题</h3>
+              </div>
+              <span class="text-xs font-mono text-emerald-400">绿色部分 100% 焊死不变！</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button onclick="setIsoProblem('141')" id="iso-btn-141" class="px-2.5 py-2 rounded-xl border text-left font-mono text-xs transition">
+                <div class="font-bold">141. 环形链表</div>
+                <div class="text-[10px] opacity-75">判是否有环</div>
+              </button>
+              <button onclick="setIsoProblem('876')" id="iso-btn-876" class="px-2.5 py-2 rounded-xl border text-left font-mono text-xs transition">
+                <div class="font-bold">876. 中间结点</div>
+                <div class="text-[10px] opacity-75">2倍速停在中点</div>
+              </button>
+              <button onclick="setIsoProblem('142')" id="iso-btn-142" class="px-2.5 py-2 rounded-xl border text-left font-mono text-xs transition">
+                <div class="font-bold">142. 环形链表II</div>
+                <div class="text-[10px] opacity-75">抓出入环口</div>
+              </button>
+              <button onclick="setIsoProblem('202')" id="iso-btn-202" class="px-2.5 py-2 rounded-xl border text-left font-mono text-xs transition">
+                <div class="font-bold">202. 快乐数</div>
+                <div class="text-[10px] opacity-75">数字隐式链表</div>
+              </button>
+            </div>
+
+            <div id="iso-code-container" class="bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs sm:text-[13px] leading-6">
+              <!-- Populated by renderIsoProblem() -->
+            </div>
+          </div>
+
+          <div id="iso-note-box" class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 leading-relaxed">
+            <!-- Populated by renderIsoProblem() -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // NAVIGATION CONTROLLER (7 CUTS)
+    // =========================================================================
+    let activeCut = 7;
+    let c2Timer = null;
+
+    function goToCut(n) {
+      activeCut = n;
+      if (c2Timer) {
+        clearInterval(c2Timer);
+        c2Timer = null;
+      }
+
+      const titles = [
+        '第一刀 / 共七刀',
+        '第二刀 / 共七刀',
+        '第三刀 / 共七刀',
+        '第四刀 / 共七刀',
+        '第五刀 / 共七刀',
+        '第六刀 / 共七刀',
+        '第七刀 / 共七刀'
+      ];
+      document.getElementById('header-progress-text').textContent = titles[n - 1];
+
+      for (let i = 1; i <= 7; i++) {
+        const sec = document.getElementById(`cut-${i}`);
+        const tab = document.getElementById(`tab-cut-${i}`);
+        const badge = document.getElementById(`badge-cut-${i}`);
+
+        if (i === n) {
+          sec.classList.remove('hidden');
+          tab.className = 'cut-tab flex items-center gap-2 px-2.5 py-2 rounded-lg text-left bg-sky-500/15 text-sky-300 border border-sky-500/40 shadow-sm';
+          badge.className = 'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0 bg-sky-400 text-slate-950';
+        } else {
+          sec.classList.add('hidden');
+          tab.className = 'cut-tab flex items-center gap-2 px-2.5 py-2 rounded-lg text-left text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent';
+          badge.className = 'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0 bg-slate-800 text-slate-400';
+        }
+      }
+
+      if (n === 1) renderCut1();
+      if (n === 2) renderCut2();
+      if (n === 3) renderCut3();
+      if (n === 4) renderCut4();
+      if (n === 5) renderCut5();
+      if (n === 6) renderCut6();
+      if (n === 7) renderCut7();
+    }
+
+    // =========================================================================
+    // CUT 1: GOD VIEW vs POINTER'S FOG OF WAR
+    // =========================================================================
+    const c1Nodes = [
+      { id: 0, val: '1', x: 70, y: 125, next: 1 },
+      { id: 1, val: '2', x: 185, y: 125, next: 2 },
+      { id: 2, val: '3', x: 305, y: 125, next: 3 },
+      { id: 3, val: '4', x: 435, y: 60, next: 4 },
+      { id: 4, val: '5', x: 435, y: 190, next: 2 }, // loops back to node 2 (val '3')
+    ];
+
+    const c1StraightNodes = [
+      { id: 0, val: '1', x: 60, y: 125, next: 1 },
+      { id: 1, val: '2', x: 170, y: 125, next: 2 },
+      { id: 2, val: '3', x: 280, y: 125, next: 3 },
+      { id: 3, val: '4', x: 390, y: 125, next: 4 },
+      { id: 4, val: '3', x: 500, y: 125, next: 0 }, // mock endless straight line with repeated values
+    ];
+
+    let c1Curr = 0;
+    let c1Steps = 0;
+    let c1AllowChalk = false;
+    let c1Terrain = 'cycle'; // 'cycle' or 'straight'
+    let c1Visited = new Set([0]);
+    let c1FoundCycleByChalk = false;
+
+    function setCut1Chalk(allow) {
+      c1AllowChalk = allow;
+      c1Reset();
+    }
+
+    function toggleCut1Terrain() {
+      c1Terrain = c1Terrain === 'cycle' ? 'straight' : 'cycle';
+      const btn = document.getElementById('c1-btn-terrain');
+      btn.textContent = c1Terrain === 'cycle' ? '🔄 地形：9字环路' : '🛣️ 地形：长直路(含重复值)';
+      c1Reset();
+    }
+
+    function c1Reset() {
+      c1Curr = 0;
+      c1Steps = 0;
+      c1Visited = new Set([0]);
+      c1FoundCycleByChalk = false;
+      renderCut1();
+    }
+
+    function c1StepForward() {
+      if (c1FoundCycleByChalk) return;
+      const activeList = c1Terrain === 'cycle' ? c1Nodes : c1StraightNodes;
+      c1Curr = activeList[c1Curr].next;
+      c1Steps++;
+      if (c1AllowChalk && c1Terrain === 'cycle') {
+        if (c1Visited.has(c1Curr)) {
+          c1FoundCycleByChalk = true;
+        } else {
+          c1Visited.add(c1Curr);
+        }
+      }
+      renderCut1();
+    }
+
+    function renderCut1() {
+      const activeList = c1Terrain === 'cycle' ? c1Nodes : c1StraightNodes;
+      const btnNoChalk = document.getElementById('c1-btn-nochalk');
+      const btnChalk = document.getElementById('c1-btn-chalk');
+      if (!c1AllowChalk) {
+        btnNoChalk.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition bg-sky-500 text-slate-950 shadow-lg shadow-sky-500/20';
+        btnChalk.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+      } else {
+        btnNoChalk.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+        btnChalk.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
+      }
+
+      document.getElementById('c1-step-badge').textContent = `已走步数: ${c1Steps} 步`;
+
+      // 1. Render God View SVG (All nodes and arrows clearly visible)
+      const godSvg = document.getElementById('c1-god-svg');
+      let godHtml = `
+        <defs>
+          <marker id="c1-god-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+          </marker>
+          <marker id="c1-loop-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+          </marker>
+        </defs>
+      `;
+
+      // Edges
+      activeList.forEach(n => {
+        if (c1Terrain === 'straight' && n.id === 4) return;
+        const t = activeList[n.next];
+        const dx = t.x - n.x;
+        const dy = t.y - n.y;
+        const dist = Math.hypot(dx, dy);
+        const r = 26;
+        const x1 = n.x + (dx / dist) * r;
+        const y1 = n.y + (dy / dist) * r;
+        const x2 = t.x - (dx / dist) * (r + 5);
+        const y2 = t.y - (dy / dist) * (r + 5);
+        const isLoopBack = (c1Terrain === 'cycle' && n.id === 4 && t.id === 2);
+        godHtml += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${isLoopBack ? '#38bdf8' : '#64748b'}" stroke-width="2.5" marker-end="url(#${isLoopBack ? 'c1-loop-arrow' : 'c1-god-arrow'})" />`;
+      });
+
+      // Nodes
+      activeList.forEach(n => {
+        const isCurr = (n.id === c1Curr);
+        godHtml += `
+          <g>
+            <circle cx="${n.x}" cy="${n.y}" r="25" fill="${isCurr ? 'rgba(56, 189, 248, 0.2)' : '#0f172a'}" stroke="${isCurr ? '#38bdf8' : '#475569'}" stroke-width="2.5" />
+            <text x="${n.x}" y="${n.y + 5}" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="700" font-family="JetBrains Mono">${n.val}</text>
+          </g>
+        `;
+        if (isCurr) {
+          godHtml += `
+            <g transform="translate(${n.x - 26}, ${n.y - 45})">
+              <rect x="0" y="0" width="52" height="19" rx="5" fill="#0284c7" />
+              <text x="26" y="13" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="JetBrains Mono">curr</text>
+            </g>
+          `;
+        }
+      });
+      godSvg.innerHTML = godHtml;
+
+      // 2. Render Fog of War SVG (Only current node is lit by flashlight!)
+      const fogSvg = document.getElementById('c1-fog-svg');
+      const currNode = activeList[c1Curr];
+      const nextNode = activeList[currNode.next];
+
+      let fogHtml = `
+        <defs>
+          <radialGradient id="flashlight" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(56, 189, 248, 0.28)" />
+            <stop offset="65%" stop-color="rgba(56, 189, 248, 0.06)" />
+            <stop offset="100%" stop-color="rgba(9, 13, 22, 0)" />
+          </radialGradient>
+          <marker id="c1-fog-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+          </marker>
+        </defs>
+      `;
+
+      // Flashlight glow around current node
+      fogHtml += `<circle cx="${currNode.x}" cy="${currNode.y}" r="88" fill="url(#flashlight)" />`;
+
+      // Draw edges: only outgoing edge from currNode is visible (and only half-way into the fog!)
+      const dx = nextNode.x - currNode.x;
+      const dy = nextNode.y - currNode.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const r = 26;
+      const x1 = currNode.x + (dx / dist) * r;
+      const y1 = currNode.y + (dy / dist) * r;
+      const xMid = currNode.x + (dx / dist) * Math.min(dist - r - 6, 72);
+      const yMid = currNode.y + (dy / dist) * Math.min(dist - r - 6, 72);
+      fogHtml += `<line x1="${x1}" y1="${y1}" x2="${xMid}" y2="${yMid}" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="5 3" marker-end="url(#c1-fog-arrow)" />`;
+
+      // Draw nodes in Fog View
+      activeList.forEach(n => {
+        const isCurr = (n.id === c1Curr);
+        const hasChalk = c1AllowChalk && c1Visited.has(n.id);
+
+        if (isCurr) {
+          fogHtml += `
+            <g>
+              <circle cx="${n.x}" cy="${n.y}" r="26" fill="#0f172a" stroke="${c1FoundCycleByChalk ? '#10b981' : '#38bdf8'}" stroke-width="3" />
+              <text x="${n.x}" y="${n.y + 5}" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="700" font-family="JetBrains Mono">${n.val}</text>
+              <text x="${n.x}" y="${n.y - 34}" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="700" font-family="JetBrains Mono">🔦 curr 在此</text>
+            </g>
+          `;
+          if (c1AllowChalk) {
+            fogHtml += `<text x="${n.x}" y="${n.y + 42}" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700" font-family="JetBrains Mono">🖍️ 已画粉笔印</text>`;
+          }
+        } else if (hasChalk) {
+          // Dimly visible chalk mark left behind in the dark
+          fogHtml += `
+            <g opacity="0.45">
+              <circle cx="${n.x}" cy="${n.y}" r="24" fill="#090d16" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 3" />
+              <text x="${n.x}" y="${n.y + 4}" text-anchor="middle" fill="#10b981" font-size="11" font-family="JetBrains Mono">🖍️${n.val}</text>
+            </g>
+          `;
+        } else {
+          // Completely shrouded in fog (barely visible silhouette)
+          fogHtml += `
+            <g opacity="0.10">
+              <circle cx="${n.x}" cy="${n.y}" r="24" fill="#090d16" stroke="#475569" stroke-width="1" stroke-dasharray="2 4" />
+              <text x="${n.x}" y="${n.y + 4}" text-anchor="middle" fill="#64748b" font-size="11" font-family="JetBrains Mono">?</text>
+            </g>
+          `;
+        }
+      });
+
+      fogSvg.innerHTML = fogHtml;
+
+      // 3. Update Pointer's Inner Monologue
+      const mono = document.getElementById('c1-monologue');
+      if (!c1AllowChalk) {
+        if (c1Steps === 0) {
+          mono.innerHTML = `🗣️ <strong>盲人指针 <code class="font-mono text-sky-400">curr</code> 的独白</strong>：“我现在站在石板 <code class="font-mono text-white">[1]</code> 上，四周一片漆黑，我只知道脚下有一根铁索指向右前方。请点击下方『👣 往前走一步』看看我能看到什么。”`;
+        } else if (c1Steps < 5) {
+          mono.innerHTML = `🗣️ <strong>盲人指针 <code class="font-mono text-sky-400">curr</code> 的独白（第 ${c1Steps} 步）</strong>：“我顺着铁索走到了石板 <code class="font-mono text-white">[${currNode.val}]</code>。但我刚才走过的石板已经在身后消失在浓雾里了……”`;
+        } else {
+          mono.innerHTML = `😱 <strong>陷入鬼打墙困境（第 ${c1Steps} 步）</strong>：“我现在又踩在写着数字 <code class="font-mono text-amber-300 font-bold">[${currNode.val}]</code> 的石板上！可是……<strong>因为不准画粉笔印（无 set），而且链表里本来就允许不同石板写相同的数字，我根本无法分辨这是不是我之前踩过的那块石板 <code class="font-mono">[${currNode.val}]</code>！</strong>哪怕再走 10000 步，我也分不清自己是在走一条无限长的直线，还是在 3 块石板里鬼打墙！”`;
+        }
+      } else {
+        if (c1FoundCycleByChalk) {
+          mono.innerHTML = `🎯 <strong>方法一（哈希表画粉笔印）破案！</strong>：“我走到了石板 <code class="font-mono text-emerald-300 font-bold">[${currNode.val}]</code>，低头一看地上居然有我之前画的 <code class="font-mono text-emerald-400">🖍️粉笔印 (in seen)</code>！抓到了，有环！”<br><span class="text-slate-400">（代价：走过多少块石板就要记多少个印记，空间复杂度 $O(N)$。如果不准画粉笔印，怎么破局？请点右下角进入第二刀！）</span>`;
+        } else {
+          mono.innerHTML = `🖍️ <strong>方法一（哈希表 set）模式</strong>：“每走一块石板，我就在地上画个粉笔印（<code class="font-mono text-emerald-400">seen.add(head)</code>）。再往前走几步看看！”`;
+        }
+      }
+    }
+
+    // =========================================================================
+    // CUT 2: FROM 0 TO 1 — THREE THOUGHT EXPERIMENTS
+    // =========================================================================
+    let c2Exp = 'A'; // 'A' (Stationary slow), 'B' (Same speed), 'C' (Slow=1, Fast=2)
+    let c2Tick = 0;
+
+    function selectCut2Exp(exp) {
+      c2Exp = exp;
+      c2Reset();
+    }
+
+    function c2Reset() {
+      if (c2Timer) {
+        clearInterval(c2Timer);
+        c2Timer = null;
+        document.getElementById('c2-btn-auto').textContent = '⚡ 连续播放动画';
+      }
+      c2Tick = 0;
+      renderCut2();
+    }
+
+    function c2Step() {
+      if (c2Exp === 'C' && c2Tick >= 5) {
+        if (c2Timer) {
+          clearInterval(c2Timer);
+          c2Timer = null;
+          document.getElementById('c2-btn-auto').textContent = '⚡ 连续播放动画';
+        }
+        return;
+      }
+      if (c2Tick >= 12) {
+        c2Tick = 0;
+      } else {
+        c2Tick++;
+      }
+      renderCut2();
+    }
+
+    function c2ToggleAuto() {
+      const btn = document.getElementById('c2-btn-auto');
+      if (c2Timer) {
+        clearInterval(c2Timer);
+        c2Timer = null;
+        btn.textContent = '⚡ 连续播放动画';
+      } else {
+        if (c2Exp === 'C' && c2Tick >= 5) c2Tick = 0;
+        btn.textContent = '⏸ 暂停动画';
+        c2Timer = setInterval(() => {
+          c2Step();
+        }, 750);
+      }
+    }
+
+    function getCut2Positions(exp, tick) {
+      // Nodes: 0('1') -> 1('2') -> 2('3 环口') -> 3('4') -> 4('5') -> back to 2
+      const move = (start, steps) => {
+        let p = start;
+        for (let i = 0; i < steps; i++) {
+          p = c1Nodes[p].next;
+        }
+        return p;
+      };
+
+      if (exp === 'A') {
+        // slow stays at 0 ('1'), fast moves 1 step per tick from 0
+        return {
+          slow: 0,
+          fast: move(0, tick),
+          collided: false
+        };
+      } else if (exp === 'B') {
+        // slow starts at 0, fast starts at 1, both move 1 step per tick
+        return {
+          slow: move(0, tick),
+          fast: move(1, tick),
+          collided: false
+        };
+      } else {
+        // Exp C: both start at 0, slow moves 1 step/tick, fast moves 2 steps/tick
+        // Let's trace:
+        // tick 0: slow=0, fast=0
+        // tick 1: slow=1, fast=2
+        // tick 2: slow=2, fast=4
+        // tick 3: slow=3, fast=3 -> COLLISION at node 3 ('4')!
+        const t = Math.min(tick, 3);
+        const s = move(0, t);
+        const f = move(0, t * 2);
+        return {
+          slow: s,
+          fast: f,
+          collided: (t > 0 && s === f)
+        };
+      }
+    }
+
+    function renderCut2() {
+      // Style tabs
+      ['A', 'B', 'C'].forEach(k => {
+        const el = document.getElementById(`c2-tab-${k}`);
+        if (k === c2Exp) {
+          el.className = 'p-4 rounded-2xl border-2 text-left transition-all bg-slate-800/90 border-sky-400 shadow-lg shadow-sky-500/10';
+        } else {
+          el.className = 'p-4 rounded-2xl border text-left transition-all bg-slate-900/60 border-slate-800 opacity-75 hover:opacity-100';
+        }
+      });
+
+      const pos = getCut2Positions(c2Exp, c2Tick);
+      document.getElementById('c2-tick-badge').textContent = `第 ${c2Tick} 步`;
+
+      // Canvas Title & Analysis Box
+      const titleEl = document.getElementById('c2-canvas-title');
+      const analysisEl = document.getElementById('c2-analysis-box');
+
+      if (c2Exp === 'A') {
+        titleEl.innerHTML = `实验 A：让 <code class="text-sky-400 font-mono">slow</code> 站在起点 <code class="font-mono">[1]</code> 当固定路标，<code class="text-amber-400 font-mono">fast</code> 往前跑`;
+        analysisEl.innerHTML = `
+          <div class="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 space-y-1.5">
+            <div class="font-bold text-rose-300">❌ 为什么实验 A 彻底失败？（看左侧动画）</div>
+            <p>因为链表是<strong>“9字形”</strong>而不是“O字形”！起点 <code class="font-mono">[1]</code> 在环外面的直道上。</p>
+            <p>当 <code class="font-mono text-amber-300">fast</code> 跑进 <code class="font-mono">3 ➔ 4 ➔ 5 ➔ 3</code> 的圈里后，它就永远在环里打转，<strong>一辈子也回不到起点 <code class="font-mono">[1]</code></strong>！傻站在起点的 <code class="font-mono text-sky-300">slow</code> 永远等不到它。</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-sky-300 font-medium">
+            🔪 <strong>第一刀逼出的结论</strong>：当路标的人（<code class="font-mono">slow</code>）绝不能停在原地！<strong>路标自己也必须往前走，才能走完直道进入环里！</strong>（请点击上方『脑洞实验 B』）
+          </div>
+        `;
+      } else if (c2Exp === 'B') {
+        titleEl.innerHTML = `实验 B：让路标 <code class="text-sky-400 font-mono">slow</code> 也往前走！两人一前一后，每次都走 1 步`;
+        analysisEl.innerHTML = `
+          <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 space-y-1.5">
+            <div class="font-bold text-amber-300">❌ 为什么实验 B 还是失败？（看左侧动画）</div>
+            <p>现在路标 <code class="font-mono text-sky-300">slow</code> 确实成功走进环里了！</p>
+            <p>但是因为两人<strong>每次都走 1 步（速度一样）</strong>，他们在环里就像旋转木马上的两匹木马，永远隔着固定的 1 格距离，追到天荒地老也撞不上！</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-emerald-300 font-medium">
+            🔪 <strong>第二刀逼出的结论</strong>：既然路标必须在动，那追击者就必须<strong>比路标跑得更快</strong>！只有一快一慢，进环后才能发生<strong>「套圈追尾」</strong>！（请点击上方『脑洞实验 C』）
+          </div>
+        `;
+      } else {
+        titleEl.innerHTML = `实验 C（破局）：<code class="text-sky-400 font-mono">slow</code> 每次走 1 步（移动路标），<code class="text-amber-400 font-mono">fast</code> 每次走 2 步（套圈猎人）`;
+        analysisEl.innerHTML = `
+          <div class="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-100 space-y-1.5">
+            <div class="font-bold text-emerald-300">🎯 破局成功！看清两个指针各自的神圣使命：</div>
+            <p>1. <strong>慢指针 <code class="font-mono text-sky-300">slow</code>（走 1 步）的使命</strong>：我负责把“路标”从起点稳稳运送到环里面去！</p>
+            <p>2. <strong>快指针 <code class="font-mono text-amber-300">fast</code>（走 2 步）的使命</strong>：我用 2 倍速在环里狂奔，从背后对慢指针完成<strong>套圈追尾</strong>！一旦我们在同一块石板撞上（第 3 步在石板 <code class="font-mono">[4]</code> 相遇），就 100% 铁证有环！</p>
+          </div>
+        `;
+      }
+
+      // Render SVG
+      const svg = document.getElementById('c2-svg');
+      let html = `
+        <defs>
+          <marker id="c2-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+          </marker>
+        </defs>
+      `;
+
+      // Zone labels
+      html += `
+        <rect x="28" y="20" width="205" height="210" rx="12" fill="rgba(30, 41, 59, 0.25)" stroke="#1e293b" stroke-dasharray="4 4" />
+        <text x="130" y="42" text-anchor="middle" fill="#64748b" font-size="11" font-family="JetBrains Mono">环外直道区 (1 ➔ 2)</text>
+
+        <rect x="255" y="20" width="315" height="210" rx="12" fill="rgba(56, 189, 248, 0.04)" stroke="#1e3a5f" stroke-dasharray="4 4" />
+        <text x="412" y="42" text-anchor="middle" fill="#38bdf8" font-size="11" font-family="JetBrains Mono">环形跑道区 (3 ➔ 4 ➔ 5 ↺ 3)</text>
+      `;
+
+      // Edges
+      c1Nodes.forEach(n => {
+        const t = c1Nodes[n.next];
+        const dx = t.x - n.x;
+        const dy = t.y - n.y;
+        const dist = Math.hypot(dx, dy);
+        const r = 26;
+        const x1 = n.x + (dx / dist) * r;
+        const y1 = n.y + (dy / dist) * r;
+        const x2 = t.x - (dx / dist) * (r + 5);
+        const y2 = t.y - (dy / dist) * (r + 5);
+        html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#64748b" stroke-width="2.5" marker-end="url(#c2-arrow)" />`;
+      });
+
+      // Nodes
+      c1Nodes.forEach(n => {
+        const isSlow = (pos.slow === n.id);
+        const isFast = (pos.fast === n.id);
+        let stroke = '#475569';
+        let fill = '#0f172a';
+        if (pos.collided && isSlow) {
+          stroke = '#10b981';
+          fill = 'rgba(16, 185, 129, 0.25)';
+        } else if (isSlow) {
+          stroke = '#38bdf8';
+          fill = 'rgba(56, 189, 248, 0.15)';
+        } else if (isFast) {
+          stroke = '#f59e0b';
+          fill = 'rgba(245, 158, 11, 0.15)';
+        }
+
+        if (pos.collided && isSlow) {
+          html += `<circle cx="${n.x}" cy="${n.y}" r="34" fill="none" stroke="#10b981" stroke-width="2.5" class="pulse-circle" />`;
+        }
+
+        html += `
+          <g>
+            <circle cx="${n.x}" cy="${n.y}" r="25" fill="${fill}" stroke="${stroke}" stroke-width="2.5" />
+            <text x="${n.x}" y="${n.y + 5}" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="700" font-family="JetBrains Mono">${n.val}</text>
+          </g>
+        `;
+
+        if (isSlow) {
+          html += `
+            <g transform="translate(${n.x - 32}, ${n.y - 46})">
+              <rect x="0" y="0" width="64" height="20" rx="6" fill="#0284c7" />
+              <text x="32" y="14" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="JetBrains Mono">slow(路标)</text>
+            </g>
+          `;
+        }
+        if (isFast) {
+          const yOff = isSlow ? n.y + 28 : n.y - 46;
+          html += `
+            <g transform="translate(${n.x - 32}, ${yOff})">
+              <rect x="0" y="0" width="64" height="20" rx="6" fill="${pos.collided ? '#10b981' : '#d97706'}" />
+              <text x="32" y="14" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="JetBrains Mono">${pos.collided ? '💥撞上了!' : 'fast(追击)'}</text>
+            </g>
+          `;
+        }
+      });
+
+      svg.innerHTML = html;
+    }
+
+    // =========================================================================
+    // CUT 3: HOPSCOTCH STONE TILES — WHY 2 STEPS INSTEAD OF 3 STEPS?
+    // =========================================================================
+    let c3FastSpeed = 2; // 2 or 3
+    let c3Jumped = false;
+
+    function setCut3Mode(speed) {
+      c3FastSpeed = speed;
+      c3Jumped = false;
+      renderCut3();
+    }
+
+    function c3TriggerJump() {
+      c3Jumped = !c3Jumped;
+      renderCut3();
+    }
+
+    function c3Reset() {
+      c3Jumped = false;
+      renderCut3();
+    }
+
+    function renderCut3() {
+      const b2 = document.getElementById('c3-btn-m2');
+      const b3 = document.getElementById('c3-btn-m3');
+      if (c3FastSpeed === 2) {
+        b2.className = 'px-3 py-2 rounded-lg text-xs font-mono font-semibold transition bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
+        b3.className = 'px-3 py-2 rounded-lg text-xs font-mono font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+      } else {
+        b2.className = 'px-3 py-2 rounded-lg text-xs font-mono font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+        b3.className = 'px-3 py-2 rounded-lg text-xs font-mono font-semibold transition bg-rose-500 text-white shadow-lg shadow-rose-500/20';
+      }
+
+      const jumpBtn = document.getElementById('c3-btn-jump');
+      jumpBtn.textContent = c3Jumped ? '⟲ 再看一次起跳前' : '🦘 点击同时起跳！(看落点)';
+
+      // 5 Stone tiles unrolled horizontally:
+      // Tile 0 (x=90), Tile 1 (x=215, fast before jump), Tile 2 (x=340, slow before jump), Tile 3 (x=465, slow after jump / fast(v=2) after jump), Tile 4 (x=575, fast(v=3) after jump!)
+      const tiles = [
+        { idx: 0, label: '石板 A', x: 75 },
+        { idx: 1, label: '石板 B', x: 195 },
+        { idx: 2, label: '石板 C', x: 315 },
+        { idx: 3, label: '石板 D', x: 435 },
+        { idx: 4, label: '石板 E', x: 555 },
+      ];
+
+      const slowIdx = c3Jumped ? 3 : 2;
+      const fastIdx = c3Jumped ? (1 + c3FastSpeed) : 1;
+
+      const labelEl = document.getElementById('c3-state-label');
+      if (!c3Jumped) {
+        labelEl.textContent = '起跳前：fast 在石板 B，slow 在石板 C（仅差 1 格）';
+        labelEl.className = 'text-xs font-mono px-2.5 py-1 rounded bg-slate-800 text-amber-300';
+      } else if (c3FastSpeed === 2) {
+        labelEl.textContent = '🎯 起跳后：两人同时落在【石板 D】，精准踩中！';
+        labelEl.className = 'text-xs font-mono px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 font-bold';
+      } else {
+        labelEl.textContent = '😱 起跳后：slow 落在【石板 D】，fast 直接飞跃到【石板 E】！';
+        labelEl.className = 'text-xs font-mono px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 font-bold';
+      }
+
+      // Render SVG Hopscotch
+      const svg = document.getElementById('c3-svg');
+      let html = `
+        <defs>
+          <marker id="c3-arc-slow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+          </marker>
+          <marker id="c3-arc-fast" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="${c3FastSpeed === 2 ? '#10b981' : '#f43f5e'}" />
+          </marker>
+        </defs>
+      `;
+
+      // Draw jump trajectories
+      // Slow jump arc: Tile 2 (315) -> Tile 3 (435)
+      html += `
+        <path d="M 315 135 Q 375 75 430 130" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="${c3Jumped ? 'none' : '5 4'}" marker-end="url(#c3-arc-slow)" />
+        <text x="375" y="88" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="700" font-family="JetBrains Mono">slow 跳 +1 格</text>
+      `;
+
+      // Fast jump arc: Tile 1 (195) -> Tile 3 (435) or Tile 4 (555)
+      const targetX = c3FastSpeed === 2 ? 430 : 550;
+      const ctrlX = (195 + targetX) / 2;
+      const ctrlY = c3FastSpeed === 2 ? 25 : 10;
+      const fastArcColor = c3FastSpeed === 2 ? '#10b981' : '#f43f5e';
+      html += `
+        <path d="M 195 135 Q ${ctrlX} ${ctrlY} ${targetX} 130" fill="none" stroke="${fastArcColor}" stroke-width="3" stroke-dasharray="${c3Jumped ? 'none' : '6 4'}" marker-end="url(#c3-arc-fast)" />
+        <text x="${ctrlX}" y="${ctrlY + 22}" text-anchor="middle" fill="${fastArcColor}" font-size="12" font-weight="700" font-family="JetBrains Mono">
+          fast 跳 +${c3FastSpeed} 格 ${c3FastSpeed === 3 ? '(直接从 slow 头顶飞过去!)' : '(刚好踩中同一块石板!)'}
+        </text>
+      `;
+
+      // Draw Stone Tiles
+      tiles.forEach(t => {
+        const hasSlow = (t.idx === slowIdx);
+        const hasFast = (t.idx === fastIdx);
+        const isHit = hasSlow && hasFast;
+        const isSkippedSlow = (c3Jumped && c3FastSpeed === 3 && t.idx === 3);
+
+        let stroke = '#334155';
+        let fill = '#0f172a';
+        if (isHit) {
+          stroke = '#10b981';
+          fill = 'rgba(16, 185, 129, 0.22)';
+        } else if (isSkippedSlow) {
+          stroke = '#f43f5e';
+          fill = 'rgba(244, 63, 94, 0.15)';
+        } else if (hasSlow) {
+          stroke = '#38bdf8';
+          fill = 'rgba(56, 189, 248, 0.15)';
+        } else if (hasFast) {
+          stroke = '#f59e0b';
+          fill = 'rgba(245, 158, 11, 0.15)';
+        }
+
+        html += `
+          <g>
+            <rect x="${t.x - 44}" y="140" width="88" height="52" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="2.5" />
+            <text x="${t.x}" y="170" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="700" font-family="JetBrains Mono">${t.label}</text>
+          </g>
+        `;
+
+        if (hasSlow) {
+          html += `
+            <g transform="translate(${t.x - 36}, 200)">
+              <rect x="0" y="0" width="72" height="22" rx="6" fill="#0284c7" />
+              <text x="36" y="15" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="JetBrains Mono">🐢 slow</text>
+            </g>
+          `;
+        }
+        if (hasFast) {
+          const yBadge = hasSlow ? 108 : 200;
+          html += `
+            <g transform="translate(${t.x - 36}, ${yBadge})">
+              <rect x="0" y="0" width="72" height="22" rx="6" fill="${isHit ? '#10b981' : '#d97706'}" />
+              <text x="36" y="15" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="JetBrains Mono">${isHit ? '💥 重合!' : '🐇 fast'}</text>
+            </g>
+          `;
+        }
+      });
+
+      svg.innerHTML = html;
+
+      // Explanation card
+      const expEl = document.getElementById('c3-explain-card');
+      if (c3FastSpeed === 2) {
+        expEl.innerHTML = `
+          <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1.5">
+            <div class="font-bold text-emerald-300">✅ 为什么跳 2 格绝对稳？</div>
+            <p class="text-xs text-slate-200 leading-relaxed">
+              起跳前：<code class="font-mono text-amber-300">fast</code> 在石板 B，<code class="font-mono text-sky-300">slow</code> 在石板 C（两人相差 <strong>1 格</strong>）。<br>
+              起跳后：<code class="font-mono text-sky-300">slow</code> 往右跳 1 格落到<strong>石板 D</strong>；<code class="font-mono text-amber-300">fast</code> 往右跳 2 格（B ➔ C ➔ D），<strong>也稳稳落在石板 D</strong>！
+            </p>
+          </div>
+        `;
+      } else {
+        expEl.innerHTML = `
+          <div class="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 space-y-1.5">
+            <div class="font-bold text-rose-300">❌ 为什么跳 3 格会漏判？</div>
+            <p class="text-xs text-slate-200 leading-relaxed">
+              起跳前：两人同样相差 <strong>1 格</strong>（B 和 C）。<br>
+              起跳后：<code class="font-mono text-sky-300">slow</code> 跳 1 格落到<strong>石板 D</strong>；而 <code class="font-mono text-amber-300">fast</code> 一口气跳 3 格（B ➔ C ➔ D ➔ E），<strong>直接从石板 D 上空的 slow 头顶飞了过去</strong>，落到了石板 E！<br>
+              原本落后的 1 格瞬间变成了超前 1 格，完美错过！
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    // =========================================================================
+    // CUT 4: CLIFF JUMP VISUALIZER — WHY `while fast:` CRASHES ON 2-NODE LIST
+    // =========================================================================
+    let c4Mode = 'bug'; // 'bug' or 'safe'
+    let c4Phase = 0; // 0: after step 2 (at gate), 1: gate check, 2: jump / exit
+
+    function setCut4Mode(m) {
+      c4Mode = m;
+      c4Phase = 0;
+      renderCut4();
+    }
+
+    function c4Step() {
+      if (c4Phase < 2) {
+        c4Phase++;
+      } else {
+        c4Phase = 0;
+      }
+      renderCut4();
+    }
+
+    function c4Reset() {
+      c4Phase = 0;
+      renderCut4();
+    }
+
+    function renderCut4() {
+      const btnBug = document.getElementById('c4-btn-bug');
+      const btnSafe = document.getElementById('c4-btn-safe');
+      const whileText = document.getElementById('c4-while-text');
+
+      if (c4Mode === 'bug') {
+        btnBug.className = 'px-3 py-2 rounded-lg text-xs font-mono font-semibold transition bg-rose-500 text-white shadow-lg shadow-rose-500/20';
+        btnSafe.className = 'px-3 py-2 rounded-lg text-xs font-mono font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+        whileText.innerHTML = `<span class="text-purple-400">while</span> <span class="text-amber-300 font-bold">fast</span>:`;
+      } else {
+        btnBug.className = 'px-3 py-2 rounded-lg text-xs font-mono font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+        btnSafe.className = 'px-3 py-2 rounded-lg text-xs font-mono font-semibold transition bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
+        whileText.innerHTML = `<span class="text-purple-400">while</span> <span class="text-emerald-300 font-bold">fast and fast.next</span>:`;
+      }
+
+      document.getElementById('c4-progress').textContent = `阶段 ${c4Phase + 1} / 3`;
+
+      // Highlight code row
+      ['c4-row-1', 'c4-row-2', 'c4-row-5', 'c4-row-3', 'c4-row-4', 'c4-row-ret'].forEach(id => {
+        document.getElementById(id).className = 'code-row px-2.5 py-1 rounded-r flex justify-between';
+      });
+
+      const narrator = document.getElementById('c4-narrator');
+
+      if (c4Phase === 0) {
+        document.getElementById('c4-row-2').classList.add('active');
+        narrator.innerHTML = `<strong>阶段 1（起跳准备）</strong>：面对 2 块石板的无环链表 <code class="font-mono text-sky-300">[石板 1] ➔ [石板 2] ➔ 悬崖 None</code>。执行完你的步骤 2 后，<code class="font-mono text-sky-300">slow</code> 站在石板 1，<code class="font-mono text-amber-300">fast</code> 已经站在<strong>最后一块实体石板 [2]</strong> 上！请点击「▶ 单步推进看画面」。`;
+      } else if (c4Phase === 1) {
+        document.getElementById('c4-row-5').classList.add('active');
+        if (c4Mode === 'bug') {
+          narrator.innerHTML = `⚠️ <strong>阶段 2（原版安检门失守）</strong>：你的第 5 步写的是 <code class="font-mono text-amber-300">while fast:</code>。安检员只低头看了一眼 <code class="font-mono">fast</code> 脚下——脚下是 <code class="font-mono">[石板 2]</code>（不是悬崖），于是<strong>错误地亮绿灯喊：“跳吧！”</strong>（它完全没看身前第 1 格已经是悬崖了！）`;
+        } else {
+          narrator.innerHTML = `🛡️ <strong>阶段 2（双重安全锁拦截！）</strong>：改成 <code class="font-mono text-emerald-300">while fast and fast.next:</code> 后，安检员不仅看脚下（石板 2），还探头看了一眼身前第一块垫脚石 <code class="font-mono">fast.next</code>——发现前面已经是<strong>悬崖 None</strong>！安检门立刻亮红灯拦住，不准起跳！`;
+        }
+      } else {
+        if (c4Mode === 'bug') {
+          document.getElementById('c4-row-3').classList.add('crash');
+          narrator.innerHTML = `💥 <strong>阶段 3（半空踩空摔死！）</strong>：<code class="font-mono text-amber-300">fast</code> 执行二段跳 <code class="font-mono text-rose-400">fast.next.next</code>：第一跳 <code class="font-mono">fast.next</code> 飞出石板 2 落进悬崖 <code class="font-mono">None</code>；紧接着在悬崖半空中试图蹬第二脚（<code class="font-mono text-rose-400">None.next</code>），脚下全是空气，当场抛出 <code class="font-mono text-rose-300">AttributeError</code> 崩溃！<br><span class="text-emerald-300">👉 请点击右上角切换到「🟢 双重安全锁」看修复效果！</span>`;
+        } else {
+          document.getElementById('c4-row-ret').classList.add('safe');
+          narrator.innerHTML = `✅ <strong>阶段 3（安全收工）</strong>：因为被 <code class="font-mono text-emerald-300">fast.next</code> 安全锁拦在循环门外，程序直接跳到底部执行 <code class="font-mono text-emerald-300">return False</code>，稳稳报告“前方是悬崖，没有环”！`;
+        }
+      }
+
+      // Render Cliff SVG
+      const svg = document.getElementById('c4-svg');
+      let html = `
+        <defs>
+          <marker id="c4-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+          </marker>
+          <marker id="c4-crash-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f43f5e" />
+          </marker>
+        </defs>
+      `;
+
+      // Cliff ground & abyss
+      html += `
+        <rect x="25" y="165" width="320" height="45" rx="6" fill="#1e293b" stroke="#334155" />
+        <text x="185" y="192" text-anchor="middle" fill="#64748b" font-size="11" font-family="JetBrains Mono">🪨 实体石板悬崖岸</text>
+
+        <rect x="355" y="165" width="240" height="55" rx="6" fill="rgba(244, 63, 94, 0.07)" stroke="#881337" stroke-dasharray="5 4" />
+        <text x="475" y="196" text-anchor="middle" fill="#fb7185" font-size="11" font-family="JetBrains Mono">🌊 万丈深渊 (None 空虚区)</text>
+      `;
+
+      // Stone 1 & Stone 2
+      html += `
+        <rect x="55" y="110" width="95" height="50" rx="10" fill="rgba(56, 189, 248, 0.15)" stroke="#38bdf8" stroke-width="2.5" />
+        <text x="102" y="140" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="JetBrains Mono">石板 1</text>
+
+        <line x1="150" y1="135" x2="215" y2="135" stroke="#64748b" stroke-width="2.5" marker-end="url(#c4-arrow)" />
+
+        <rect x="225" y="110" width="95" height="50" rx="10" fill="rgba(245, 158, 11, 0.18)" stroke="#f59e0b" stroke-width="2.5" />
+        <text x="272" y="140" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="JetBrains Mono">石板 2</text>
+
+        <line x1="320" y1="135" x2="395" y2="135" stroke="#64748b" stroke-width="2.5" marker-end="url(#c4-arrow)" />
+
+        <!-- Cloud None -->
+        <rect x="405" y="112" width="85" height="46" rx="10" fill="#090d16" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4 4" />
+        <text x="447" y="139" text-anchor="middle" fill="#fda4af" font-size="12" font-weight="700" font-family="JetBrains Mono">None(空气)</text>
+      `;
+
+      // Slow badge on Stone 1
+      html += `
+        <g transform="translate(66, 80)">
+          <rect x="0" y="0" width="72" height="22" rx="6" fill="#0284c7" />
+          <text x="36" y="15" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="JetBrains Mono">🐢 slow</text>
+        </g>
+      `;
+
+      // Fast badge & jump arcs depending on phase and mode
+      if (c4Phase < 2 || c4Mode === 'safe') {
+        html += `
+          <g transform="translate(236, 80)">
+            <rect x="0" y="0" width="72" height="22" rx="6" fill="${c4Mode === 'safe' && c4Phase >= 1 ? '#10b981' : '#d97706'}" />
+            <text x="36" y="15" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="JetBrains Mono">${c4Mode === 'safe' && c4Phase >= 1 ? '🛑 停步安全' : '🐇 fast'}</text>
+          </g>
+        `;
+      }
+
+      if (c4Phase === 2 && c4Mode === 'bug') {
+        // Show 1st hop to None, and 2nd hop from None crashing!
+        html += `
+          <path d="M 272 110 Q 360 45 445 108" fill="none" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#c4-arrow)" />
+          <text x="360" y="62" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700" font-family="JetBrains Mono">第1跳: fast.next</text>
+
+          <path d="M 455 110 Q 525 40 575 135" fill="none" stroke="#f43f5e" stroke-width="3" stroke-dasharray="5 3" marker-end="url(#c4-crash-arrow)" />
+          <text x="525" y="58" text-anchor="middle" fill="#f43f5e" font-size="11" font-weight="700" font-family="JetBrains Mono">第2跳: None.next ?!</text>
+          <text x="565" y="155" text-anchor="middle" fill="#fb7185" font-size="12" font-weight="700" font-family="JetBrains Mono">💥 踩空摔死!</text>
+        `;
+      }
+
+      svg.innerHTML = html;
+    }
+
+    // =========================================================================
+    // CUT 5: TWO-BLADE CODE SURGERY (5 STEPS -> 3 STEPS)
+    // =========================================================================
+    let c5Cut1Done = false;
+    let c5Cut2Done = false;
+
+    function toggleCut5Blade(b) {
+      if (b === 1) c5Cut1Done = !c5Cut1Done;
+      if (b === 2) c5Cut2Done = !c5Cut2Done;
+      renderCut5();
+    }
+
+    function renderCut5() {
+      const b1 = document.getElementById('c5-blade-1');
+      const b2 = document.getElementById('c5-blade-2');
+      const tag1 = document.getElementById('c5-b1-tag');
+      const tag2 = document.getElementById('c5-b2-tag');
+      const block1 = document.getElementById('c5-code-block1');
+      const block2 = document.getElementById('c5-code-block2');
+      const pill = document.getElementById('c5-status-pill');
+
+      if (c5Cut1Done) {
+        b1.className = 'p-3 rounded-xl border-2 text-left transition-all bg-emerald-500/10 border-emerald-500/50';
+        tag1.textContent = '已切除 ✓';
+        tag1.className = 'px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-bold';
+        block1.innerHTML = `<div class="text-slate-600 line-through"># 已切除：if not head or not head.next: return False (由下方 while 全自动接管)</div>`;
+        block1.className = 'transition-all duration-300 px-2 py-0.5 rounded bg-slate-900/50 border-l-2 border-slate-700';
+      } else {
+        b1.className = 'p-3 rounded-xl border text-left transition-all bg-slate-900/90 border-slate-700 hover:border-sky-400';
+        tag1.textContent = '点击切除';
+        tag1.className = 'px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300';
+        block1.innerHTML = `
+          <div class="text-slate-500"># 【赘肉 1】下面的 while 已经能自动拦截空链表和单节点了</div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400">if not</span> head <span class="text-sky-400">or not</span> head.next: <span class="text-emerald-400">return False</span></div>
+        `;
+        block1.className = 'transition-all duration-300 px-2 py-1 rounded bg-rose-500/10 border-l-2 border-rose-500/60';
+      }
+
+      if (c5Cut2Done) {
+        b2.className = 'p-3 rounded-xl border-2 text-left transition-all bg-emerald-500/10 border-emerald-500/50';
+        tag2.textContent = '已归零 ✓';
+        tag2.className = 'px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-bold';
+        block2.innerHTML = `
+          <div class="text-emerald-400/90"># 【步骤 0：同一起跑线出发】清爽、自然、无需错位！</div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-emerald-300 font-bold">slow = fast = head</span></div>
+        `;
+        block2.className = 'transition-all duration-300 px-2 py-1 rounded bg-emerald-500/10 border-l-2 border-emerald-500';
+      } else {
+        b2.className = 'p-3 rounded-xl border text-left transition-all bg-slate-900/90 border-slate-700 hover:border-sky-400';
+        tag2.textContent = '点击归零';
+        tag2.className = 'px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300';
+        block2.innerHTML = `
+          <div class="text-slate-500"># 【赘肉 2】官方题解先判断再跳才被迫错位，你是先跳再判断！</div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;slow = head; <span class="text-amber-300 font-bold">fast = head.next</span></div>
+        `;
+        block2.className = 'transition-all duration-300 px-2 py-1 rounded bg-amber-500/10 border-l-2 border-amber-500/60';
+      }
+
+      if (c5Cut1Done && c5Cut2Done) {
+        pill.textContent = '✨ 手术完成：3 步终极形态';
+        pill.className = 'text-xs font-mono px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold';
+      } else {
+        pill.textContent = `手术进度：已切 ${(c5Cut1Done ? 1 : 0) + (c5Cut2Done ? 1 : 0)} / 2 刀`;
+        pill.className = 'text-xs font-mono px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300';
+      }
+    }
+
+    function testCut5Case(type) {
+      // Automatically complete both cuts so user sees the clean 3-step code in action
+      c5Cut1Done = true;
+      c5Cut2Done = true;
+      renderCut5();
+
+      const out = document.getElementById('c5-test-output');
+      if (type === 'empty') {
+        out.innerHTML = `✅ <strong>测试【空链表 head = None】</strong>：<br>1. <code>slow = fast = None</code><br>2. 进安检门 <code>while fast and fast.next:</code> ➔ 因为 <code>fast</code> 是 <code>None</code>，当场拦在门外！<br>3. 直接执行底部 <code>return False</code>。<strong>（根本不需要前置 if 判空！）</strong>`;
+      } else if (type === 'one') {
+        out.innerHTML = `✅ <strong>测试【单块石板 [1] ➔ None】</strong>：<br>1. <code>slow = fast = 石板1</code><br>2. 进安检门 <code>while fast and fast.next:</code> ➔ 虽然 <code>fast</code> 有砖，但 <code>fast.next</code> 是 <code>None</code>，当场拦在门外！<br>3. 直接执行底部 <code>return False</code>。<strong>（同样不需要前置 if！）</strong>`;
+      } else if (type === 'two') {
+        out.innerHTML = `✅ <strong>测试【双石板无环 [1] ➔ [2] ➔ None】</strong>：<br>1. <code>slow = fast = 石板1</code><br>2. 第1轮安检通过 ➔ <code>slow</code> 跳到 <code>[2]</code>，<code>fast</code> 二段跳落入终点 <code>None</code>（<code>slow != fast</code>）<br>3. 第2轮安检门发现 <code>fast</code> 为 <code>None</code> 结束循环 ➔ 安全返回 <code>False</code>！`;
+      } else {
+        out.innerHTML = `🎯 <strong>测试【有环链表】</strong>：<br>1. <code>slow = fast = head</code> 同起点出发<br>2. 每次先各自跳跃（<code>slow</code> +1，<code>fast</code> +2），落地后再检查 <code>if slow == fast:</code><br>3. 入环后以每轮 -1 格的相对速度精准踩中同一块石板，返回 <code>True</code>！`;
+      }
+    }
+
+    // =========================================================================
+    // CUT 6: META-COGNITIVE DIAGNOSIS (INSIDE-OUT CODE GROWTH & ONION BUILDER)
+    // =========================================================================
+    let c6Phase = 2; // Default to Phase 2 so user immediately sees the "inner core first" insight
+    let onionLayer = 1;
+
+    function setCut6Phase(p) {
+      c6Phase = p;
+      renderCut6();
+    }
+
+    function setOnionLayer(l) {
+      onionLayer = l;
+      renderCut6();
+    }
+
+    function runOnionProbe(type) {
+      onionLayer = 4;
+      renderCut6();
+      const box = document.getElementById('onion-probe-result');
+      if (type === 'empty') {
+        box.innerHTML = `🚀 <strong>发射 <code class="text-sky-300">head = None</code> 撞击第 2 层外壳</strong>：<br>1. <code>slow = fast = None</code><br>2. 撞击 <code>while <span class="text-rose-400 font-bold">fast</span> and fast.next:</code> ➔ 第 1 个条件 <code>fast</code> 直接为 <code>False</code>！<br>3. 瞬间弹回底部执行 <code>return False</code>。<strong>结论：0 崩溃，完全不需要补写步骤 1！</strong>`;
+      } else {
+        box.innerHTML = `🚀 <strong>发射 <code class="text-sky-300">head = [1] (单节点)</code> 撞击第 2 层外壳</strong>：<br>1. <code>slow = fast = 节点1</code><br>2. 撞击 <code>while fast and <span class="text-rose-400 font-bold">fast.next</span>:</code> ➔ <code>fast.next</code> 为 <code>None</code>，当场拦截！<br>3. 瞬间弹回底部执行 <code>return False</code>。<strong>结论：0 崩溃，完全不需要补写步骤 1！</strong>`;
+      }
+    }
+
+    function renderCut6() {
+      // 1. Render Panel A: Code Growth Time-Machine
+      [1, 2, 3].forEach(p => {
+        const btn = document.getElementById(`c6-pbtn-${p}`);
+        if (p === c6Phase) {
+          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition bg-violet-500 text-white shadow-lg shadow-violet-500/25';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+        }
+      });
+
+      const codeBox = document.getElementById('c6-growth-code');
+      const descBox = document.getElementById('c6-phase-desc');
+      const phaseInd = document.getElementById('c6-phase-indicator');
+
+      if (c6Phase === 1) {
+        phaseInd.textContent = '当前回放：阶段 ①（先写步骤 1 & 2）';
+        codeBox.innerHTML = `
+          <div class="px-3 py-1.5 rounded bg-violet-500/15 border-l-4 border-violet-400 flex justify-between items-center">
+            <div>
+              <span class="text-slate-500"># 步骤 1：先判空（受官方题解影响的防御习惯）</span><br>
+              <span class="text-sky-400">if not</span> head <span class="text-sky-400">or not</span> head.next: <span class="text-emerald-400">return False</span>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-violet-500/30 text-violet-200 font-bold">第 1 步写下</span>
+          </div>
+          <div class="px-3 py-1.5 rounded bg-violet-500/15 border-l-4 border-violet-400 flex justify-between items-center">
+            <div>
+              <span class="text-slate-500"># 步骤 2：摆放快慢指针棋子</span><br>
+              slow = head; fast = head.next
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-violet-500/30 text-violet-200 font-bold">第 2 步写下</span>
+          </div>
+          <div class="px-3 py-3 rounded border border-dashed border-slate-800 text-slate-600 text-center">
+            （此时下方还是空白，你准备开始写核心动作……请点击上方【② 先钉步骤 3&4】）
+          </div>
+        `;
+        descBox.innerHTML = `
+          <div class="font-bold text-violet-300">阶段 ① 心理剖析：先清场、摆好棋子</div>
+          <p>你习惯先把最简单的边界（空链表/单节点）清掉，然后把 <code class="font-mono text-sky-300">slow</code> 和 <code class="font-mono text-amber-300">fast</code> 两个演员摆上舞台。</p>
+          <p class="text-amber-300/90 text-xs">⚠️ <strong>埋下的伏笔</strong>：你在这里沿用了官方题解的 <code class="font-mono">fast = head.next</code>，却没意识到你接下来在阶段 ② 写的内核根本不需要错位起跑。</p>
+        `;
+      } else if (c6Phase === 2) {
+        phaseInd.textContent = '当前回放：阶段 ②（跳过 while，先写步骤 3 & 4 内核！）';
+        codeBox.innerHTML = `
+          <div class="px-3 py-1 rounded bg-slate-900/60 border-l-4 border-slate-700 opacity-60">
+            <span class="text-sky-400">if not</span> head <span class="text-sky-400">or not</span> head.next: <span class="text-emerald-400">return False</span><br>
+            slow = head; fast = head.next
+          </div>
+          <div class="px-3 py-1.5 rounded border border-dashed border-amber-500/40 bg-amber-500/5 text-amber-300/80 text-xs">
+            ⚡ 注意：此时你<strong>根本还没写 while 循环</strong>！你直接空出一行，先写了下面这两步：
+          </div>
+          <div class="px-3 py-1.5 rounded bg-emerald-500/15 border-l-4 border-emerald-400 flex justify-between items-center">
+            <div>
+              <span class="text-slate-400"># 步骤 3：移动两个指针（单帧物理动作）</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;fast = <span class="text-amber-300 font-bold">fast.next.next</span>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/30 text-emerald-200 font-bold">第 3 步写下(核心!)</span>
+          </div>
+          <div class="px-3 py-1.5 rounded bg-emerald-500/15 border-l-4 border-emerald-400 flex justify-between items-center">
+            <div>
+              <span class="text-slate-400"># 步骤 4：追尾命中判定</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400">if</span> slow == fast: <span class="text-emerald-400">return True</span>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/30 text-emerald-200 font-bold">第 4 步写下(核心!)</span>
+          </div>
+        `;
+        descBox.innerHTML = `
+          <div class="font-bold text-emerald-300">阶段 ② 心理剖析：跳过循环外壳，直接造“单帧心脏”！</div>
+          <p><strong>这是你整个思维里最精彩的一步！</strong>你没有先写 <code class="font-mono">while</code>，而是直接写下了<strong>「步骤 3：慢走1步、快走2步」</strong>和<strong>「步骤 4：如果相等就返回 True」</strong>。</p>
+          <p class="text-xs text-slate-300">为什么这极其符合直觉？因为你先把<strong>“1 回合之内发生什么”</strong>彻底钉死了！而且因为你先写移动（步骤 3）再写判断（步骤 4），天然避免了官方题解的死结。</p>
+        `;
+      } else {
+        phaseInd.textContent = '当前回放：阶段 ③（回头向上插 while，向下补 return False）';
+        codeBox.innerHTML = `
+          <div class="px-3 py-1 rounded bg-slate-900/60 border-l-4 border-slate-700 opacity-55">
+            <span class="text-sky-400">if not</span> head <span class="text-sky-400">or not</span> head.next: <span class="text-emerald-400">return False</span><br>
+            slow = head; fast = head.next
+          </div>
+          <div class="px-3 py-1.5 rounded bg-rose-500/20 border-l-4 border-rose-500 flex justify-between items-center">
+            <div>
+              <span class="text-rose-300"># 步骤 5(上)：回头向上插循环条件（⚠️凭宏观印象漏了 fast.next）</span><br>
+              <span class="text-purple-400">while</span> <span class="text-rose-300 font-bold underline">fast</span>:
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-rose-500/40 text-white font-bold">第 5 步回头上插</span>
+          </div>
+          <div class="px-3 py-1 rounded bg-slate-900/60 border-l-4 border-emerald-500/50 opacity-75">
+            &nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next; fast = <span class="text-amber-300">fast.next.next</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400">if</span> slow == fast: <span class="text-emerald-400">return True</span>
+          </div>
+          <div class="px-3 py-1.5 rounded bg-amber-500/15 border-l-4 border-amber-400 flex justify-between items-center">
+            <div>
+              <span class="text-amber-200"># 步骤 5(下)：向下补无环默认出口</span><br>
+              <span class="text-emerald-400">return False</span>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/30 text-amber-200 font-bold">第 5 步向下收尾</span>
+          </div>
+        `;
+        descBox.innerHTML = `
+          <div class="font-bold text-rose-300">阶段 ③ 心理剖析：前后补齐外壳时的“视线盲区”</div>
+          <p>当步骤 3 和 4 写好后，你需要让它循环起来。于是你把光标移回步骤 3 上方，心想：“当快指针不为空时继续循环”，写下了 <code class="font-mono text-rose-300">while fast:</code>。</p>
+          <p class="text-xs text-amber-200">💡 <strong>破局顿悟</strong>：回头补 <code class="font-mono">while</code> 时，<strong>不要凭脑子里的中文语义写，而要低头看一眼你刚写的步骤 3</strong>——里面有 <code class="font-mono">fast.next.next</code>（两个点号），所以 <code class="font-mono">while</code> 必须写 <code class="font-mono text-emerald-300">fast and fast.next</code>！</p>
+        `;
+      }
+
+      // 2. Render Panel C: Upgraded Onion Inside-Out 4-Step Builder
+      [1, 2, 3, 4].forEach(l => {
+        const b = document.getElementById(`onion-btn-${l}`);
+        if (l === onionLayer) {
+          b.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
+        } else {
+          b.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+        }
+      });
+
+      document.getElementById('onion-step-tag').textContent = `当前洋葱层：第 ${onionLayer} / 4 层`;
+      const oCode = document.getElementById('onion-code-box');
+      const oGuide = document.getElementById('onion-guide-box');
+
+      if (onionLayer === 1) {
+        oCode.innerHTML = `
+          <div class="text-slate-600"># [顶层留白] 先别写初始化和 if 判空！</div>
+          <div class="text-slate-600"># [外壳留白] 先别写 while 循环！</div>
+          <div class="p-2.5 rounded-lg bg-emerald-500/15 border border-emerald-500/40 space-y-0.5">
+            <div class="text-emerald-300 font-bold"># 🧅 第 1 层（最内核）：直接写单回合动作 + 命中条件</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;slow = slow<span class="text-sky-400 font-bold">.next</span></div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;fast = fast<span class="text-amber-300 font-bold underline">.next</span><span class="text-rose-400 font-bold underline">.next</span></div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400">if</span> slow == fast: <span class="text-emerald-400">return True</span></div>
+          </div>
+        `;
+        oGuide.innerHTML = `
+          <div class="font-bold text-emerald-300">🧅 第 1 层操作指南：开局先写最中间的 3 行！</div>
+          <p>完全顺应你的直觉！打开编辑器，<strong>第一行先空着不写</strong>，直接把快慢指针的移动（慢走1、快走2）和相遇返回 <code class="font-mono">True</code> 钉在屏幕正中央。</p>
+          <p class="text-xs text-slate-400">👉 接下来点击上方【第2层(往外包)：数.next定while】。</p>
+        `;
+      } else if (onionLayer === 2) {
+        oCode.innerHTML = `
+          <div class="text-slate-600"># [顶层留白] 初始化稍后补</div>
+          <div class="p-2 rounded-lg bg-amber-500/15 border border-amber-500/40">
+            <div class="text-amber-300 font-bold"># 🧅 第 2 层（往外包一层）：数内核里的点号，機械推导 while</div>
+            <div><span class="text-purple-400">while</span> <span class="text-amber-300 font-bold">fast</span> <span class="text-sky-400">and</span> <span class="text-rose-400 font-bold">fast.next</span>:</div>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;fast = <span class="text-amber-300 font-bold">fast</span>.<span class="text-rose-400 font-bold">next</span>.next  <span class="text-slate-500"># ⬅ 2次解引用 = 2个非空守卫</span></div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400">if</span> slow == fast: <span class="text-emerald-400">return True</span></div>
+          </div>
+        `;
+        oGuide.innerHTML = `
+          <div class="font-bold text-amber-300">🧅 第 2 层操作指南：盯着第 1 层的 <code class="font-mono">.next</code> 数量写 <code class="font-mono">while</code></div>
+          <p>现在往第 1 层上方包 <code class="font-mono">while</code>。<strong>千万别凭感觉写！</strong>低头看第 1 层谁跨的步子最大：</p>
+          <ul class="list-disc pl-4 text-xs space-y-1 text-slate-300">
+            <li>看到 <code class="font-mono text-amber-300">fast</code> 后面跟着 <strong>第 1 个 <code class="font-mono">.next</code></strong> ➔ 必须保证 <code class="font-mono text-amber-300">fast</code> 非空；</li>
+            <li>后面还跟着 <strong>第 2 个 <code class="font-mono text-rose-400">.next</code></strong> ➔ 必须保证 <code class="font-mono text-rose-400">fast.next</code> 也非空！</li>
+          </ul>
+          <p class="text-xs text-emerald-300">把这两项用 <code class="font-mono">and</code> 连起来，100% 不会再犯 <code class="font-mono">while fast:</code> 的漏判错误！</p>
+        `;
+      } else if (onionLayer === 3) {
+        oCode.innerHTML = `
+          <div class="p-2 rounded-lg bg-sky-500/15 border border-sky-500/40">
+            <div class="text-sky-300 font-bold"># 🧅 第 3 层(上)：补同起点初始化</div>
+            <div>slow = fast = head</div>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-900/90 border border-slate-800">
+            <div><span class="text-purple-400">while</span> fast <span class="text-sky-400">and</span> fast.next:</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;fast = fast.next.next</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400">if</span> slow == fast: <span class="text-emerald-400">return True</span></div>
+          </div>
+          <div class="p-2 rounded-lg bg-sky-500/15 border border-sky-500/40">
+            <div class="text-sky-300 font-bold"># 🧅 第 3 层(下)：补循环结束后的默认出口</div>
+            <div><span class="text-emerald-400">return False</span></div>
+          </div>
+        `;
+        oGuide.innerHTML = `
+          <div class="font-bold text-sky-300">🧅 第 3 层操作指南：前后补齐起点与终点</div>
+          <p>因为你在第 1 层是<strong>先移动指针、再判断 <code class="font-mono">slow == fast</code></strong>，所以上方初始化直接写最自然的 <code class="font-mono text-sky-300">slow = fast = head</code> 即可，完全不需要错位起跑！下方补上 <code class="font-mono text-emerald-400">return False</code>。</p>
+        `;
+      } else {
+        oCode.innerHTML = `
+          <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/40 space-y-0.5">
+            <div class="text-emerald-300 font-bold"># 🧅 第 4 层（穿透检验通过）：无需任何前置 if，直接完工！</div>
+            <div>slow = fast = head</div>
+            <div><span class="text-purple-400">while</span> fast <span class="text-sky-400">and</span> fast.next:</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;fast = fast.next.next</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400">if</span> slow == fast: <span class="text-emerald-400">return True</span></div>
+            <div><span class="text-emerald-400">return False</span></div>
+          </div>
+        `;
+        oGuide.innerHTML = `
+          <div class="font-bold text-emerald-300">🧅 第 4 层操作指南：把「判空步骤 1」放到最后做穿透检验！</div>
+          <p>注意看顺序的改变：以前你是<strong>开局第 1 步先写 <code class="font-mono">if not head...</code></strong>；现在你是<strong>等前 3 层写完后，最后拿空链表 <code class="font-mono">None</code> 和单节点 <code class="font-mono">[1]</code> 往代码里一撞</strong>（点击下方两个发射按钮试试）。</p>
+          <p class="text-xs text-emerald-300">发现 <code class="font-mono">while fast and fast.next:</code> 已经自动把它们全拦住了，于是你心安理得地省掉了步骤 1！</p>
+        `;
+      }
+    }
+
+    // =========================================================================
+    // CUT 7: INTJ META-OS (PROBLEM SOLVING FUNNEL + X-RAY READER + ISOMORPHISM)
+    // =========================================================================
+    let funnelPat = 0;
+    let xrayPass = 1;
+    let dotSteps = 2;
+    let isoProb = '141';
+
+    function setFunnelPattern(idx) {
+      funnelPat = idx;
+      renderFunnel();
+    }
+
+    function setXrayPass(p) {
+      xrayPass = p;
+      renderXray();
+    }
+
+    function setDotSim(s) {
+      dotSteps = s;
+      renderDotSim();
+    }
+
+    function setIsoProblem(id) {
+      isoProb = id;
+      renderIsoProblem();
+    }
+
+    function renderFunnel() {
+      [0, 1, 2].forEach(i => {
+        const b = document.getElementById(`funnel-pat-${i}`);
+        if (i === funnelPat) {
+          b.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-sky-500 text-slate-950 shadow-lg shadow-sky-500/20';
+        } else {
+          b.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+        }
+      });
+
+      const patterns = [
+        {
+          s1Title: '第 1 步：写出你最顺手的暴力/哈希解（锚定本质）',
+          s1Code: `seen = set()\nwhile head:\n    if head in seen: return True\n    seen.add(head)\n    head = head.next`,
+          s1Desc: '你在方法一里写出了这段代码。它帮你锚定了这道题的物理本质：<strong>「如何发现一个状态曾经出现过（判重）」</strong>。',
+          s2Title: '第 2 步：下复杂度砍刀（定位唯一瓶颈行）',
+          s2Code: `❌ 砍掉：seen = set()  (占用 O(N) 内存)\n❓ 逼问自己：不准拿小本本记历史节点，怎么知道自己在转圈？`,
+          s2Desc: '进阶要求 $O(1)$ 空间，意味着<strong>只禁止 `seen = set()` 这一行</strong>！问题瞬间从“怎么做这道题”缩小为“怎么在不记历史的情况下发现重复”。',
+          s3Title: '第 3 步：物理等价置换（用相对速度置换空间记忆）',
+          s3Code: `✅ 置换公式：\n【静态记忆集合 seen】\n  ⬇️ 等价置换为\n【动态套圈碰撞 slow == fast】`,
+          s3Desc: '在闭环跑道里，<strong>「速度差导致的套圈追尾」在物理上等价于「踩到历史印记」</strong>！于是顺理成章逼出快慢双指针。'
+        },
+        {
+          s1Title: '第 1 步：先写双层循环暴力枚举（锚定本质）',
+          s1Code: `for i in range(n):\n    for j in range(i, n):\n        if check(nums[i:j+1]): ...`,
+          s1Desc: '遇到子数组/子串题卡壳时，先在脑子里立起双层循环 `i, j`。本质是：<strong>「枚举所有左端点 i 和右端点 j 的区间」</strong>。',
+          s2Title: '第 2 步：下复杂度砍刀（砍掉指针回退）',
+          s2Code: `❌ 砍掉：每次 i+1 时，j 重新退回 i 的重复扫描\n❓ 逼问自己：当左边界 i 往右缩时，右边界 j 需要往回退吗？`,
+          s2Desc: '如果区间性质具有单调性（如正数和），当 `i` 往右走时，`j` 根本不需要退回！',
+          s3Title: '第 3 步：物理等价置换（双指针同向蠕动 = 滑动窗口）',
+          s3Code: `✅ 置换公式：\n【j 每次退回 i 重算 O(N²)】\n  ⬇️ 等价置换为\n【left 和 right 只进不退 O(N)】`,
+          s3Desc: '把回退的 `j` 变成不回退的 `right`，双层循环直接坍缩成经典的<strong>同向双指针（滑动窗口）</strong>。'
+        },
+        {
+          s1Title: '第 1 步：先画暴力递归决策树（锚定本质）',
+          s1Code: `def dfs(i):\n    if i < 0: return 0\n    return max(dfs(i-1), dfs(i-2) + nums[i])`,
+          s1Desc: '遇到动态规划（DP）卡壳时，永远别上来就凑 `dp[i]` 方程！先写最无脑的“选或不选”暴力递归 `dfs(i)`。',
+          s2Title: '第 2 步：下复杂度砍刀（砍掉重复计算的树枝）',
+          s2Code: `❌ 砍掉：dfs(i-2) 被不同分支反复重算 O(2^N)\n❓ 逼问自己：决定当前结果的唯一入参是什么？就是下标 i！`,
+          s2Desc: '既然相同的 `i` 算出的结果永远一样，直接给它加个缓存 `@cache`，或者从小到大填表。',
+          s3Title: '第 3 步：物理等价置换（递归树 ➔ 递推数组 ➔ 滚动双变量）',
+          s3Code: `✅ 置换公式：\n【dfs(i) 递归栈】➔【dp[i] 数组】\n  ⬇️ 只依赖前两项，再次砍空间：\n【prev, curr = curr, max(curr, prev + x)】`,
+          s3Desc: '你会发现：DP 的滚动变量优化，跟链表把 `set` 优化成 `slow, fast` 两个指针，在底层逻辑上是<strong>同一个降维操作</strong>！'
+        }
+      ];
+
+      const cur = patterns[funnelPat];
+      document.getElementById('funnel-stages-grid').innerHTML = `
+        <div class="p-4 rounded-xl bg-slate-900/95 border border-slate-800 flex flex-col justify-between space-y-3">
+          <div class="space-y-2">
+            <div class="text-xs font-mono font-bold text-sky-400">${cur.s1Title}</div>
+            <pre class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 overflow-x-auto">${cur.s1Code}</pre>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">${cur.s1Desc}</p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex flex-col justify-between space-y-3">
+          <div class="space-y-2">
+            <div class="text-xs font-mono font-bold text-rose-300">${cur.s2Title}</div>
+            <pre class="p-2.5 rounded-lg bg-slate-950 border border-rose-500/30 text-xs font-mono text-rose-200 whitespace-pre-wrap">${cur.s2Code}</pre>
+          </div>
+          <p class="text-xs text-slate-200 leading-relaxed">${cur.s2Desc}</p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between space-y-3">
+          <div class="space-y-2">
+            <div class="text-xs font-mono font-bold text-emerald-300">${cur.s3Title}</div>
+            <pre class="p-2.5 rounded-lg bg-slate-950 border border-emerald-500/30 text-xs font-mono text-emerald-200 whitespace-pre-wrap">${cur.s3Code}</pre>
+          </div>
+          <p class="text-xs text-slate-200 leading-relaxed">${cur.s3Desc}</p>
+        </div>
+      `;
+    }
+
+    function renderXray() {
+      [1, 2, 3].forEach(p => {
+        const b = document.getElementById(`xray-btn-${p}`);
+        if (p === xrayPass) {
+          b.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-violet-500 text-white shadow-lg shadow-violet-500/25';
+        } else {
+          b.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+        }
+      });
+
+      const badge = document.getElementById('xray-mode-badge');
+      const codeEl = document.getElementById('xray-official-code');
+      const expEl = document.getElementById('xray-explanation');
+      const myCodeEl = document.getElementById('xray-my-code');
+
+      if (xrayPass === 1) {
+        badge.textContent = '第一眼：屏蔽前8行噪音，直奔洋葱心';
+        codeEl.innerHTML = `
+          <div class="px-2 py-0.5 opacity-25 line-through text-slate-500">if not head or not head.next: return False  # [先跳过不看]</div>
+          <div class="px-2 py-0.5 opacity-25 line-through text-slate-500">slow = head; fast = head.next               # [先跳过不看]</div>
+          <div class="px-2 py-0.5 opacity-25 line-through text-slate-500">while slow != fast:                         # [先跳过不看]</div>
+          <div class="px-2 py-0.5 opacity-25 line-through text-slate-500">    if not fast or not fast.next: return False</div>
+          <div class="px-2 py-1.5 rounded bg-emerald-500/20 border-l-4 border-emerald-400 text-white font-bold">
+            &nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next          <span class="text-emerald-300"># 🎯 第一眼只抓这两行！</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;fast = fast.next.next     <span class="text-emerald-300"># 🎯 原来核心就是慢走1、快走2！</span>
+          </div>
+          <div class="px-2 py-0.5 opacity-25 line-through text-slate-500">return True</div>
+        `;
+        expEl.innerHTML = `
+          <div class="font-bold text-emerald-300">👁️ 第一眼操作（只看循环最深处的状态转移）：</div>
+          <p>当你打不开思路去看别人题解时，<strong>严禁从第 1 行开始读！</strong>直接把视线投向循环最里面的缩进层——你会瞬间看穿：“哦，整道题的物理发动机就只是 <code class="font-mono text-emerald-300">slow</code> 走 1 步、<code class="font-mono text-emerald-300">fast</code> 走 2 步，撞上就返回 <code class="font-mono">True</code>！”</p>
+          <p class="text-xs text-slate-400">此时在你脑海里，你的「洋葱第 1 层」已经吸收完毕了（看下方绿色框）。</p>
+        `;
+        myCodeEl.textContent = `# 吸收进你的洋葱第 1 层（核心动作已到手）：\nslow = slow.next\nfast = fast.next.next\nif slow == fast:\n    return True`;
+      } else if (xrayPass === 2) {
+        badge.textContent = '第二眼：提取越界保护契约';
+        codeEl.innerHTML = `
+          <div class="px-2 py-0.5 opacity-30 text-slate-500">if not head or not head.next: return False</div>
+          <div class="px-2 py-0.5 opacity-30 text-slate-500">slow = head; fast = head.next</div>
+          <div class="px-2 py-0.5 opacity-30 text-slate-500">while slow != fast:</div>
+          <div class="px-2 py-1.5 rounded bg-amber-500/20 border-l-4 border-amber-400 text-white font-bold">
+            &nbsp;&nbsp;&nbsp;&nbsp;if not fast or not fast.next: return False <span class="text-amber-300"># 🛡️ 越界保护锁</span>
+          </div>
+          <div class="px-2 py-1 rounded bg-slate-900 text-slate-300">
+            &nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;fast = fast.next.next
+          </div>
+          <div class="px-2 py-0.5 opacity-30 text-slate-500">return True</div>
+        `;
+        expEl.innerHTML = `
+          <div class="font-bold text-amber-300">🛡️ 第二眼操作（看作者怎么防空指针越界）：</div>
+          <p>接着看作者是怎么保护 <code class="font-mono">fast.next.next</code> 的：他在里面写了 <code class="font-mono text-amber-300">if not fast or not fast.next: return False</code>。</p>
+          <p class="text-xs text-slate-300">按照你的洋葱构建法，这其实就是<strong>「只要 <code class="font-mono text-emerald-300">fast and fast.next</code> 为真就继续循环」</strong>！直接把它翻转为你的第 2 层 <code class="font-mono">while</code> 外壳。</p>
+        `;
+        myCodeEl.textContent = `# 吸收进你的洋葱第 2 层（翻转成正向 while 安全门）：\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n    if slow == fast:\n        return True`;
+      } else {
+        badge.textContent = '第三眼：识破并扔掉作者的倒装补丁';
+        codeEl.innerHTML = `
+          <div class="px-2 py-1 rounded bg-rose-500/20 border-l-4 border-rose-500 text-rose-200">
+            if not head or not head.next: return False <span class="text-rose-400 font-bold"># ❌ 补丁1(因错位起跑被迫加的)</span><br>
+            slow = head; fast = head.next              <span class="text-rose-400 font-bold"># ❌ 补丁2(因while条件倒装被迫加的)</span><br>
+            while slow != fast:                        <span class="text-rose-400 font-bold"># ❌ 罪魁祸首：先判相等再走</span>
+          </div>
+          <div class="px-2 py-1 text-slate-400">
+            &nbsp;&nbsp;&nbsp;&nbsp;if not fast or not fast.next: return False<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next; fast = fast.next.next<br>
+            return True
+          </div>
+        `;
+        expEl.innerHTML = `
+          <div class="font-bold text-rose-300">🔪 第三眼操作（审判作者开头的防御代码，去芜存菁）：</div>
+          <p>最后才看题解的前 3 行！这下你一眼就能看穿：“原来作者之所以写 <code class="font-mono text-rose-300">fast = head.next</code> 和开头那句判空，纯粹是因为他把 <code class="font-mono">slow != fast</code> 写在了 <code class="font-mono">while</code> 头上！”</p>
+          <p class="text-xs text-emerald-300">而你的洋葱模板是<strong>先走再判</strong>，所以作者前 3 行的拧巴补丁你可以<strong>全部扔进垃圾桶</strong>，直接补上清爽的 <code class="font-mono">slow = fast = head</code> 即可永久收工！</p>
+        `;
+        myCodeEl.textContent = `# 最终入库（扔掉官方前3行补丁，用你的洋葱母本永久掌握）：\nslow = fast = head\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n    if slow == fast:\n        return True\nreturn False`;
+      }
+    }
+
+    function renderDotSim() {
+      [1, 2, 3].forEach(s => {
+        const b = document.getElementById(`dot-btn-${s}`);
+        if (s === dotSteps) {
+          b.className = 'p-2.5 rounded-xl border-2 text-center font-mono text-xs transition bg-amber-500/20 border-amber-400 text-amber-200 shadow-lg';
+        } else {
+          b.className = 'p-2.5 rounded-xl border text-center font-mono text-xs transition bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200';
+        }
+      });
+
+      const box = document.getElementById('dot-sim-display');
+      if (dotSteps === 1) {
+        box.innerHTML = `
+          <div class="text-slate-400">1. 内核最大跨度（<span class="text-amber-300 font-bold">1 个点号</span>）：</div>
+          <div class="p-2 rounded bg-slate-900 text-sky-300">p = <span class="text-emerald-300 font-bold">p</span>.next</div>
+          <div class="text-slate-400">2. 自动推导出的外层 <code class="text-purple-400">while</code> 契约（<span class="text-emerald-300 font-bold">1 项非空</span>）：</div>
+          <div class="p-2 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">while p:</div>
+        `;
+      } else if (dotSteps === 2) {
+        box.innerHTML = `
+          <div class="text-slate-400">1. 内核最大跨度（<span class="text-amber-300 font-bold">2 个点号</span>）：</div>
+          <div class="p-2 rounded bg-slate-900 text-sky-300">fast = <span class="text-emerald-300 font-bold">fast</span>.<span class="text-amber-300 font-bold">next</span>.next</div>
+          <div class="text-slate-400">2. 自动推导出的外层 <code class="text-purple-400">while</code> 契约（<span class="text-emerald-300 font-bold">2 项非空</span>）：</div>
+          <div class="p-2 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">while fast and fast.next:</div>
+        `;
+      } else {
+        box.innerHTML = `
+          <div class="text-slate-400">1. 内核最大跨度（<span class="text-amber-300 font-bold">3 个点号</span>）：</div>
+          <div class="p-2 rounded bg-slate-900 text-sky-300">fast = <span class="text-emerald-300 font-bold">fast</span>.<span class="text-amber-300 font-bold">next</span>.<span class="text-rose-300 font-bold">next</span>.next</div>
+          <div class="text-slate-400">2. 自动推导出的外层 <code class="text-purple-400">while</code> 契约（<span class="text-emerald-300 font-bold">3 项非空</span>）：</div>
+          <div class="p-2 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">while fast and fast.next and fast.next.next:</div>
+        `;
+      }
+    }
+
+    function renderIsoProblem() {
+      ['141', '876', '142', '202'].forEach(id => {
+        const b = document.getElementById(`iso-btn-${id}`);
+        if (id === isoProb) {
+          b.className = 'px-2.5 py-2 rounded-xl border-2 text-left font-mono text-xs transition bg-emerald-500/20 border-emerald-400 text-emerald-200 shadow-lg';
+        } else {
+          b.className = 'px-2.5 py-2 rounded-xl border text-left font-mono text-xs transition bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200';
+        }
+      });
+
+      const codeBox = document.getElementById('iso-code-container');
+      const noteBox = document.getElementById('iso-note-box');
+
+      if (isoProb === '141') {
+        codeBox.innerHTML = `
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">slow = fast = head                      <span class="text-slate-500"># [母本焊死] 同起点</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">while fast and fast.next:               <span class="text-slate-500"># [母本焊死] 2级安全锁</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">&nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next                    <span class="text-slate-500"># [母本焊死] 慢走1</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">&nbsp;&nbsp;&nbsp;&nbsp;fast = fast.next.next               <span class="text-slate-500"># [母本焊死] 快走2</span></div>
+          <div class="px-2 py-1 mt-1 rounded bg-amber-500/20 border-l-2 border-amber-400 text-amber-200">&nbsp;&nbsp;&nbsp;&nbsp;if slow == fast: return True        <span class="text-amber-300"># [本题插件] 撞上即有环</span></div>
+          <div class="px-2 py-0.5 mt-1 rounded bg-amber-500/20 border-l-2 border-amber-400 text-amber-200">return False                            <span class="text-amber-300"># [本题插件] 走空即无环</span></div>
+        `;
+        noteBox.innerHTML = `🎯 <strong>141. 环形链表（母本基准）</strong>：前 4 行绿色代码是你通过洋葱法构建的黄金骨架。点击右侧另外 3 道题，看看这 4 行代码是如何原封不动直接复用的！`;
+      } else if (isoProb === '876') {
+        codeBox.innerHTML = `
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">slow = fast = head                      <span class="text-slate-500"># [母本焊死] 同起点</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">while fast and fast.next:               <span class="text-slate-500"># [母本焊死] 2级安全锁</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">&nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next                    <span class="text-slate-500"># [母本焊死] 慢走1</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">&nbsp;&nbsp;&nbsp;&nbsp;fast = fast.next.next               <span class="text-slate-500"># [母本焊死] 快走2</span></div>
+          <div class="px-2 py-1 mt-1 rounded bg-amber-500/20 border-l-2 border-amber-400 text-amber-200">return slow                             <span class="text-amber-300"># [仅改这1行!] 快指针到头时，慢指针正好在正中间</span></div>
+        `;
+        noteBox.innerHTML = `⚡ <strong>876. 链表的中间结点（白捡 1 题）</strong>：前 4 行母本<strong>一字不改</strong>！因为链表无环，当 2 倍速的 <code class="font-mono text-amber-300">fast</code> 触发 <code class="font-mono">while</code> 安全锁停下时，1 倍速的 <code class="font-mono text-sky-300">slow</code> 刚好走完一半路程，直接 <code class="font-mono text-emerald-300">return slow</code> 秒杀！`;
+      } else if (isoProb === '142') {
+        codeBox.innerHTML = `
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">slow = fast = head                      <span class="text-slate-500"># [母本焊死] 同起点</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">while fast and fast.next:               <span class="text-slate-500"># [母本焊死] 2级安全锁</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">&nbsp;&nbsp;&nbsp;&nbsp;slow = slow.next                    <span class="text-slate-500"># [母本焊死] 慢走1</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">&nbsp;&nbsp;&nbsp;&nbsp;fast = fast.next.next               <span class="text-slate-500"># [母本焊死] 快走2</span></div>
+          <div class="px-2 py-1 mt-1 rounded bg-amber-500/20 border-l-2 border-amber-400 text-amber-200">
+            &nbsp;&nbsp;&nbsp;&nbsp;if slow == fast:                    <span class="text-amber-300"># [插件升级] 撞上后派head同速走，交汇即环口</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while head != slow: head, slow = head.next, slow.next<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return head
+          </div>
+          <div class="px-2 py-0.5 mt-1 rounded bg-amber-500/20 border-l-2 border-amber-400 text-amber-200">return None</div>
+        `;
+        noteBox.innerHTML = `🔥 <strong>142. 环形链表 II（中等题直接打通）</strong>：之所以你之前若按官方题解写 <code class="font-mono">fast = head.next</code> 会在 142 题里算错环口，就是因为起点不一致！而用你的<strong>同起点母本</strong>，在 <code class="font-mono">slow == fast</code> 里面加 2 行同速走，直接找到入环口！`;
+      } else {
+        codeBox.innerHTML = `
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">slow = fast = n                         <span class="text-slate-500"># [母本焊死] 同起点</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">while fast != 1 and nxt(fast) != 1:     <span class="text-slate-500"># [母本映射] 1就是数字链表的None终点</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">&nbsp;&nbsp;&nbsp;&nbsp;slow = nxt(slow)                    <span class="text-slate-500"># [母本映射] .next 换成平方和函数 nxt()</span></div>
+          <div class="px-2 py-0.5 rounded bg-emerald-500/10 border-l-2 border-emerald-400 text-emerald-300">&nbsp;&nbsp;&nbsp;&nbsp;fast = nxt(nxt(fast))               <span class="text-slate-500"># [母本映射] .next.next 换成套两层 nxt()</span></div>
+          <div class="px-2 py-1 mt-1 rounded bg-amber-500/20 border-l-2 border-amber-400 text-amber-200">&nbsp;&nbsp;&nbsp;&nbsp;if slow == fast: return False       <span class="text-amber-300"># [本题插件] 陷入死循环说明不是快乐数</span></div>
+          <div class="px-2 py-0.5 mt-1 rounded bg-amber-500/20 border-l-2 border-amber-400 text-amber-200">return True</div>
+        `;
+        noteBox.innerHTML = `🌌 <strong>202. 快乐数（跨题型降维打击）</strong>：表面上是数学题，实际上每个数通过平方和变换到下一个数就是一条<strong>隐式单向链表</strong>！把 <code class="font-mono">.next</code> 换成函数调用 <code class="font-mono">nxt(x)</code>，把终点 <code class="font-mono">None</code> 换成数字 <code class="font-mono">1</code>，你的母本原封不动照搬！`;
+      }
+    }
+
+    function renderCut7() {
+      renderFunnel();
+      renderXray();
+      renderDotSim();
+      renderIsoProblem();
+    }
+
+    // Init on window load
+    window.onload = function () {
+      goToCut(7);
+    };
+  </script>
+</body>
+</html>
